@@ -3084,8 +3084,8 @@
     const renderGraph = (visibleDevices) => {
       const svg = document.getElementById('graph');
       while (svg.firstChild) svg.removeChild(svg.firstChild);
-      const useSelection = state.selected.size ? visibleDevices.filter((d) => state.selected.has(d.id)) : visibleDevices;
-      if (!useSelection.length) {
+      const primary = state.selected.size ? visibleDevices.filter((d) => state.selected.has(d.id)) : visibleDevices;
+      if (!primary.length) {
         const empty = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         empty.setAttribute('x', '20');
         empty.setAttribute('y', '28');
@@ -3094,23 +3094,30 @@
         svg.appendChild(empty);
         return;
       }
+      const nodeMap = {};
+      primary.forEach((d) => { nodeMap[d.id] = { device: d }; });
+      const edges = [];
+      connections.forEach((c) => {
+        const involvesPrimary = nodeMap[c.from.deviceId] || nodeMap[c.to.deviceId];
+        if (!involvesPrimary) return;
+        const fromDev = nodeMap[c.from.deviceId]?.device || devices.find((d) => d.id === c.from.deviceId);
+        const toDev = nodeMap[c.to.deviceId]?.device || devices.find((d) => d.id === c.to.deviceId);
+        if (fromDev) nodeMap[fromDev.id] = { device: fromDev };
+        if (toDev) nodeMap[toDev.id] = { device: toDev };
+        edges.push(c);
+      });
+      const nodes = Object.values(nodeMap);
       const width = 960;
       const height = 520;
       const radius = Math.min(width, height) / 2 - 70;
       const centerX = width / 2;
       const centerY = height / 2;
-      const nodeMap = {};
-      useSelection.forEach((d, idx) => {
-        const angle = (2 * Math.PI * idx) / useSelection.length;
-        nodeMap[d.id] = {
-          device: d,
-          x: useSelection.length === 1 ? centerX : centerX + radius * Math.cos(angle),
-          y: useSelection.length === 1 ? centerY : centerY + radius * Math.sin(angle),
-        };
+      nodes.forEach((entry, idx) => {
+        const angle = (2 * Math.PI * idx) / nodes.length;
+        entry.x = nodes.length === 1 ? centerX : centerX + radius * Math.cos(angle);
+        entry.y = nodes.length === 1 ? centerY : centerY + radius * Math.sin(angle);
       });
-      const allowed = new Set(useSelection.map((d) => d.id));
-      const relevantConnections = connections.filter((c) => allowed.has(c.from.deviceId) && allowed.has(c.to.deviceId));
-      relevantConnections.forEach((c) => {
+      edges.forEach((c) => {
         const from = nodeMap[c.from.deviceId];
         const to = nodeMap[c.to.deviceId];
         if (!from || !to) return;
