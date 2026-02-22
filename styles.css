@@ -200,3 +200,13 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   font-size: 12px;
 }
 .selected-card .remove:hover { color: var(--text); }
+
+@media (max-width: 800px) {
+  body { padding: 12px; }
+  .page-header { position: static; margin: 0 0 12px; }
+  .graph-panel #graph { height: 60vh; min-height: 360px; }
+  .search-shell { min-width: 0; width: 100%; }
+  .search-results { top: 44px; }
+  .selected-panel { padding: 10px; }
+  .selected-card { min-width: 140px; }
+}

@@ -14,8 +14,15 @@ This page sketches options for presenting details about selected devices now tha
 - Selected tab shows chips/cards; Details tab can show port info; Traffic tab could show mini sparkline per link.
 - Works well for many selections without stealing horizontal space from the graph.
 
-## Idea C — Inline hover summary (no image)
-- Show a compact pill near the graph bottom-left listing selected names; clicking it opens a popover with details/actions.
-- Minimal footprint; good for quick glances; relies on hover/click to expand.
+## Idea C — Action bar + widgets
+![Idea C](mock3.svg)
+- Adds a top action bar (zoom presets, fit to screen, clear selection).
+- Under the graph: three compact widgets for Alerts, Selected, and Recent Events.
+- Gives operators quick triage at a glance without covering the graph.
 
-Recommendation: start with **Idea A** (drawer/cards) for clarity and ease of implementation, then evolve to tabs (Idea B) if we need deeper details.
+## Idea D — Chip row
+![Idea D](mock4.svg)
+- Single-line chip row under the search bar showing selected devices; tapping a chip opens the detail drawer.
+- Extremely compact; good for mobile where vertical space is tight.
+
+Recommendation: start with **Idea A** (drawer/cards) for clarity and ease of implementation. For mobile, pair with Idea D’s chip row to keep the selection visible without crowding the graph; add Idea C’s action bar later for faster zoom/reset and alert surfacing.
