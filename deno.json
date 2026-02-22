@@ -1,0 +1,16 @@
+{
+  "tasks": {
+    "dev": "$HOME/.deno/bin/deno run --no-lock --allow-net --allow-read --watch main.ts",
+    "test": "$HOME/.deno/bin/deno test --no-lock --allow-read",
+    "build:netbox": "$HOME/.deno/bin/deno run --no-lock --allow-read --allow-write scripts/buildNetboxCatalog.ts vendor/netbox-devicetype-library data/netbox-device-types.json"
+  },
+  "imports": {
+    "@std/assert": "jsr:@std/assert@1",
+    "@std/fs": "jsr:@std/fs@^1.0.10",
+    "@std/path": "jsr:@std/path@^1.0.8",
+    "@std/yaml": "jsr:@std/yaml@^1.0.12"
+  },
+  "exclude": [
+    "__tests__/"
+  ]
+}
