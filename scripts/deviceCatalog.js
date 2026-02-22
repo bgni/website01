@@ -62,7 +62,7 @@ export function createDeviceLookup(devices = []) {
   };
 }
 
-export async function loadDeviceLookup({ devicesPath = 'data/devices_v2.json' } = {}) {
+export async function loadDeviceLookup({ devicesPath = 'data/networks/small-office/devices.json' } = {}) {
   const res = await fetch(devicesPath);
   if (!res.ok) throw new Error(`Failed to load ${devicesPath}`);
   const devices = await res.json();
@@ -170,7 +170,7 @@ export function createNetboxDeviceTypeCatalog({
     return normalized;
   };
 
-  const getBySlugOrThrow = async (slug) => loadOne(slug);
+  const getBySlugOrThrow = (slug) => loadOne(slug);
 
   const getManyBySlugOrThrow = async (slugs) => {
     const list = Array.isArray(slugs) ? slugs : [slugs];
@@ -189,11 +189,11 @@ export function createNetboxDeviceTypeCatalog({
 export function createNetboxDeviceTypeCatalogFromIndex(index = {}) {
   const items = index?.items && typeof index.items === 'object' ? index.items : {};
 
-  const getBySlugOrThrow = async (slug) => {
+  const getBySlugOrThrow = (slug) => {
     const { raw } = assertSafeSlug(slug);
     const v = items[raw];
     if (!v) throw new Error(`Unknown device slug: ${raw}`);
-    return v;
+    return Promise.resolve(v);
   };
 
   const getManyBySlugOrThrow = async (slugs) => {
@@ -211,7 +211,7 @@ export function createNetboxDeviceTypeCatalogFromIndex(index = {}) {
 export function createNetboxDeviceTypeCatalogJson({ indexPath = 'data/netbox-device-types.json' } = {}) {
   let indexPromise;
 
-  const loadIndex = async () => {
+  const loadIndex = () => {
     if (!indexPromise) {
       indexPromise = (async () => {
         const text = await defaultReadText(indexPath);

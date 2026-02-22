@@ -6,10 +6,10 @@ export async function loadJson(path) {
   return res.json();
 }
 
-export async function loadData({ basePath = 'data', includeTraffic = true } = {}) {
-  const devicesPath = basePath === 'data' ? 'data/devices_v2.json' : `${basePath}/devices.json`;
-  const connectionsPath = basePath === 'data' ? 'data/connections.json' : `${basePath}/connections.json`;
-  const trafficPath = basePath === 'data' ? 'data/traffic.json' : `${basePath}/traffic.json`;
+export async function loadData({ basePath = 'data/networks/small-office', includeTraffic = true } = {}) {
+  const devicesPath = `${basePath}/devices.json`;
+  const connectionsPath = `${basePath}/connections.json`;
+  const trafficPath = `${basePath}/traffic.json`;
 
   const [devices, connections, traffic] = await Promise.all([
     loadJson(devicesPath),
@@ -42,14 +42,3 @@ export async function loadData({ basePath = 'data', includeTraffic = true } = {}
   return { devices: devicesOut, connections, traffic };
 }
 
-export function pollTraffic({ intervalMs = 5000, onUpdate, trafficPath = 'data/traffic.json' }) {
-  const timer = setInterval(async () => {
-    try {
-      const data = await loadJson(trafficPath);
-      onUpdate?.(data);
-    } catch (err) {
-      console.error(err);
-    }
-  }, intervalMs);
-  return () => clearInterval(timer);
-}

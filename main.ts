@@ -1,7 +1,3 @@
-export function add(a: number, b: number): number {
-	return a + b;
-}
-
 const contentTypeForPath = (path: string): string => {
 	const lower = path.toLowerCase();
 	if (lower.endsWith('.html')) return 'text/html; charset=utf-8';

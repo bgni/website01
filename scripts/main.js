@@ -33,6 +33,8 @@ const pageInfo = document.getElementById('pageInfo');
 const selectedDevicesEl = document.getElementById('selectedDevices');
 const selectedOverlay = document.getElementById('selectedOverlay');
 
+const DEFAULT_NETWORK_ID = 'small-office';
+
 let adjacency;
 let graph;
 let hasWiredEvents = false;
@@ -226,14 +228,14 @@ const loadJsonOptional = async (path) => {
 
 const startTrafficConnector = async ({ basePath, trafficPath }) => {
   // Optional connector config per network.
-  const connectorPath = basePath === 'data' ? 'data/traffic.connector.json' : `${basePath}/traffic.connector.json`;
+  const connectorPath = `${basePath}/traffic.connector.json`;
   const connector = await loadJsonOptional(connectorPath);
 
   const kind = connector?.kind;
 
   if (kind === 'generated') {
     const configPath = connector?.configPath || 'traffic.generator.json';
-    const full = basePath === 'data' ? `data/${configPath}` : `${basePath}/${configPath}`;
+    const full = `${basePath}/${configPath}`;
     const config = await loadJson(full);
     const gen = createGeneratedTrafficConnector({ config });
     return gen.start(attachTraffic);
@@ -274,8 +276,7 @@ const resetUiStateForNetwork = () => {
 };
 
 const getNetworkBasePath = (networkId) => {
-  if (!networkId) return 'data';
-  return `data/networks/${networkId}`;
+  return `data/networks/${networkId || DEFAULT_NETWORK_ID}`;
 };
 
 async function initNetwork(networkId) {
@@ -287,7 +288,7 @@ async function initNetwork(networkId) {
   resetTrafficState();
 
   const basePath = getNetworkBasePath(networkId);
-  const trafficPath = basePath === 'data' ? 'data/traffic.json' : `${basePath}/traffic.json`;
+  const trafficPath = `${basePath}/traffic.json`;
 
   const { devices, connections } = await loadData({ basePath, includeTraffic: false });
   state.devices = devices;
@@ -354,10 +355,10 @@ async function initNetworkSelect() {
       }
     });
   } catch (err) {
-    // If multi-network fixtures aren't present, keep the default dataset.
-    console.warn('Network index not found; using default data/*.json files.', err);
-    networkSelect.innerHTML = '<option value="">Default</option>';
-    networkSelect.value = '';
+    // If multi-network index isn't present, fall back to the bundled small-office fixture.
+    console.warn('Network index not found; falling back to small-office fixture.', err);
+    networkSelect.innerHTML = `<option value="${DEFAULT_NETWORK_ID}">Small Office</option>`;
+    networkSelect.value = DEFAULT_NETWORK_ID;
     networkSelect.disabled = true;
   }
 }
@@ -368,7 +369,7 @@ async function init() {
   initTrafficVizSelect();
 
   await initNetworkSelect();
-  const initialNetworkId = (networkSelect && !networkSelect.disabled) ? networkSelect.value : '';
+  const initialNetworkId = networkSelect ? (networkSelect.value || DEFAULT_NETWORK_ID) : DEFAULT_NETWORK_ID;
   await initNetwork(initialNetworkId);
 }
 

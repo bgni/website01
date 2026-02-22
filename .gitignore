@@ -2,3 +2,6 @@ node_modules
 
 # Local prototype device spec catalog (not used by runtime)
 catalog/
+
+# Local editor settings
+.vscode/
