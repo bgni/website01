@@ -1,0 +1,3188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Network Device Inventory</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --muted: #94a3b8;
+      --accent: #22d3ee;
+      --text: #e2e8f0;
+      --border: #1f2937;
+      --highlight: #c084fc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      background: radial-gradient(circle at 20% 20%, rgba(34, 211, 238, 0.08), transparent 30%),
+        radial-gradient(circle at 80% 0%, rgba(192, 132, 252, 0.08), transparent 25%),
+        var(--bg);
+      color: var(--text);
+      padding: 24px;
+      line-height: 1.5;
+    }
+    h1 { margin: 0 0 8px; font-weight: 700; letter-spacing: 0.3px; }
+    p.description { margin: 0 0 16px; color: var(--muted); }
+    .panel {
+      background: linear-gradient(135deg, rgba(31,41,55,0.95), rgba(15,23,42,0.95));
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+    .controls { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; align-items: center; }
+    input[type="search"] {
+      background: #0b1220;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 10px;
+      min-width: 240px;
+    }
+    button {
+      background: var(--accent);
+      color: #0b1220;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 120ms ease, box-shadow 120ms ease;
+    }
+    button:hover { transform: translateY(-1px); box-shadow: 0 10px 25px rgba(34,211,238,0.25); }
+    .table-wrapper { overflow: auto; border-radius: 10px; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; min-width: 760px; }
+    th, td { padding: 10px 12px; text-align: left; }
+    thead th {
+      position: sticky;
+      top: 0;
+      background: #0b1220;
+      cursor: pointer;
+      user-select: none;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--muted);
+    }
+    tbody tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+    tbody tr:hover { background: rgba(34,211,238,0.06); }
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(34,211,238,0.15);
+      color: var(--accent);
+      font-size: 12px;
+      border: 1px solid rgba(34,211,238,0.35);
+    }
+    #graph { width: 100%; height: 520px; background: #0b1220; border-radius: 12px; border: 1px solid var(--border); }
+    .legend { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 10px; color: var(--muted); font-size: 13px; }
+    .legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .status { font-size: 12px; color: var(--muted); }
+    .note { color: var(--muted); margin: 8px 0 0; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Network Device Inventory</h1>
+    <p class="description">Filter, sort, and visualize how routers, switches, servers, and endpoints connect.</p>
+  </header>
+
+  <section class="panel">
+    <div class="controls">
+      <input type="search" id="filter" placeholder="Filter by brand, model, or type..." />
+      <button id="clearSelection">Clear selection</button>
+      <span class="status" id="status"></span>
+    </div>
+    <div class="table-wrapper">
+      <table id="deviceTable">
+        <thead>
+          <tr>
+            <th style="width:60px"><input type="checkbox" id="selectAll" aria-label="Select all" /></th>
+            <th data-sort="name">Name</th>
+            <th data-sort="brand">Brand</th>
+            <th data-sort="model">Model</th>
+            <th data-sort="type">Type</th>
+            <th data-sort="ports">Ports</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section style="margin-top:16px" class="panel">
+    <h2 style="margin:0 0 8px">Connection Graph</h2>
+    <p class="note">Graph updates with selected devices (shows filtered devices when none are selected).</p>
+    <svg id="graph" viewBox="0 0 960 520"></svg>
+    <div class="legend">
+      <span><span class="dot" style="background:#22d3ee"></span>Switch</span>
+      <span><span class="dot" style="background:#34d399"></span>Router</span>
+      <span><span class="dot" style="background:#fbbf24"></span>Server</span>
+      <span><span class="dot" style="background:#c084fc"></span>Other</span>
+    </div>
+  </section>
+
+  <script type="application/json" id="device-data">[
+  {
+    "id": "device-1",
+    "name": "Mikrotik CSR326-24G-2S+ #1",
+    "brand": "Mikrotik",
+    "model": "CSR326-24G-2S+",
+    "type": "switch",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port3",
+        "type": "ethernet",
+        "speed": "10G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port4",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port5",
+        "type": "ethernet",
+        "speed": "2.5G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port6",
+        "type": "ethernet",
+        "speed": "5G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port7",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port8",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      }
+    ]
+  },
+  {
+    "id": "device-2",
+    "name": "Cisco Catalyst 9300 #2",
+    "brand": "Cisco",
+    "model": "Catalyst 9300",
+    "type": "switch",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port3",
+        "type": "ethernet",
+        "speed": "10G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port4",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port5",
+        "type": "ethernet",
+        "speed": "2.5G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port6",
+        "type": "ethernet",
+        "speed": "5G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port7",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port8",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      }
+    ]
+  },
+  {
+    "id": "device-3",
+    "name": "Cisco ISR 4451 #3",
+    "brand": "Cisco",
+    "model": "ISR 4451",
+    "type": "router",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port3",
+        "type": "ethernet",
+        "speed": "10G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port4",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port5",
+        "type": "ethernet",
+        "speed": "2.5G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port6",
+        "type": "ethernet",
+        "speed": "5G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port7",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port8",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "down"
+      }
+    ]
+  },
+  {
+    "id": "device-4",
+    "name": "Juniper EX4300 #4",
+    "brand": "Juniper",
+    "model": "EX4300",
+    "type": "switch",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port3",
+        "type": "ethernet",
+        "speed": "10G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port4",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port5",
+        "type": "ethernet",
+        "speed": "2.5G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port6",
+        "type": "ethernet",
+        "speed": "5G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port7",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port8",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      }
+    ]
+  },
+  {
+    "id": "device-5",
+    "name": "Aruba 2930F #5",
+    "brand": "Aruba",
+    "model": "2930F",
+    "type": "switch",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port3",
+        "type": "ethernet",
+        "speed": "10G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port4",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port5",
+        "type": "ethernet",
+        "speed": "2.5G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port6",
+        "type": "ethernet",
+        "speed": "5G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port7",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port8",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      }
+    ]
+  },
+  {
+    "id": "device-6",
+    "name": "Dell PowerEdge R740 #6",
+    "brand": "Dell",
+    "model": "PowerEdge R740",
+    "type": "server",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port3",
+        "type": "sfp",
+        "speed": "10G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port4",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      }
+    ]
+  },
+  {
+    "id": "device-7",
+    "name": "HP ProLiant DL380 #7",
+    "brand": "HP",
+    "model": "ProLiant DL380",
+    "type": "server",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port3",
+        "type": "sfp",
+        "speed": "10G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port4",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      }
+    ]
+  },
+  {
+    "id": "device-8",
+    "name": "Lenovo ThinkCentre M720 #8",
+    "brand": "Lenovo",
+    "model": "ThinkCentre M720",
+    "type": "thin client",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port3",
+        "type": "sfp",
+        "speed": "10G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port4",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "down"
+      }
+    ]
+  },
+  {
+    "id": "device-9",
+    "name": "Ubiquiti EdgeRouter 4 #9",
+    "brand": "Ubiquiti",
+    "model": "EdgeRouter 4",
+    "type": "router",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port3",
+        "type": "ethernet",
+        "speed": "10G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port4",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port5",
+        "type": "ethernet",
+        "speed": "2.5G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port6",
+        "type": "ethernet",
+        "speed": "5G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port7",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port8",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      }
+    ]
+  },
+  {
+    "id": "device-10",
+    "name": "Fortinet FortiGate 100F #10",
+    "brand": "Fortinet",
+    "model": "FortiGate 100F",
+    "type": "firewall",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port3",
+        "type": "ethernet",
+        "speed": "10G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port4",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port5",
+        "type": "ethernet",
+        "speed": "2.5G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port6",
+        "type": "ethernet",
+        "speed": "5G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port7",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port8",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "down"
+      }
+    ]
+  },
+  {
+    "id": "device-11",
+    "name": "Netgear GS724T #11",
+    "brand": "Netgear",
+    "model": "GS724T",
+    "type": "switch",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port3",
+        "type": "ethernet",
+        "speed": "10G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port4",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port5",
+        "type": "ethernet",
+        "speed": "2.5G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port6",
+        "type": "ethernet",
+        "speed": "5G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port7",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port8",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      }
+    ]
+  },
+  {
+    "id": "device-12",
+    "name": "Supermicro SuperServer 6029P #12",
+    "brand": "Supermicro",
+    "model": "SuperServer 6029P",
+    "type": "server",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port3",
+        "type": "sfp",
+        "speed": "10G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port4",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "down"
+      }
+    ]
+  },
+  {
+    "id": "device-13",
+    "name": "VMware ESXi Host #13",
+    "brand": "VMware",
+    "model": "ESXi Host",
+    "type": "virtualization",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port3",
+        "type": "sfp",
+        "speed": "10G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port4",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      }
+    ]
+  },
+  {
+    "id": "device-14",
+    "name": "Raspberry Pi Compute Module 4 #14",
+    "brand": "Raspberry Pi",
+    "model": "Compute Module 4",
+    "type": "iot gateway",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port3",
+        "type": "sfp",
+        "speed": "10G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port4",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "down"
+      }
+    ]
+  },
+  {
+    "id": "device-15",
+    "name": "Aruba Instant AP-515 #15",
+    "brand": "Aruba",
+    "model": "Instant AP-515",
+    "type": "access point",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port3",
+        "type": "sfp",
+        "speed": "10G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port4",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "down"
+      }
+    ]
+  },
+  {
+    "id": "device-16",
+    "name": "Mikrotik CSR326-24G-2S+ #16",
+    "brand": "Mikrotik",
+    "model": "CSR326-24G-2S+",
+    "type": "switch",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port3",
+        "type": "ethernet",
+        "speed": "10G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port4",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port5",
+        "type": "ethernet",
+        "speed": "2.5G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port6",
+        "type": "ethernet",
+        "speed": "5G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port7",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port8",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "down"
+      }
+    ]
+  },
+  {
+    "id": "device-17",
+    "name": "Cisco Catalyst 9300 #17",
+    "brand": "Cisco",
+    "model": "Catalyst 9300",
+    "type": "switch",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port3",
+        "type": "ethernet",
+        "speed": "10G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port4",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port5",
+        "type": "ethernet",
+        "speed": "2.5G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port6",
+        "type": "ethernet",
+        "speed": "5G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port7",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port8",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      }
+    ]
+  },
+  {
+    "id": "device-18",
+    "name": "Cisco ISR 4451 #18",
+    "brand": "Cisco",
+    "model": "ISR 4451",
+    "type": "router",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port3",
+        "type": "ethernet",
+        "speed": "10G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port4",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port5",
+        "type": "ethernet",
+        "speed": "2.5G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port6",
+        "type": "ethernet",
+        "speed": "5G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port7",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port8",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      }
+    ]
+  },
+  {
+    "id": "device-19",
+    "name": "Juniper EX4300 #19",
+    "brand": "Juniper",
+    "model": "EX4300",
+    "type": "switch",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port3",
+        "type": "ethernet",
+        "speed": "10G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port4",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port5",
+        "type": "ethernet",
+        "speed": "2.5G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port6",
+        "type": "ethernet",
+        "speed": "5G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port7",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port8",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "down"
+      }
+    ]
+  },
+  {
+    "id": "device-20",
+    "name": "Aruba 2930F #20",
+    "brand": "Aruba",
+    "model": "2930F",
+    "type": "switch",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port3",
+        "type": "ethernet",
+        "speed": "10G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port4",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port5",
+        "type": "ethernet",
+        "speed": "2.5G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port6",
+        "type": "ethernet",
+        "speed": "5G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port7",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port8",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      }
+    ]
+  },
+  {
+    "id": "device-21",
+    "name": "Dell PowerEdge R740 #21",
+    "brand": "Dell",
+    "model": "PowerEdge R740",
+    "type": "server",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port3",
+        "type": "sfp",
+        "speed": "10G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port4",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      }
+    ]
+  },
+  {
+    "id": "device-22",
+    "name": "HP ProLiant DL380 #22",
+    "brand": "HP",
+    "model": "ProLiant DL380",
+    "type": "server",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port3",
+        "type": "sfp",
+        "speed": "10G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port4",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "down"
+      }
+    ]
+  },
+  {
+    "id": "device-23",
+    "name": "Lenovo ThinkCentre M720 #23",
+    "brand": "Lenovo",
+    "model": "ThinkCentre M720",
+    "type": "thin client",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port3",
+        "type": "sfp",
+        "speed": "10G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port4",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "down"
+      }
+    ]
+  },
+  {
+    "id": "device-24",
+    "name": "Ubiquiti EdgeRouter 4 #24",
+    "brand": "Ubiquiti",
+    "model": "EdgeRouter 4",
+    "type": "router",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port3",
+        "type": "ethernet",
+        "speed": "10G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port4",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port5",
+        "type": "ethernet",
+        "speed": "2.5G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port6",
+        "type": "ethernet",
+        "speed": "5G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port7",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port8",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      }
+    ]
+  },
+  {
+    "id": "device-25",
+    "name": "Fortinet FortiGate 100F #25",
+    "brand": "Fortinet",
+    "model": "FortiGate 100F",
+    "type": "firewall",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port3",
+        "type": "ethernet",
+        "speed": "10G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port4",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port5",
+        "type": "ethernet",
+        "speed": "2.5G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port6",
+        "type": "ethernet",
+        "speed": "5G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port7",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port8",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      }
+    ]
+  },
+  {
+    "id": "device-26",
+    "name": "Netgear GS724T #26",
+    "brand": "Netgear",
+    "model": "GS724T",
+    "type": "switch",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port3",
+        "type": "ethernet",
+        "speed": "10G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port4",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port5",
+        "type": "ethernet",
+        "speed": "2.5G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port6",
+        "type": "ethernet",
+        "speed": "5G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port7",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port8",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      }
+    ]
+  },
+  {
+    "id": "device-27",
+    "name": "Supermicro SuperServer 6029P #27",
+    "brand": "Supermicro",
+    "model": "SuperServer 6029P",
+    "type": "server",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port3",
+        "type": "sfp",
+        "speed": "10G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port4",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "down"
+      }
+    ]
+  },
+  {
+    "id": "device-28",
+    "name": "VMware ESXi Host #28",
+    "brand": "VMware",
+    "model": "ESXi Host",
+    "type": "virtualization",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port3",
+        "type": "sfp",
+        "speed": "10G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port4",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      }
+    ]
+  },
+  {
+    "id": "device-29",
+    "name": "Raspberry Pi Compute Module 4 #29",
+    "brand": "Raspberry Pi",
+    "model": "Compute Module 4",
+    "type": "iot gateway",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port3",
+        "type": "sfp",
+        "speed": "10G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port4",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "down"
+      }
+    ]
+  },
+  {
+    "id": "device-30",
+    "name": "Aruba Instant AP-515 #30",
+    "brand": "Aruba",
+    "model": "Instant AP-515",
+    "type": "access point",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port3",
+        "type": "sfp",
+        "speed": "10G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port4",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      }
+    ]
+  },
+  {
+    "id": "device-31",
+    "name": "Mikrotik CSR326-24G-2S+ #31",
+    "brand": "Mikrotik",
+    "model": "CSR326-24G-2S+",
+    "type": "switch",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port3",
+        "type": "ethernet",
+        "speed": "10G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port4",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port5",
+        "type": "ethernet",
+        "speed": "2.5G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port6",
+        "type": "ethernet",
+        "speed": "5G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port7",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port8",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      }
+    ]
+  },
+  {
+    "id": "device-32",
+    "name": "Cisco Catalyst 9300 #32",
+    "brand": "Cisco",
+    "model": "Catalyst 9300",
+    "type": "switch",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port3",
+        "type": "ethernet",
+        "speed": "10G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port4",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port5",
+        "type": "ethernet",
+        "speed": "2.5G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port6",
+        "type": "ethernet",
+        "speed": "5G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port7",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port8",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      }
+    ]
+  },
+  {
+    "id": "device-33",
+    "name": "Cisco ISR 4451 #33",
+    "brand": "Cisco",
+    "model": "ISR 4451",
+    "type": "router",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port3",
+        "type": "ethernet",
+        "speed": "10G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port4",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port5",
+        "type": "ethernet",
+        "speed": "2.5G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port6",
+        "type": "ethernet",
+        "speed": "5G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port7",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port8",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "down"
+      }
+    ]
+  },
+  {
+    "id": "device-34",
+    "name": "Juniper EX4300 #34",
+    "brand": "Juniper",
+    "model": "EX4300",
+    "type": "switch",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port3",
+        "type": "ethernet",
+        "speed": "10G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port4",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port5",
+        "type": "ethernet",
+        "speed": "2.5G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port6",
+        "type": "ethernet",
+        "speed": "5G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port7",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port8",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "down"
+      }
+    ]
+  },
+  {
+    "id": "device-35",
+    "name": "Aruba 2930F #35",
+    "brand": "Aruba",
+    "model": "2930F",
+    "type": "switch",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port3",
+        "type": "ethernet",
+        "speed": "10G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port4",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port5",
+        "type": "ethernet",
+        "speed": "2.5G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port6",
+        "type": "ethernet",
+        "speed": "5G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port7",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port8",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      }
+    ]
+  },
+  {
+    "id": "device-36",
+    "name": "Dell PowerEdge R740 #36",
+    "brand": "Dell",
+    "model": "PowerEdge R740",
+    "type": "server",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port3",
+        "type": "sfp",
+        "speed": "10G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port4",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      }
+    ]
+  },
+  {
+    "id": "device-37",
+    "name": "HP ProLiant DL380 #37",
+    "brand": "HP",
+    "model": "ProLiant DL380",
+    "type": "server",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port3",
+        "type": "sfp",
+        "speed": "10G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port4",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      }
+    ]
+  },
+  {
+    "id": "device-38",
+    "name": "Lenovo ThinkCentre M720 #38",
+    "brand": "Lenovo",
+    "model": "ThinkCentre M720",
+    "type": "thin client",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port3",
+        "type": "sfp",
+        "speed": "10G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port4",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      }
+    ]
+  },
+  {
+    "id": "device-39",
+    "name": "Ubiquiti EdgeRouter 4 #39",
+    "brand": "Ubiquiti",
+    "model": "EdgeRouter 4",
+    "type": "router",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port3",
+        "type": "ethernet",
+        "speed": "10G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port4",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port5",
+        "type": "ethernet",
+        "speed": "2.5G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port6",
+        "type": "ethernet",
+        "speed": "5G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port7",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port8",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "down"
+      }
+    ]
+  },
+  {
+    "id": "device-40",
+    "name": "Fortinet FortiGate 100F #40",
+    "brand": "Fortinet",
+    "model": "FortiGate 100F",
+    "type": "firewall",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port3",
+        "type": "ethernet",
+        "speed": "10G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port4",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port5",
+        "type": "ethernet",
+        "speed": "2.5G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port6",
+        "type": "ethernet",
+        "speed": "5G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port7",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port8",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "down"
+      }
+    ]
+  },
+  {
+    "id": "device-41",
+    "name": "Netgear GS724T #41",
+    "brand": "Netgear",
+    "model": "GS724T",
+    "type": "switch",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port3",
+        "type": "ethernet",
+        "speed": "10G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port4",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port5",
+        "type": "ethernet",
+        "speed": "2.5G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port6",
+        "type": "ethernet",
+        "speed": "5G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port7",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port8",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      }
+    ]
+  },
+  {
+    "id": "device-42",
+    "name": "Supermicro SuperServer 6029P #42",
+    "brand": "Supermicro",
+    "model": "SuperServer 6029P",
+    "type": "server",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port3",
+        "type": "sfp",
+        "speed": "10G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port4",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      }
+    ]
+  },
+  {
+    "id": "device-43",
+    "name": "VMware ESXi Host #43",
+    "brand": "VMware",
+    "model": "ESXi Host",
+    "type": "virtualization",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port3",
+        "type": "sfp",
+        "speed": "10G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port4",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      }
+    ]
+  },
+  {
+    "id": "device-44",
+    "name": "Raspberry Pi Compute Module 4 #44",
+    "brand": "Raspberry Pi",
+    "model": "Compute Module 4",
+    "type": "iot gateway",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port3",
+        "type": "sfp",
+        "speed": "10G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port4",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "down"
+      }
+    ]
+  },
+  {
+    "id": "device-45",
+    "name": "Aruba Instant AP-515 #45",
+    "brand": "Aruba",
+    "model": "Instant AP-515",
+    "type": "access point",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port3",
+        "type": "sfp",
+        "speed": "10G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port4",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      }
+    ]
+  },
+  {
+    "id": "device-46",
+    "name": "Mikrotik CSR326-24G-2S+ #46",
+    "brand": "Mikrotik",
+    "model": "CSR326-24G-2S+",
+    "type": "switch",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port3",
+        "type": "ethernet",
+        "speed": "10G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port4",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port5",
+        "type": "ethernet",
+        "speed": "2.5G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port6",
+        "type": "ethernet",
+        "speed": "5G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port7",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port8",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "down"
+      }
+    ]
+  },
+  {
+    "id": "device-47",
+    "name": "Cisco Catalyst 9300 #47",
+    "brand": "Cisco",
+    "model": "Catalyst 9300",
+    "type": "switch",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port3",
+        "type": "ethernet",
+        "speed": "10G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port4",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port5",
+        "type": "ethernet",
+        "speed": "2.5G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port6",
+        "type": "ethernet",
+        "speed": "5G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port7",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port8",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      }
+    ]
+  },
+  {
+    "id": "device-48",
+    "name": "Cisco ISR 4451 #48",
+    "brand": "Cisco",
+    "model": "ISR 4451",
+    "type": "router",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port3",
+        "type": "ethernet",
+        "speed": "10G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port4",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port5",
+        "type": "ethernet",
+        "speed": "2.5G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port6",
+        "type": "ethernet",
+        "speed": "5G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port7",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port8",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      }
+    ]
+  },
+  {
+    "id": "device-49",
+    "name": "Juniper EX4300 #49",
+    "brand": "Juniper",
+    "model": "EX4300",
+    "type": "switch",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port3",
+        "type": "ethernet",
+        "speed": "10G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port4",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port5",
+        "type": "ethernet",
+        "speed": "2.5G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port6",
+        "type": "ethernet",
+        "speed": "5G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port7",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port8",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      }
+    ]
+  },
+  {
+    "id": "device-50",
+    "name": "Aruba 2930F #50",
+    "brand": "Aruba",
+    "model": "2930F",
+    "type": "switch",
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port3",
+        "type": "ethernet",
+        "speed": "10G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port4",
+        "type": "ethernet",
+        "speed": "1G",
+        "linkStatus": "down"
+      },
+      {
+        "id": "port5",
+        "type": "ethernet",
+        "speed": "2.5G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port6",
+        "type": "ethernet",
+        "speed": "5G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port7",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "up"
+      },
+      {
+        "id": "port8",
+        "type": "sfp",
+        "speed": "1G",
+        "linkStatus": "down"
+      }
+    ]
+  }
+]</script>
+  <script type="application/json" id="connection-data">[
+  {
+    "id": "conn-1",
+    "description": "Link between device-6 and device-2",
+    "from": {
+      "deviceId": "device-6",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-2",
+      "portId": "port1"
+    }
+  },
+  {
+    "id": "conn-2",
+    "description": "Link between device-7 and device-3",
+    "from": {
+      "deviceId": "device-7",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-3",
+      "portId": "port1"
+    }
+  },
+  {
+    "id": "conn-3",
+    "description": "Link between device-8 and device-4",
+    "from": {
+      "deviceId": "device-8",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-4",
+      "portId": "port1"
+    }
+  },
+  {
+    "id": "conn-4",
+    "description": "Link between device-9 and device-5",
+    "from": {
+      "deviceId": "device-9",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-5",
+      "portId": "port1"
+    }
+  },
+  {
+    "id": "conn-5",
+    "description": "Link between device-10 and device-1",
+    "from": {
+      "deviceId": "device-10",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-1",
+      "portId": "port1"
+    }
+  },
+  {
+    "id": "conn-6",
+    "description": "Link between device-11 and device-2",
+    "from": {
+      "deviceId": "device-11",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-2",
+      "portId": "port2"
+    }
+  },
+  {
+    "id": "conn-7",
+    "description": "Link between device-12 and device-3",
+    "from": {
+      "deviceId": "device-12",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-3",
+      "portId": "port2"
+    }
+  },
+  {
+    "id": "conn-8",
+    "description": "Link between device-13 and device-4",
+    "from": {
+      "deviceId": "device-13",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-4",
+      "portId": "port2"
+    }
+  },
+  {
+    "id": "conn-9",
+    "description": "Link between device-14 and device-5",
+    "from": {
+      "deviceId": "device-14",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-5",
+      "portId": "port2"
+    }
+  },
+  {
+    "id": "conn-10",
+    "description": "Link between device-15 and device-1",
+    "from": {
+      "deviceId": "device-15",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-1",
+      "portId": "port2"
+    }
+  },
+  {
+    "id": "conn-11",
+    "description": "Link between device-16 and device-2",
+    "from": {
+      "deviceId": "device-16",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-2",
+      "portId": "port3"
+    }
+  },
+  {
+    "id": "conn-12",
+    "description": "Link between device-17 and device-3",
+    "from": {
+      "deviceId": "device-17",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-3",
+      "portId": "port3"
+    }
+  },
+  {
+    "id": "conn-13",
+    "description": "Link between device-18 and device-4",
+    "from": {
+      "deviceId": "device-18",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-4",
+      "portId": "port3"
+    }
+  },
+  {
+    "id": "conn-14",
+    "description": "Link between device-19 and device-5",
+    "from": {
+      "deviceId": "device-19",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-5",
+      "portId": "port3"
+    }
+  },
+  {
+    "id": "conn-15",
+    "description": "Link between device-20 and device-1",
+    "from": {
+      "deviceId": "device-20",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-1",
+      "portId": "port3"
+    }
+  },
+  {
+    "id": "conn-16",
+    "description": "Link between device-21 and device-2",
+    "from": {
+      "deviceId": "device-21",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-2",
+      "portId": "port4"
+    }
+  },
+  {
+    "id": "conn-17",
+    "description": "Link between device-22 and device-3",
+    "from": {
+      "deviceId": "device-22",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-3",
+      "portId": "port4"
+    }
+  },
+  {
+    "id": "conn-18",
+    "description": "Link between device-23 and device-4",
+    "from": {
+      "deviceId": "device-23",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-4",
+      "portId": "port4"
+    }
+  },
+  {
+    "id": "conn-19",
+    "description": "Link between device-24 and device-5",
+    "from": {
+      "deviceId": "device-24",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-5",
+      "portId": "port4"
+    }
+  },
+  {
+    "id": "conn-20",
+    "description": "Link between device-25 and device-1",
+    "from": {
+      "deviceId": "device-25",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-1",
+      "portId": "port4"
+    }
+  },
+  {
+    "id": "conn-21",
+    "description": "Link between device-26 and device-2",
+    "from": {
+      "deviceId": "device-26",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-2",
+      "portId": "port5"
+    }
+  },
+  {
+    "id": "conn-22",
+    "description": "Link between device-27 and device-3",
+    "from": {
+      "deviceId": "device-27",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-3",
+      "portId": "port5"
+    }
+  },
+  {
+    "id": "conn-23",
+    "description": "Link between device-28 and device-4",
+    "from": {
+      "deviceId": "device-28",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-4",
+      "portId": "port5"
+    }
+  },
+  {
+    "id": "conn-24",
+    "description": "Link between device-29 and device-5",
+    "from": {
+      "deviceId": "device-29",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-5",
+      "portId": "port5"
+    }
+  },
+  {
+    "id": "conn-25",
+    "description": "Link between device-30 and device-1",
+    "from": {
+      "deviceId": "device-30",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-1",
+      "portId": "port5"
+    }
+  },
+  {
+    "id": "conn-26",
+    "description": "Link between device-31 and device-2",
+    "from": {
+      "deviceId": "device-31",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-2",
+      "portId": "port6"
+    }
+  },
+  {
+    "id": "conn-27",
+    "description": "Link between device-32 and device-3",
+    "from": {
+      "deviceId": "device-32",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-3",
+      "portId": "port6"
+    }
+  },
+  {
+    "id": "conn-28",
+    "description": "Link between device-33 and device-4",
+    "from": {
+      "deviceId": "device-33",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-4",
+      "portId": "port6"
+    }
+  },
+  {
+    "id": "conn-29",
+    "description": "Link between device-34 and device-5",
+    "from": {
+      "deviceId": "device-34",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-5",
+      "portId": "port6"
+    }
+  },
+  {
+    "id": "conn-30",
+    "description": "Link between device-35 and device-1",
+    "from": {
+      "deviceId": "device-35",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-1",
+      "portId": "port6"
+    }
+  },
+  {
+    "id": "conn-31",
+    "description": "Link between device-36 and device-2",
+    "from": {
+      "deviceId": "device-36",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-2",
+      "portId": "port7"
+    }
+  },
+  {
+    "id": "conn-32",
+    "description": "Link between device-37 and device-3",
+    "from": {
+      "deviceId": "device-37",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-3",
+      "portId": "port7"
+    }
+  },
+  {
+    "id": "conn-33",
+    "description": "Link between device-38 and device-4",
+    "from": {
+      "deviceId": "device-38",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-4",
+      "portId": "port7"
+    }
+  },
+  {
+    "id": "conn-34",
+    "description": "Link between device-39 and device-5",
+    "from": {
+      "deviceId": "device-39",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-5",
+      "portId": "port7"
+    }
+  },
+  {
+    "id": "conn-35",
+    "description": "Link between device-40 and device-1",
+    "from": {
+      "deviceId": "device-40",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-1",
+      "portId": "port7"
+    }
+  },
+  {
+    "id": "conn-36",
+    "description": "Link between device-41 and device-2",
+    "from": {
+      "deviceId": "device-41",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-2",
+      "portId": "port8"
+    }
+  },
+  {
+    "id": "conn-37",
+    "description": "Link between device-42 and device-3",
+    "from": {
+      "deviceId": "device-42",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-3",
+      "portId": "port8"
+    }
+  },
+  {
+    "id": "conn-38",
+    "description": "Link between device-43 and device-4",
+    "from": {
+      "deviceId": "device-43",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-4",
+      "portId": "port8"
+    }
+  },
+  {
+    "id": "conn-39",
+    "description": "Link between device-44 and device-5",
+    "from": {
+      "deviceId": "device-44",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-5",
+      "portId": "port8"
+    }
+  },
+  {
+    "id": "conn-40",
+    "description": "Link between device-45 and device-1",
+    "from": {
+      "deviceId": "device-45",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-1",
+      "portId": "port8"
+    }
+  },
+  {
+    "id": "conn-41",
+    "description": "Link between device-46 and device-2",
+    "from": {
+      "deviceId": "device-46",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-2",
+      "portId": "port9"
+    }
+  },
+  {
+    "id": "conn-42",
+    "description": "Link between device-47 and device-3",
+    "from": {
+      "deviceId": "device-47",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-3",
+      "portId": "port9"
+    }
+  },
+  {
+    "id": "conn-43",
+    "description": "Link between device-48 and device-4",
+    "from": {
+      "deviceId": "device-48",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-4",
+      "portId": "port9"
+    }
+  },
+  {
+    "id": "conn-44",
+    "description": "Link between device-49 and device-5",
+    "from": {
+      "deviceId": "device-49",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-5",
+      "portId": "port9"
+    }
+  },
+  {
+    "id": "conn-45",
+    "description": "Link between device-50 and device-1",
+    "from": {
+      "deviceId": "device-50",
+      "portId": "port1"
+    },
+    "to": {
+      "deviceId": "device-1",
+      "portId": "port9"
+    }
+  }
+]</script>
+  <script>
+    const devices = JSON.parse(document.getElementById('device-data').textContent);
+    const connections = JSON.parse(document.getElementById('connection-data').textContent);
+
+    const state = { filter: '', sortKey: 'name', sortDir: 'asc', selected: new Set() };
+    const tableBody = document.querySelector('#deviceTable tbody');
+    const filterInput = document.getElementById('filter');
+    const selectAllBox = document.getElementById('selectAll');
+    const statusEl = document.getElementById('status');
+
+    const typeColor = (type) => {
+      if (type.includes('switch')) return '#22d3ee';
+      if (type.includes('router')) return '#34d399';
+      if (type.includes('server')) return '#fbbf24';
+      return '#c084fc';
+    };
+
+    const applyFilter = (list) => {
+      if (!state.filter.trim()) return list;
+      const q = state.filter.toLowerCase();
+      return list.filter((d) =>
+        d.brand.toLowerCase().includes(q) ||
+        d.model.toLowerCase().includes(q) ||
+        d.type.toLowerCase().includes(q)
+      );
+    };
+
+    const applySort = (list) => {
+      const sorted = [...list].sort((a, b) => {
+        let av = a[state.sortKey];
+        let bv = b[state.sortKey];
+        if (state.sortKey === 'ports') {
+          av = a.ports.length;
+          bv = b.ports.length;
+        }
+        if (typeof av === 'string') av = av.toLowerCase();
+        if (typeof bv === 'string') bv = bv.toLowerCase();
+        if (av < bv) return state.sortDir === 'asc' ? -1 : 1;
+        if (av > bv) return state.sortDir === 'asc' ? 1 : -1;
+        return 0;
+      });
+      return sorted;
+    };
+
+    const renderTable = () => {
+      const filtered = applySort(applyFilter(devices));
+      tableBody.innerHTML = '';
+      filtered.forEach((d) => {
+        const row = document.createElement('tr');
+        const checked = state.selected.has(d.id);
+        row.innerHTML = `
+          <td><input type="checkbox" data-id="${d.id}" ${checked ? 'checked' : ''} aria-label="Select ${d.name}" /></td>
+          <td>${d.name}</td>
+          <td>${d.brand}</td>
+          <td>${d.model}</td>
+          <td><span class="tag">${d.type}</span></td>
+          <td>${d.ports.length}</td>`;
+        tableBody.appendChild(row);
+      });
+      statusEl.textContent = `${state.selected.size} selected / ${filtered.length} shown / ${devices.length} total`;
+      selectAllBox.checked = filtered.length > 0 && filtered.every((d) => state.selected.has(d.id));
+      renderGraph(filtered);
+    };
+
+    const renderGraph = (visibleDevices) => {
+      const svg = document.getElementById('graph');
+      while (svg.firstChild) svg.removeChild(svg.firstChild);
+      const useSelection = state.selected.size ? visibleDevices.filter((d) => state.selected.has(d.id)) : visibleDevices;
+      if (!useSelection.length) {
+        const empty = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        empty.setAttribute('x', '20');
+        empty.setAttribute('y', '28');
+        empty.setAttribute('fill', '#94a3b8');
+        empty.textContent = 'No devices to display. Adjust filter or selection.';
+        svg.appendChild(empty);
+        return;
+      }
+      const width = 960;
+      const height = 520;
+      const radius = Math.min(width, height) / 2 - 70;
+      const centerX = width / 2;
+      const centerY = height / 2;
+      const nodeMap = {};
+      useSelection.forEach((d, idx) => {
+        const angle = (2 * Math.PI * idx) / useSelection.length;
+        nodeMap[d.id] = {
+          device: d,
+          x: useSelection.length === 1 ? centerX : centerX + radius * Math.cos(angle),
+          y: useSelection.length === 1 ? centerY : centerY + radius * Math.sin(angle),
+        };
+      });
+      const allowed = new Set(useSelection.map((d) => d.id));
+      const relevantConnections = connections.filter((c) => allowed.has(c.from.deviceId) && allowed.has(c.to.deviceId));
+      relevantConnections.forEach((c) => {
+        const from = nodeMap[c.from.deviceId];
+        const to = nodeMap[c.to.deviceId];
+        if (!from || !to) return;
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', from.x);
+        line.setAttribute('y1', from.y);
+        line.setAttribute('x2', to.x);
+        line.setAttribute('y2', to.y);
+        line.setAttribute('stroke', '#1f9cfb');
+        line.setAttribute('stroke-width', '2');
+        line.setAttribute('opacity', '0.65');
+        svg.appendChild(line);
+      });
+      Object.values(nodeMap).forEach(({ device, x, y }) => {
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', x);
+        circle.setAttribute('cy', y);
+        circle.setAttribute('r', '16');
+        circle.setAttribute('fill', typeColor(device.type.toLowerCase()));
+        circle.setAttribute('stroke', '#0b1220');
+        circle.setAttribute('stroke-width', '2');
+        svg.appendChild(circle);
+        const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        label.setAttribute('x', x);
+        label.setAttribute('y', y + 30);
+        label.setAttribute('fill', '#e2e8f0');
+        label.setAttribute('text-anchor', 'middle');
+        label.setAttribute('font-size', '12');
+        label.textContent = device.brand + ' ' + device.model;
+        svg.appendChild(label);
+      });
+    };
+
+    filterInput.addEventListener('input', (e) => {
+      state.filter = e.target.value;
+      renderTable();
+    });
+
+    document.getElementById('deviceTable').addEventListener('change', (e) => {
+      const id = e.target.getAttribute('data-id');
+      if (!id) return;
+      if (e.target.checked) state.selected.add(id); else state.selected.delete(id);
+      renderTable();
+    });
+
+    selectAllBox.addEventListener('change', () => {
+      const filtered = applySort(applyFilter(devices));
+      filtered.forEach((d) => {
+        if (selectAllBox.checked) state.selected.add(d.id); else state.selected.delete(d.id);
+      });
+      renderTable();
+    });
+
+    document.querySelectorAll('thead th[data-sort]').forEach((th) => {
+      th.addEventListener('click', () => {
+        const key = th.getAttribute('data-sort');
+        if (state.sortKey === key) {
+          state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+          state.sortKey = key;
+          state.sortDir = 'asc';
+        }
+        renderTable();
+      });
+    });
+
+    document.getElementById('clearSelection').addEventListener('click', () => {
+      state.selected.clear();
+      renderTable();
+    });
+
+    renderTable();
+  </script>
+</body>
+</html>
