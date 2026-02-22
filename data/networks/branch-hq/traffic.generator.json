@@ -1,0 +1,55 @@
+{
+  "tickSeconds": 1,
+  "initial": [
+    { "connectionId": "conn-hq-inet-edge1", "status": "up", "rateMbps": 650, "utilization": 0.45 },
+    { "connectionId": "conn-hq-inet-edge2", "status": "up", "rateMbps": 420, "utilization": 0.32 },
+
+    { "connectionId": "conn-hq-edge1-fw", "status": "up", "rateMbps": 520, "utilization": 0.5 },
+    { "connectionId": "conn-hq-edge2-fw", "status": "up", "rateMbps": 360, "utilization": 0.35 },
+
+    { "connectionId": "conn-hq-fw-core1", "status": "up", "rateMbps": 620, "utilization": 0.55 },
+    { "connectionId": "conn-hq-fw-core2", "status": "up", "rateMbps": 580, "utilization": 0.52 },
+    { "connectionId": "conn-hq-core1-core2", "status": "up", "rateMbps": 900, "utilization": 0.35 },
+
+    { "connectionId": "conn-hq-core1-app", "status": "up", "rateMbps": 220, "utilization": 0.42 },
+    { "connectionId": "conn-hq-core2-db", "status": "up", "rateMbps": 260, "utilization": 0.55 },
+
+    { "connectionId": "conn-hq-core1-ap1", "status": "up", "rateMbps": 60, "utilization": 0.2 },
+    { "connectionId": "conn-hq-core2-ap2", "status": "up", "rateMbps": 75, "utilization": 0.26 },
+
+    { "connectionId": "conn-b1-vpn-hq1", "status": "up", "rateMbps": 85, "utilization": 0.35 },
+    { "connectionId": "conn-b1-vpn-hq2", "status": "up", "rateMbps": 90, "utilization": 0.38 },
+    { "connectionId": "conn-b1-edge-sw", "status": "up", "rateMbps": 45, "utilization": 0.22 },
+    { "connectionId": "conn-b1-sw-ap", "status": "up", "rateMbps": 25, "utilization": 0.18 },
+    { "connectionId": "conn-b1-sw-pos", "status": "up", "rateMbps": 8, "utilization": 0.06 },
+
+    { "connectionId": "conn-b2-vpn-hq1", "status": "up", "rateMbps": 70, "utilization": 0.32 },
+    { "connectionId": "conn-b2-vpn-hq2", "status": "up", "rateMbps": 65, "utilization": 0.28 },
+    { "connectionId": "conn-b2-edge-sw", "status": "up", "rateMbps": 40, "utilization": 0.18 },
+    { "connectionId": "conn-b2-sw-ap", "status": "up", "rateMbps": 22, "utilization": 0.16 },
+    { "connectionId": "conn-b2-sw-pos", "status": "up", "rateMbps": 10, "utilization": 0.07 },
+
+    { "connectionId": "conn-b3-edge-sw", "status": "up", "rateMbps": 35, "utilization": 0.15 },
+    { "connectionId": "conn-b3-sw-ap", "status": "up", "rateMbps": 15, "utilization": 0.12 },
+    { "connectionId": "conn-b3-sw-pos", "status": "up", "rateMbps": 7, "utilization": 0.05 }
+  ],
+  "links": {
+    "conn-hq-inet-edge1": { "rateMbps": { "min": 120, "max": 950, "delta": 80 }, "utilization": { "min": 0.12, "max": 0.92, "delta": 0.08 } },
+    "conn-hq-inet-edge2": { "rateMbps": { "min": 120, "max": 800, "delta": 70 }, "utilization": { "min": 0.1, "max": 0.88, "delta": 0.08 } },
+
+    "conn-hq-fw-core1": { "rateMbps": { "min": 200, "max": 1200, "delta": 120 }, "utilization": { "min": 0.15, "max": 0.98, "delta": 0.1 } },
+    "conn-hq-fw-core2": { "rateMbps": { "min": 200, "max": 1200, "delta": 120 }, "utilization": { "min": 0.15, "max": 0.98, "delta": 0.1 } },
+
+    "conn-b1-vpn-hq1": { "rateMbps": { "min": 10, "max": 180, "delta": 18 }, "utilization": { "min": 0.05, "max": 0.95, "delta": 0.12 } },
+    "conn-b1-vpn-hq2": { "rateMbps": { "min": 10, "max": 180, "delta": 18 }, "utilization": { "min": 0.05, "max": 0.95, "delta": 0.12 } },
+
+    "conn-b2-vpn-hq1": { "rateMbps": { "min": 8, "max": 160, "delta": 16 }, "utilization": { "min": 0.05, "max": 0.9, "delta": 0.11 } },
+    "conn-b2-vpn-hq2": { "rateMbps": { "min": 8, "max": 160, "delta": 16 }, "utilization": { "min": 0.05, "max": 0.9, "delta": 0.11 } }
+  },
+  "events": [
+    { "t": 10, "connectionId": "conn-b1-vpn-hq2", "status": "down" },
+    { "t": 16, "connectionId": "conn-b1-vpn-hq2", "status": "up" },
+    { "t": 22, "connectionId": "conn-b2-vpn-hq1", "status": "down" },
+    { "t": 28, "connectionId": "conn-b2-vpn-hq1", "status": "up" }
+  ]
+}

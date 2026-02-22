@@ -1,0 +1,20 @@
+[
+  { "id": "conn-transit1-pop1", "description": "Transit1 uplink", "from": { "deviceId": "transit-1", "portId": "p1" }, "to": { "deviceId": "pop-1", "portId": "p1" } },
+  { "id": "conn-transit2-pop5", "description": "Transit2 uplink", "from": { "deviceId": "transit-2", "portId": "p1" }, "to": { "deviceId": "pop-5", "portId": "p1" } },
+
+  { "id": "conn-ring-1-2", "description": "Ring", "from": { "deviceId": "pop-1", "portId": "p2" }, "to": { "deviceId": "pop-2", "portId": "p2" } },
+  { "id": "conn-ring-2-3", "description": "Ring", "from": { "deviceId": "pop-2", "portId": "p3" }, "to": { "deviceId": "pop-3", "portId": "p2" } },
+  { "id": "conn-ring-3-4", "description": "Ring", "from": { "deviceId": "pop-3", "portId": "p3" }, "to": { "deviceId": "pop-4", "portId": "p2" } },
+  { "id": "conn-ring-4-5", "description": "Ring", "from": { "deviceId": "pop-4", "portId": "p3" }, "to": { "deviceId": "pop-5", "portId": "p2" } },
+  { "id": "conn-ring-5-6", "description": "Ring", "from": { "deviceId": "pop-5", "portId": "p3" }, "to": { "deviceId": "pop-6", "portId": "p2" } },
+  { "id": "conn-ring-6-7", "description": "Ring", "from": { "deviceId": "pop-6", "portId": "p3" }, "to": { "deviceId": "pop-7", "portId": "p2" } },
+  { "id": "conn-ring-7-8", "description": "Ring", "from": { "deviceId": "pop-7", "portId": "p3" }, "to": { "deviceId": "pop-8", "portId": "p2" } },
+  { "id": "conn-ring-8-1", "description": "Ring", "from": { "deviceId": "pop-8", "portId": "p3" }, "to": { "deviceId": "pop-1", "portId": "p3" } },
+
+  { "id": "conn-cust-a-pop2", "description": "Customer", "from": { "deviceId": "cust-a", "portId": "p1" }, "to": { "deviceId": "pop-2", "portId": "p4" } },
+  { "id": "conn-cust-b-pop3", "description": "Customer", "from": { "deviceId": "cust-b", "portId": "p1" }, "to": { "deviceId": "pop-3", "portId": "p4" } },
+  { "id": "conn-cust-c-pop4", "description": "Customer", "from": { "deviceId": "cust-c", "portId": "p1" }, "to": { "deviceId": "pop-4", "portId": "p4" } },
+  { "id": "conn-cust-d-pop6", "description": "Customer", "from": { "deviceId": "cust-d", "portId": "p1" }, "to": { "deviceId": "pop-6", "portId": "p4" } },
+  { "id": "conn-cust-e-pop7", "description": "Customer", "from": { "deviceId": "cust-e", "portId": "p1" }, "to": { "deviceId": "pop-7", "portId": "p4" } },
+  { "id": "conn-cust-f-pop8", "description": "Customer", "from": { "deviceId": "cust-f", "portId": "p1" }, "to": { "deviceId": "pop-8", "portId": "p4" } }
+]

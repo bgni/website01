@@ -1,0 +1,29 @@
+{
+  "tickSeconds": 1,
+  "initial": [
+    { "connectionId": "conn-isp-edge", "status": "up", "rateMbps": 120, "utilization": 0.55 },
+    { "connectionId": "conn-edge-fw", "status": "up", "rateMbps": 120, "utilization": 0.55 },
+    { "connectionId": "conn-fw-core", "status": "up", "rateMbps": 95, "utilization": 0.4 },
+    { "connectionId": "conn-core-access", "status": "up", "rateMbps": 60, "utilization": 0.25 },
+    { "connectionId": "conn-core-nas", "status": "up", "rateMbps": 320, "utilization": 0.75 },
+    { "connectionId": "conn-access-ap1", "status": "up", "rateMbps": 45, "utilization": 0.3 },
+    { "connectionId": "conn-access-ap2", "status": "up", "rateMbps": 30, "utilization": 0.2 },
+    { "connectionId": "conn-access-pc", "status": "up", "rateMbps": 15, "utilization": 0.1 },
+    { "connectionId": "conn-access-printer", "status": "up", "rateMbps": 2, "utilization": 0.02 },
+    { "connectionId": "conn-access-iot", "status": "down", "rateMbps": 0, "utilization": 0 }
+  ],
+  "links": {
+    "conn-isp-edge": { "rateMbps": { "min": 20, "max": 350, "delta": 30 }, "utilization": { "min": 0.05, "max": 0.95, "delta": 0.08 } },
+    "conn-edge-fw": { "rateMbps": { "min": 20, "max": 350, "delta": 30 }, "utilization": { "min": 0.05, "max": 0.95, "delta": 0.08 } },
+    "conn-fw-core": { "rateMbps": { "min": 10, "max": 300, "delta": 25 }, "utilization": { "min": 0.05, "max": 0.9, "delta": 0.07 } },
+    "conn-core-access": { "rateMbps": { "min": 5, "max": 250, "delta": 20 }, "utilization": { "min": 0.02, "max": 0.85, "delta": 0.06 } },
+    "conn-core-nas": { "rateMbps": { "min": 10, "max": 1200, "delta": 140 }, "utilization": { "min": 0.05, "max": 0.98, "delta": 0.1 } },
+    "conn-access-ap1": { "rateMbps": { "min": 1, "max": 600, "delta": 90 }, "utilization": { "min": 0.01, "max": 0.9, "delta": 0.12 } },
+    "conn-access-ap2": { "rateMbps": { "min": 1, "max": 600, "delta": 90 }, "utilization": { "min": 0.01, "max": 0.9, "delta": 0.12 } }
+  },
+  "events": [
+    { "t": 7, "connectionId": "conn-access-iot", "status": "up" },
+    { "t": 14, "connectionId": "conn-access-iot", "status": "down" },
+    { "t": 18, "connectionId": "conn-access-iot", "status": "up" }
+  ]
+}

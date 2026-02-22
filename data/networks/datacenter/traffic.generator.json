@@ -1,0 +1,31 @@
+{
+  "tickSeconds": 1,
+  "initial": [
+    { "connectionId": "conn-dc-inet-fw1", "status": "up", "rateMbps": 900, "utilization": 0.55 },
+    { "connectionId": "conn-dc-inet-fw2", "status": "up", "rateMbps": 850, "utilization": 0.52 },
+
+    { "connectionId": "conn-dc-fw1-lb1", "status": "up", "rateMbps": 780, "utilization": 0.6 },
+    { "connectionId": "conn-dc-fw2-lb2", "status": "up", "rateMbps": 720, "utilization": 0.56 },
+
+    { "connectionId": "conn-sp1-leaf1", "status": "up", "rateMbps": 1400, "utilization": 0.48 },
+    { "connectionId": "conn-sp2-leaf1", "status": "up", "rateMbps": 1300, "utilization": 0.44 },
+    { "connectionId": "conn-sp1-leaf2", "status": "up", "rateMbps": 1500, "utilization": 0.5 },
+    { "connectionId": "conn-sp2-leaf2", "status": "up", "rateMbps": 1450, "utilization": 0.49 },
+
+    { "connectionId": "conn-leaf1-app1", "status": "up", "rateMbps": 420, "utilization": 0.62 },
+    { "connectionId": "conn-leaf1-app2", "status": "up", "rateMbps": 380, "utilization": 0.55 },
+    { "connectionId": "conn-leaf2-db1", "status": "up", "rateMbps": 460, "utilization": 0.68 },
+    { "connectionId": "conn-leaf2-db2", "status": "up", "rateMbps": 410, "utilization": 0.61 },
+
+    { "connectionId": "conn-app1-db1", "status": "up", "rateMbps": 600, "utilization": 0.82 }
+  ],
+  "links": {
+    "conn-app1-db1": { "rateMbps": { "min": 200, "max": 2200, "delta": 240 }, "utilization": { "min": 0.2, "max": 0.99, "delta": 0.12 } },
+    "conn-sp1-leaf2": { "rateMbps": { "min": 300, "max": 4200, "delta": 380 }, "utilization": { "min": 0.05, "max": 0.95, "delta": 0.1 } },
+    "conn-sp2-leaf2": { "rateMbps": { "min": 300, "max": 4200, "delta": 380 }, "utilization": { "min": 0.05, "max": 0.95, "delta": 0.1 } }
+  },
+  "events": [
+    { "t": 15, "connectionId": "conn-leaf2-db2", "status": "down" },
+    { "t": 20, "connectionId": "conn-leaf2-db2", "status": "up" }
+  ]
+}

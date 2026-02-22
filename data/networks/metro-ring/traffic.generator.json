@@ -1,0 +1,33 @@
+{
+  "tickSeconds": 1,
+  "initial": [
+    { "connectionId": "conn-transit1-pop1", "status": "up", "rateMbps": 1800, "utilization": 0.55 },
+    { "connectionId": "conn-transit2-pop5", "status": "up", "rateMbps": 1600, "utilization": 0.5 },
+
+    { "connectionId": "conn-ring-1-2", "status": "up", "rateMbps": 1200, "utilization": 0.35 },
+    { "connectionId": "conn-ring-2-3", "status": "up", "rateMbps": 1400, "utilization": 0.42 },
+    { "connectionId": "conn-ring-3-4", "status": "up", "rateMbps": 1500, "utilization": 0.45 },
+    { "connectionId": "conn-ring-4-5", "status": "up", "rateMbps": 1700, "utilization": 0.52 },
+    { "connectionId": "conn-ring-5-6", "status": "up", "rateMbps": 1100, "utilization": 0.32 },
+    { "connectionId": "conn-ring-6-7", "status": "up", "rateMbps": 900, "utilization": 0.28 },
+    { "connectionId": "conn-ring-7-8", "status": "up", "rateMbps": 1000, "utilization": 0.3 },
+    { "connectionId": "conn-ring-8-1", "status": "up", "rateMbps": 1300, "utilization": 0.4 },
+
+    { "connectionId": "conn-cust-a-pop2", "status": "up", "rateMbps": 120, "utilization": 0.25 },
+    { "connectionId": "conn-cust-b-pop3", "status": "up", "rateMbps": 90, "utilization": 0.2 },
+    { "connectionId": "conn-cust-c-pop4", "status": "up", "rateMbps": 140, "utilization": 0.28 },
+    { "connectionId": "conn-cust-d-pop6", "status": "up", "rateMbps": 110, "utilization": 0.22 },
+    { "connectionId": "conn-cust-e-pop7", "status": "up", "rateMbps": 85, "utilization": 0.18 },
+    { "connectionId": "conn-cust-f-pop8", "status": "up", "rateMbps": 100, "utilization": 0.21 }
+  ],
+  "links": {
+    "conn-ring-2-3": { "rateMbps": { "min": 200, "max": 5000, "delta": 320 }, "utilization": { "min": 0.05, "max": 0.99, "delta": 0.12 } },
+    "conn-ring-3-4": { "rateMbps": { "min": 200, "max": 5000, "delta": 320 }, "utilization": { "min": 0.05, "max": 0.99, "delta": 0.12 } },
+    "conn-ring-4-5": { "rateMbps": { "min": 200, "max": 5000, "delta": 320 }, "utilization": { "min": 0.05, "max": 0.99, "delta": 0.12 } },
+    "conn-ring-8-1": { "rateMbps": { "min": 200, "max": 5000, "delta": 320 }, "utilization": { "min": 0.05, "max": 0.99, "delta": 0.12 } }
+  },
+  "events": [
+    { "t": 14, "connectionId": "conn-ring-4-5", "status": "down" },
+    { "t": 22, "connectionId": "conn-ring-4-5", "status": "up" }
+  ]
+}

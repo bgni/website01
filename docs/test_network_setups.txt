@@ -1,0 +1,121 @@
+# Test network setups (5)
+
+These are *text-only* definitions you can turn into JSON fixtures later. Each setup includes purpose, approximate scale, topology notes, and scenarios to validate in the UI (search, selection, shortest paths, traffic styling, down links).
+
+---
+
+## 1) Small Office (flat star)
+**Purpose:** Baseline UX sanity check with a tiny, easy-to-reason-about topology.
+
+- **Scale:** ~8–12 devices, ~10–16 links
+- **Topology:** ISP edge → firewall → core switch → access switch → endpoints/APs
+- **Devices (roles):**
+  - 1x ISP CPE / edge router
+  - 1x firewall
+  - 1x core switch
+  - 1–2x access switches
+  - 1x WiFi controller (optional)
+  - 2–4x APs
+  - 1–2x servers (NAS / small app)
+- **Links:** Mostly 1G, single uplinks, minimal redundancy
+- **Scenarios to validate:**
+  - Search for a device by partial name/brand/type; jump/center it.
+  - Multi-select AP + server; shortest-path highlight should be unambiguous.
+  - Simulate one down link (access switch uplink) → clear “down” styling.
+  - One high-traffic link (firewall↔core) → thickness/traffic color stands out.
+
+---
+
+## 2) Retail Branch + HQ over VPN (hub-and-spoke)
+**Purpose:** Test pathfinding and selection across WAN edges; validate that “remote” devices still feel navigable.
+
+- **Scale:** ~20–35 devices, ~25–45 links
+- **Topology:**
+  - 1x HQ site (small 3-tier or collapsed core)
+  - 2–4x branches (each: edge + switch + APs)
+  - Site-to-site VPN or SD-WAN overlay between branches and HQ
+- **Devices (roles):**
+  - HQ: 2x edge routers (dual WAN), 2x firewalls (HA), 2x distribution switches, 1–2x server racks
+  - Each branch: 1x edge router, 1x switch, 1–2x APs, 1x POS server (optional)
+- **Links:** WAN links per site, plus LAN links; include asymmetric bandwidth (e.g., 500/50 Mbps)
+- **Scenarios to validate:**
+  - Select a branch AP and an HQ database server; shortest path should traverse VPN edge devices.
+  - Model one degraded WAN link (traffic spikes / utilization) and ensure it pops.
+  - Add one branch with *no* VPN link (misconfigured/disconnected) → graph shows isolated island.
+  - Multiple possible HQ egress paths (two edges) → verify path choice consistency.
+
+---
+
+## 3) Campus Network (3-tier with redundancy)
+**Purpose:** Moderate/large enterprise topology with multiple equal-cost-ish paths to test readability and path highlighting.
+
+- **Scale:** ~40–80 devices, ~70–140 links
+- **Topology:** Core (pair) ↔ aggregation (pair per building) ↔ access switches ↔ APs/endpoints
+- **Redundancy:**
+  - Core pair (core-1/core-2) with cross-links
+  - Each aggregation switch dual-homed to both cores
+  - Access switches dual-uplinked (LACP) to both aggregation switches
+- **Devices (roles):**
+  - 2x core routers/switches
+  - 6–12x aggregation switches (3–6 buildings, pair per building)
+  - 20–50x access switches
+  - 20–60x APs
+  - 2–6x key services: DHCP/DNS, IdP, app, DB
+- **Scenarios to validate:**
+  - Multi-select 3–5 devices across buildings; confirm selection UX stays usable.
+  - Highlight shortest paths where *multiple* routes exist; ensure visual doesn’t become confusing.
+  - Mark one core↔agg uplink down; verify alternate paths still shown logically.
+  - Add a “noisy” access switch with many high-traffic edge links; ensure it’s noticeable but not overwhelming.
+
+---
+
+## 4) Datacenter (spine–leaf with security + load balancer)
+**Purpose:** High-density fabric style; validate rendering under many parallel links and service chains.
+
+- **Scale:** ~60–120 devices, ~200–600 links (depending on how many servers you model)
+- **Topology:**
+  - 2–4 spines
+  - 6–16 leaves
+  - Service chain: edge ↔ firewalls ↔ load balancers ↔ leaf pairs ↔ server racks
+- **Devices (roles):**
+  - Spines/leaves (switches)
+  - 2x firewalls (HA)
+  - 2x load balancers (active/standby)
+  - 20–80 servers (or represent racks as “server” nodes)
+  - Storage nodes (optional)
+- **Traffic patterns:**
+  - East–west traffic between app and DB tiers (leaf↔spine↔leaf)
+  - North–south traffic via firewalls/LB
+- **Scenarios to validate:**
+  - Select an internet edge and a DB node; path should pass through firewall + LB (service chain visibility).
+  - Simulate a leaf failure: many server links should go “down” together (blast radius clarity).
+  - One “hot” server pair with high east–west traffic; verify fabric links reflect aggregate load.
+  - Confirm the graph remains navigable (zoom/pan) at higher link density.
+
+---
+
+## 5) Metro Ring / ISP-ish (ring + multiple POPs)
+**Purpose:** Non-tree topology with cycles; test whether cycles and alternate routes remain understandable.
+
+- **Scale:** ~25–60 devices, ~40–120 links
+- **Topology:**
+  - 6–10 POP routers in a ring
+  - 2x upstream/transit edges
+  - Customer aggregation switches/routers hanging off POPs
+- **Failure modes:**
+  - Single ring cut should reroute the other way around the ring
+  - Dual failures create partitions
+- **Scenarios to validate:**
+  - Select two customers on different POPs; shortest path should choose the shorter direction around the ring.
+  - Flip one ring link down; path should reroute (and the down segment should stand out).
+  - Add one POP with *two* customer aggregates; ensure local fan-out stays readable.
+  - Traffic “wave”: higher load on one half of ring; verify it’s visually obvious.
+
+---
+
+## Notes for turning these into JSON fixtures later
+- If your model is **devices + connections + traffic**, each setup can become:
+  - `devices.json`: nodes with `id`, `name`, `type`, optional `ports`
+  - `connections.json`: edges (optionally referencing ports)
+  - `traffic.json`: per-link metrics (utilization/rate, status up/down)
+- Keep ids stable and human-readable (e.g., `hq-core-1`, `b2-edge`, `pop-7`).
