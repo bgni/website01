@@ -25,6 +25,17 @@
       padding: 24px;
       line-height: 1.5;
     }
+    .layout {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+    @media (max-width: 1100px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
     h1 { margin: 0 0 8px; font-weight: 700; letter-spacing: 0.3px; }
     p.description { margin: 0 0 16px; color: var(--muted); }
     .panel {
@@ -54,7 +65,7 @@
       transition: transform 120ms ease, box-shadow 120ms ease;
     }
     button:hover { transform: translateY(-1px); box-shadow: 0 10px 25px rgba(34,211,238,0.25); }
-    .table-wrapper { overflow: auto; border-radius: 10px; border: 1px solid var(--border); }
+    .table-wrapper { overflow: auto; border-radius: 10px; border: 1px solid var(--border); max-height: 70vh; }
     table { width: 100%; border-collapse: collapse; min-width: 760px; }
     th, td { padding: 10px 12px; text-align: left; }
     thead th {
@@ -78,7 +89,8 @@
       font-size: 12px;
       border: 1px solid rgba(34,211,238,0.35);
     }
-    #graph { width: 100%; height: 520px; background: #0b1220; border-radius: 12px; border: 1px solid var(--border); }
+    .graph-panel #graph { width: 100%; height: 70vh; min-height: 520px; background: #0b1220; border-radius: 12px; border: 1px solid var(--border); }
+    .graph-panel .note { margin: 0 0 12px; }
     .legend { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 10px; color: var(--muted); font-size: 13px; }
     .legend span { display: inline-flex; align-items: center; gap: 6px; }
     .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
@@ -92,40 +104,44 @@
     <p class="description">Filter, sort, and visualize how routers, switches, servers, and endpoints connect.</p>
   </header>
 
-  <section class="panel">
-    <div class="controls">
-      <input type="search" id="filter" placeholder="Filter by brand, model, or type..." />
-      <button id="clearSelection">Clear selection</button>
-      <span class="status" id="status"></span>
-    </div>
-    <div class="table-wrapper">
-      <table id="deviceTable">
-        <thead>
-          <tr>
-            <th style="width:60px"><input type="checkbox" id="selectAll" aria-label="Select all" /></th>
-            <th data-sort="name">Name</th>
-            <th data-sort="brand">Brand</th>
-            <th data-sort="model">Model</th>
-            <th data-sort="type">Type</th>
-            <th data-sort="ports">Ports</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </section>
+  <main class="layout">
+    <section class="panel graph-panel">
+      <div style="display:flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap;">
+        <h2 style="margin:0">Network Map</h2>
+        <p class="note">Pan/zoom to explore the whole network. Select multiple devices to highlight the shortest paths between them.</p>
+      </div>
+      <svg id="graph" viewBox="0 0 1200 720" aria-label="Network topology"></svg>
+      <div class="legend">
+        <span><span class="dot" style="background:#22d3ee"></span>Switch</span>
+        <span><span class="dot" style="background:#34d399"></span>Router</span>
+        <span><span class="dot" style="background:#fbbf24"></span>Server</span>
+        <span><span class="dot" style="background:#c084fc"></span>Other</span>
+      </div>
+    </section>
 
-  <section style="margin-top:16px" class="panel">
-    <h2 style="margin:0 0 8px">Connection Graph</h2>
-    <p class="note">Graph updates with selected devices (shows filtered devices when none are selected).</p>
-    <svg id="graph" viewBox="0 0 960 520"></svg>
-    <div class="legend">
-      <span><span class="dot" style="background:#22d3ee"></span>Switch</span>
-      <span><span class="dot" style="background:#34d399"></span>Router</span>
-      <span><span class="dot" style="background:#fbbf24"></span>Server</span>
-      <span><span class="dot" style="background:#c084fc"></span>Other</span>
-    </div>
-  </section>
+    <section class="panel table-panel">
+      <div class="controls">
+        <input type="search" id="filter" placeholder="Filter by brand, model, or type..." />
+        <button id="clearSelection">Clear selection</button>
+        <span class="status" id="status"></span>
+      </div>
+      <div class="table-wrapper">
+        <table id="deviceTable">
+          <thead>
+            <tr>
+              <th style="width:60px"><input type="checkbox" id="selectAll" aria-label="Select all" /></th>
+              <th data-sort="name">Name</th>
+              <th data-sort="brand">Brand</th>
+              <th data-sort="model">Model</th>
+              <th data-sort="type">Type</th>
+              <th data-sort="ports">Ports</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
 
   <script type="application/json" id="device-data">[
   {
@@ -3017,9 +3033,18 @@
     }
   }
 ]</script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7.8.5/dist/d3.min.js"></script>
   <script>
     const devices = JSON.parse(document.getElementById('device-data').textContent);
     const connections = JSON.parse(document.getElementById('connection-data').textContent);
+
+    const adjacency = {};
+    connections.forEach((c) => {
+      adjacency[c.from.deviceId] = adjacency[c.from.deviceId] || [];
+      adjacency[c.to.deviceId] = adjacency[c.to.deviceId] || [];
+      adjacency[c.from.deviceId].push({ neighbor: c.to.deviceId, connectionId: c.id });
+      adjacency[c.to.deviceId].push({ neighbor: c.from.deviceId, connectionId: c.id });
+    });
 
     const state = { filter: '', sortKey: 'name', sortDir: 'asc', selected: new Set() };
     const tableBody = document.querySelector('#deviceTable tbody');
@@ -3061,8 +3086,175 @@
       return sorted;
     };
 
-    const renderTable = () => {
-      const filtered = applySort(applyFilter(devices));
+    const getFilteredDevices = () => applySort(applyFilter(devices));
+
+    const findPath = (start, goal) => {
+      const queue = [{ node: start, nodes: [start], links: [] }];
+      const visited = new Set([start]);
+      while (queue.length) {
+        const current = queue.shift();
+        if (current.node === goal) return current;
+        (adjacency[current.node] || []).forEach(({ neighbor, connectionId }) => {
+          if (visited.has(neighbor)) return;
+          visited.add(neighbor);
+          queue.push({ node: neighbor, nodes: [...current.nodes, neighbor], links: [...current.links, connectionId] });
+        });
+      }
+      return null;
+    };
+
+    const collectHighlights = (selectedSet) => {
+      const nodes = new Set(selectedSet);
+      const links = new Set();
+      const ids = Array.from(selectedSet);
+      if (ids.length === 1) {
+        const [single] = ids;
+        (adjacency[single] || []).forEach(({ neighbor, connectionId }) => {
+          nodes.add(neighbor);
+          links.add(connectionId);
+        });
+      }
+      for (let i = 0; i < ids.length; i += 1) {
+        for (let j = i + 1; j < ids.length; j += 1) {
+          const path = findPath(ids[i], ids[j]);
+          if (path) {
+            path.nodes.forEach((n) => nodes.add(n));
+            path.links.forEach((l) => links.add(l));
+          }
+        }
+      }
+      return { nodes, links };
+    };
+
+    let graph;
+
+    function createGraph() {
+      const width = 1200;
+      const height = 720;
+      const svg = d3.select('#graph')
+        .attr('viewBox', `0 0 ${width} ${height}`)
+        .attr('preserveAspectRatio', 'xMidYMid meet');
+      const container = svg.append('g');
+
+      const zoom = d3.zoom().scaleExtent([0.5, 3]).on('zoom', (event) => {
+        container.attr('transform', event.transform);
+      });
+      svg.call(zoom);
+
+      const nodes = devices.map((d) => ({ ...d }));
+      const links = connections.map((c) => ({ ...c, source: c.from.deviceId, target: c.to.deviceId }));
+
+      const link = container.append('g')
+        .attr('stroke', '#334155')
+        .attr('stroke-opacity', 0.6)
+        .selectAll('line')
+        .data(links, (d) => d.id)
+        .join('line')
+        .attr('stroke-width', 1.4);
+
+      const node = container.append('g')
+        .selectAll('circle')
+        .data(nodes, (d) => d.id)
+        .join('circle')
+        .attr('r', 12)
+        .attr('fill', (d) => typeColor(d.type.toLowerCase()))
+        .attr('stroke', '#0b1220')
+        .attr('stroke-width', 2)
+        .on('click', (event, d) => {
+          const already = state.selected.has(d.id);
+          if (already) state.selected.delete(d.id); else state.selected.add(d.id);
+          renderTable();
+        })
+        .call(d3.drag()
+          .on('start', (event, d) => {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+          })
+          .on('drag', (event, d) => {
+            d.fx = event.x;
+            d.fy = event.y;
+          })
+          .on('end', (event, d) => {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+          })
+        );
+
+      const labels = container.append('g')
+        .selectAll('text')
+        .data(nodes, (d) => d.id)
+        .join('text')
+        .attr('fill', '#e2e8f0')
+        .attr('font-size', 11)
+        .attr('text-anchor', 'middle')
+        .attr('dy', 22)
+        .text((d) => d.name);
+
+      const simulation = d3.forceSimulation(nodes)
+        .force('link', d3.forceLink(links).id((d) => d.id).distance(140).strength(0.55))
+        .force('charge', d3.forceManyBody().strength(-260))
+        .force('center', d3.forceCenter(width / 2, height / 2))
+        .force('collide', d3.forceCollide(26));
+
+      simulation.on('tick', () => {
+        link
+          .attr('x1', (d) => d.source.x)
+          .attr('y1', (d) => d.source.y)
+          .attr('x2', (d) => d.target.x)
+          .attr('y2', (d) => d.target.y);
+        node
+          .attr('cx', (d) => {
+            d.x = Math.max(20, Math.min(width - 20, d.x || width / 2));
+            return d.x;
+          })
+          .attr('cy', (d) => {
+            d.y = Math.max(20, Math.min(height - 20, d.y || height / 2));
+            return d.y;
+          });
+        labels
+          .attr('x', (d) => d.x)
+          .attr('y', (d) => d.y + 24);
+      });
+
+      const update = (filteredIds = new Set()) => {
+        const filteredSet = filteredIds instanceof Set ? filteredIds : new Set(filteredIds);
+        const { nodes: highlightedNodes, links: highlightedLinks } = collectHighlights(state.selected);
+        const hasSelection = state.selected.size > 0;
+
+        link
+          .attr('stroke', (d) => highlightedLinks.has(d.id) ? '#f472b6' : '#334155')
+          .attr('stroke-width', (d) => highlightedLinks.has(d.id) ? 3 : 1.4)
+          .attr('opacity', (d) => {
+            if (hasSelection) {
+              if (highlightedLinks.size) return highlightedLinks.has(d.id) ? 1 : 0.12;
+              return (state.selected.has(d.source.id) || state.selected.has(d.target.id)) ? 0.85 : 0.15;
+            }
+            return (filteredSet.has(d.source.id) || filteredSet.has(d.target.id)) ? 0.7 : 0.25;
+          });
+
+        node
+          .attr('r', (d) => state.selected.has(d.id) ? 16 : 12)
+          .attr('stroke', (d) => highlightedNodes.has(d.id) ? '#e2e8f0' : '#0b1220')
+          .attr('stroke-width', (d) => highlightedNodes.has(d.id) ? 2.5 : 2)
+          .attr('opacity', (d) => {
+            if (hasSelection) return highlightedNodes.has(d.id) ? 1 : 0.25;
+            return filteredSet.has(d.id) ? 1 : 0.45;
+          });
+
+        labels
+          .attr('opacity', (d) => {
+            if (hasSelection) return highlightedNodes.has(d.id) ? 0.9 : 0.25;
+            return filteredSet.has(d.id) ? 0.85 : 0.4;
+          });
+      };
+
+      return { update };
+    }
+
+    function renderTable() {
+      const filtered = getFilteredDevices();
       tableBody.innerHTML = '';
       filtered.forEach((d) => {
         const row = document.createElement('tr');
@@ -3076,80 +3268,10 @@
           <td>${d.ports.length}</td>`;
         tableBody.appendChild(row);
       });
-      statusEl.textContent = `${state.selected.size} selected / ${filtered.length} shown / ${devices.length} total`;
+      statusEl.textContent = `${state.selected.size} selected | ${filtered.length} shown | ${devices.length} total. Click nodes or checkboxes to highlight paths.`;
       selectAllBox.checked = filtered.length > 0 && filtered.every((d) => state.selected.has(d.id));
-      renderGraph(filtered);
-    };
-
-    const renderGraph = (visibleDevices) => {
-      const svg = document.getElementById('graph');
-      while (svg.firstChild) svg.removeChild(svg.firstChild);
-      const primary = state.selected.size ? visibleDevices.filter((d) => state.selected.has(d.id)) : visibleDevices;
-      if (!primary.length) {
-        const empty = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        empty.setAttribute('x', '20');
-        empty.setAttribute('y', '28');
-        empty.setAttribute('fill', '#94a3b8');
-        empty.textContent = 'No devices to display. Adjust filter or selection.';
-        svg.appendChild(empty);
-        return;
-      }
-      const nodeMap = {};
-      primary.forEach((d) => { nodeMap[d.id] = { device: d }; });
-      const edges = [];
-      connections.forEach((c) => {
-        const involvesPrimary = nodeMap[c.from.deviceId] || nodeMap[c.to.deviceId];
-        if (!involvesPrimary) return;
-        const fromDev = nodeMap[c.from.deviceId]?.device || devices.find((d) => d.id === c.from.deviceId);
-        const toDev = nodeMap[c.to.deviceId]?.device || devices.find((d) => d.id === c.to.deviceId);
-        if (fromDev) nodeMap[fromDev.id] = { device: fromDev };
-        if (toDev) nodeMap[toDev.id] = { device: toDev };
-        edges.push(c);
-      });
-      const nodes = Object.values(nodeMap);
-      const width = 960;
-      const height = 520;
-      const radius = Math.min(width, height) / 2 - 70;
-      const centerX = width / 2;
-      const centerY = height / 2;
-      nodes.forEach((entry, idx) => {
-        const angle = (2 * Math.PI * idx) / nodes.length;
-        entry.x = nodes.length === 1 ? centerX : centerX + radius * Math.cos(angle);
-        entry.y = nodes.length === 1 ? centerY : centerY + radius * Math.sin(angle);
-      });
-      edges.forEach((c) => {
-        const from = nodeMap[c.from.deviceId];
-        const to = nodeMap[c.to.deviceId];
-        if (!from || !to) return;
-        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line.setAttribute('x1', from.x);
-        line.setAttribute('y1', from.y);
-        line.setAttribute('x2', to.x);
-        line.setAttribute('y2', to.y);
-        line.setAttribute('stroke', '#1f9cfb');
-        line.setAttribute('stroke-width', '2');
-        line.setAttribute('opacity', '0.65');
-        svg.appendChild(line);
-      });
-      Object.values(nodeMap).forEach(({ device, x, y }) => {
-        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        circle.setAttribute('cx', x);
-        circle.setAttribute('cy', y);
-        circle.setAttribute('r', '16');
-        circle.setAttribute('fill', typeColor(device.type.toLowerCase()));
-        circle.setAttribute('stroke', '#0b1220');
-        circle.setAttribute('stroke-width', '2');
-        svg.appendChild(circle);
-        const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        label.setAttribute('x', x);
-        label.setAttribute('y', y + 30);
-        label.setAttribute('fill', '#e2e8f0');
-        label.setAttribute('text-anchor', 'middle');
-        label.setAttribute('font-size', '12');
-        label.textContent = device.brand + ' ' + device.model;
-        svg.appendChild(label);
-      });
-    };
+      if (graph) graph.update(new Set(filtered.map((d) => d.id)));
+    }
 
     filterInput.addEventListener('input', (e) => {
       state.filter = e.target.value;
@@ -3164,7 +3286,7 @@
     });
 
     selectAllBox.addEventListener('change', () => {
-      const filtered = applySort(applyFilter(devices));
+      const filtered = getFilteredDevices();
       filtered.forEach((d) => {
         if (selectAllBox.checked) state.selected.add(d.id); else state.selected.delete(d.id);
       });
@@ -3189,6 +3311,7 @@
       renderTable();
     });
 
+    graph = createGraph();
     renderTable();
   </script>
 </body>
