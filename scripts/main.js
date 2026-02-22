@@ -1,6 +1,6 @@
 import { loadData, pollTraffic } from './dataLoader.js';
 import { applyFilter, applySort, paginate } from './search.js';
-import { buildAdjacency } from './graphLogic.js';
+import { buildAdjacency, typeColor } from './graphLogic.js';
 import { createGraph } from './graph.js';
 
 const state = {
@@ -15,48 +15,45 @@ const state = {
   traffic: [],
 };
 
-const tableBody = document.querySelector('#deviceTable tbody');
 const statusEl = document.getElementById('status');
-const trafficStatusEl = document.getElementById('trafficStatus');
-const selectAllBox = document.getElementById('selectAll');
 const searchInput = document.getElementById('searchInput');
 const searchResults = document.getElementById('searchResults');
 const searchTbody = searchResults.querySelector('tbody');
 const pageInfo = document.getElementById('pageInfo');
+const selectedDevicesEl = document.getElementById('selectedDevices');
 
 let adjacency;
 let graph;
 let stopPoll = () => {};
 
-const setTrafficStatus = (text) => {
-  trafficStatusEl.textContent = text;
-};
-
 const getFilteredDevices = () => applySort(applyFilter(state.devices, state.filter), state.sortKey, state.sortDir);
 
-const renderTable = () => {
-  const filtered = getFilteredDevices();
-  tableBody.innerHTML = '';
-  filtered.forEach((d) => {
-    const row = document.createElement('tr');
-    row.dataset.id = d.id;
-    const checked = state.selected.has(d.id);
-    row.innerHTML = `
-      <td><input type="checkbox" data-id="${d.id}" ${checked ? 'checked' : ''} aria-label="Select ${d.name}" /></td>
-      <td>${d.name}</td>
-      <td>${d.brand}</td>
-      <td>${d.model}</td>
-      <td><span class="tag">${d.type}</span></td>
-      <td>${d.ports.length}</td>`;
-    row.addEventListener('click', (e) => {
-      if (e.target.tagName.toLowerCase() === 'input') return;
-      toggleSelect(d.id);
+const renderSelected = () => {
+  selectedDevicesEl.innerHTML = '';
+  const selectedList = state.devices.filter((d) => state.selected.has(d.id));
+  if (!selectedList.length) {
+    const empty = document.createElement('span');
+    empty.className = 'status';
+    empty.textContent = 'No devices selected';
+    selectedDevicesEl.appendChild(empty);
+  } else {
+    selectedList.forEach((d) => {
+      const card = document.createElement('div');
+      card.className = 'selected-card';
+      card.innerHTML = `
+        <div class="title">
+          <span style="width:10px; height:10px; border-radius:50%; background:${typeColor(d.type)}; display:inline-block;"></span>
+          ${d.name}
+        </div>
+        <div class="meta">${d.brand} • ${d.model}</div>
+        <div class="type-pill">${d.type}</div>
+        <button class="remove" data-id="${d.id}">Remove</button>
+      `;
+      card.querySelector('.remove').addEventListener('click', () => toggleSelect(d.id));
+      selectedDevicesEl.appendChild(card);
     });
-    tableBody.appendChild(row);
-  });
-  statusEl.textContent = `${state.selected.size} selected | ${filtered.length} shown | ${state.devices.length} total.`;
-  selectAllBox.checked = filtered.length > 0 && filtered.every((d) => state.selected.has(d.id));
-  if (graph) graph.update({ filteredIds: new Set(filtered.map((d) => d.id)), selected: state.selected });
+  }
+  statusEl.textContent = `${state.selected.size} selected | ${state.devices.length} total.`;
 };
 
 const renderSearchDropdown = () => {
@@ -67,8 +64,9 @@ const renderSearchDropdown = () => {
   searchTbody.innerHTML = '';
   pageItems.forEach((d) => {
     const tr = document.createElement('tr');
+    tr.classList.toggle('is-selected', state.selected.has(d.id));
     tr.innerHTML = `
-      <td>${d.name}</td>
+      <td>${state.selected.has(d.id) ? '✓ ' : ''}${d.name}</td>
       <td>${d.brand}</td>
       <td>${d.model}</td>
       <td><span class="badge">${d.type}</span></td>`;
@@ -86,52 +84,23 @@ const renderSearchDropdown = () => {
 
 const toggleSelect = (id, focusTable = false) => {
   if (state.selected.has(id)) state.selected.delete(id); else state.selected.add(id);
-  if (focusTable) {
-    const row = tableBody.querySelector(`tr[data-id="${id}"]`);
-    if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
-  renderTable();
+  renderSelected();
+  renderSearchDropdown();
+  if (graph) graph.update({ filteredIds: new Set(getFilteredDevices().map((d) => d.id)), selected: state.selected });
 };
 
 const wireEvents = () => {
-  document.getElementById('deviceTable').addEventListener('change', (e) => {
-    const id = e.target.getAttribute('data-id');
-    if (!id) return;
-    if (e.target.checked) state.selected.add(id); else state.selected.delete(id);
-    renderTable();
-  });
-
-  document.querySelectorAll('thead th[data-sort]').forEach((th) => {
-    th.addEventListener('click', () => {
-      const key = th.getAttribute('data-sort');
-      if (state.sortKey === key) {
-        state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
-      } else {
-        state.sortKey = key;
-        state.sortDir = 'asc';
-      }
-      renderTable();
-    });
-  });
-
   document.getElementById('clearSelection').addEventListener('click', () => {
     state.selected.clear();
-    renderTable();
-  });
-
-  document.getElementById('selectAll').addEventListener('change', () => {
-    const filtered = getFilteredDevices();
-    filtered.forEach((d) => {
-      if (selectAllBox.checked) state.selected.add(d.id); else state.selected.delete(d.id);
-    });
-    renderTable();
+    renderSelected();
+    renderSearchDropdown();
+    if (graph) graph.update({ filteredIds: new Set(getFilteredDevices().map((d) => d.id)), selected: state.selected });
   });
 
   searchInput.addEventListener('input', (e) => {
     state.filter = e.target.value;
     state.page = 1;
     renderSearchDropdown();
-    renderTable();
   });
 
   searchInput.addEventListener('focus', () => renderSearchDropdown());
@@ -140,7 +109,7 @@ const wireEvents = () => {
     state.page = 1;
     searchInput.value = '';
     searchResults.classList.remove('visible');
-    renderTable();
+    renderSelected();
   });
   document.getElementById('prevPage').addEventListener('click', () => {
     if (state.page > 1) {
@@ -163,8 +132,7 @@ const wireEvents = () => {
 const attachTraffic = (traffic) => {
   state.traffic = traffic;
   if (graph) graph.updateTraffic(traffic);
-  setTrafficStatus(`Traffic updated ${new Date().toLocaleTimeString()}`);
-  renderTable();
+  renderSelected();
 };
 
 async function init() {
@@ -181,7 +149,7 @@ async function init() {
   attachTraffic(traffic);
   stopPoll = pollTraffic({ intervalMs: 5000, onUpdate: attachTraffic });
   wireEvents();
-  renderTable();
+  renderSelected();
   renderSearchDropdown();
 }
 

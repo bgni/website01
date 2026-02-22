@@ -7,7 +7,14 @@ const trafficColor = (status, util) => {
   return '#38bdf8';
 };
 
-const trafficWidth = (rateMbps) => Math.min(6, 1 + Math.sqrt(rateMbps || 0) / 15);
+const trafficWidth = (rateMbps) => {
+  const minWidth = 0.7; // about half prior base
+  const maxWidth = 14; // 10x base for 10Gbps+
+  const clamped = Math.min(rateMbps || 0, 10000); // 10Gbps ceiling
+  if (clamped <= 0.008) return minWidth; // ~1kB/s
+  const scaled = minWidth + (clamped / 10000) * (maxWidth - minWidth);
+  return Math.min(maxWidth, Math.max(minWidth, scaled));
+};
 
 export function createGraph({ devices, connections, adjacency, onNodeSelect }) {
   const width = 1200;
@@ -116,6 +123,11 @@ export function createGraph({ devices, connections, adjacency, onNodeSelect }) {
         const t = trafficById[d.id];
         const base = t ? trafficWidth(t.rateMbps) : 1.4;
         return highlightedLinks.has(d.id) ? Math.max(base, 3) : base;
+      })
+      .attr('stroke-dasharray', (d) => {
+        const t = trafficById[d.id];
+        if (t?.status === 'down') return '6 4';
+        return highlightedLinks.has(d.id) ? '0' : '0';
       })
       .attr('opacity', (d) => {
         if (hasSelection) {

@@ -43,7 +43,7 @@
     <section class="panel graph-panel">
       <div class="section-head">
         <h2>Network Map</h2>
-        <p class="note">Pan/zoom the force layout. Click nodes or table rows to select; multi-select highlights shortest paths.</p>
+        <p class="note">Pan/zoom the force layout. Click nodes or search results to select; multi-select highlights shortest paths.</p>
       </div>
       <svg id="graph" viewBox="0 0 1200 720" aria-label="Network topology"></svg>
       <div class="legend">
@@ -56,28 +56,15 @@
         <span class="traffic-pill high">High</span>
         <span class="traffic-pill down">Link down</span>
       </div>
-    </section>
-
-    <section class="panel table-panel">
-      <div class="controls">
-        <button id="clearSelection">Clear selection</button>
-        <span class="status" id="status"></span>
-        <span class="status" id="trafficStatus"></span>
-      </div>
-      <div class="table-wrapper">
-        <table id="deviceTable">
-          <thead>
-            <tr>
-              <th style="width:60px"><input type="checkbox" id="selectAll" aria-label="Select all" /></th>
-              <th data-sort="name">Name</th>
-              <th data-sort="brand">Brand</th>
-              <th data-sort="model">Model</th>
-              <th data-sort="type">Type</th>
-              <th data-sort="ports">Ports</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
+      <div class="selected-panel">
+        <div class="selected-header">
+          <div>
+            <strong>Selected</strong>
+            <span class="status" id="status"></span>
+          </div>
+          <button id="clearSelection">Clear selection</button>
+        </div>
+        <div id="selectedDevices" class="selected-devices"></div>
       </div>
     </section>
   </main>
