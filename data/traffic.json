@@ -1,23 +1,42 @@
-[
-  { "connectionId": "conn-core1-core2", "status": "up", "rateMbps": 3200, "utilization": 0.72 },
-  { "connectionId": "conn-core1-agg1", "status": "up", "rateMbps": 1400, "utilization": 0.41 },
-  { "connectionId": "conn-core2-agg2", "status": "up", "rateMbps": 1600, "utilization": 0.48 },
-  { "connectionId": "conn-agg1-agg2", "status": "up", "rateMbps": 900, "utilization": 0.33 },
-  { "connectionId": "conn-agg1-dist1", "status": "up", "rateMbps": 600, "utilization": 0.28 },
-  { "connectionId": "conn-agg2-dist2", "status": "up", "rateMbps": 720, "utilization": 0.31 },
-  { "connectionId": "conn-dist1-dist2", "status": "up", "rateMbps": 450, "utilization": 0.19 },
-  { "connectionId": "conn-dist1-wifi", "status": "up", "rateMbps": 300, "utilization": 0.25 },
-  { "connectionId": "conn-dist1-ap1", "status": "up", "rateMbps": 120, "utilization": 0.35 },
-  { "connectionId": "conn-dist2-ap2", "status": "up", "rateMbps": 140, "utilization": 0.38 },
-  { "connectionId": "conn-dist2-iot", "status": "up", "rateMbps": 80, "utilization": 0.22 },
-  { "connectionId": "conn-core1-fw", "status": "up", "rateMbps": 500, "utilization": 0.27 },
-  { "connectionId": "conn-core2-fw", "status": "up", "rateMbps": 520, "utilization": 0.29 },
-  { "connectionId": "conn-fw-edge", "status": "up", "rateMbps": 260, "utilization": 0.18 },
-  { "connectionId": "conn-core2-dc", "status": "up", "rateMbps": 1900, "utilization": 0.55 },
-  { "connectionId": "conn-dc-app", "status": "up", "rateMbps": 460, "utilization": 0.36 },
-  { "connectionId": "conn-dc-db", "status": "up", "rateMbps": 580, "utilization": 0.42 },
-  { "connectionId": "conn-dc-hyper", "status": "up", "rateMbps": 820, "utilization": 0.54 },
-  { "connectionId": "conn-dc-nvr", "status": "down", "rateMbps": 0, "utilization": 0.0 },
-  { "connectionId": "conn-branch-edge", "status": "up", "rateMbps": 110, "utilization": 0.21 },
-  { "connectionId": "conn-branch-ap", "status": "up", "rateMbps": 45, "utilization": 0.14 }
-]
+{
+  "initial": [
+    { "connectionId": "conn-core1-core2", "status": "up", "rateMbps": 3200, "utilization": 0.72 },
+    { "connectionId": "conn-core1-agg1", "status": "up", "rateMbps": 1400, "utilization": 0.41 },
+    { "connectionId": "conn-core2-agg2", "status": "up", "rateMbps": 1600, "utilization": 0.48 },
+    { "connectionId": "conn-agg1-agg2", "status": "up", "rateMbps": 900, "utilization": 0.33 },
+    { "connectionId": "conn-agg1-dist1", "status": "up", "rateMbps": 600, "utilization": 0.28 },
+    { "connectionId": "conn-agg2-dist2", "status": "up", "rateMbps": 720, "utilization": 0.31 },
+    { "connectionId": "conn-dist1-dist2", "status": "up", "rateMbps": 450, "utilization": 0.19 },
+    { "connectionId": "conn-dist1-wifi", "status": "up", "rateMbps": 300, "utilization": 0.25 },
+    { "connectionId": "conn-dist1-ap1", "status": "up", "rateMbps": 120, "utilization": 0.35 },
+    { "connectionId": "conn-dist2-ap2", "status": "up", "rateMbps": 140, "utilization": 0.38 },
+    { "connectionId": "conn-dist2-iot", "status": "up", "rateMbps": 80, "utilization": 0.22 },
+    { "connectionId": "conn-core1-fw", "status": "up", "rateMbps": 500, "utilization": 0.27 },
+    { "connectionId": "conn-core2-fw", "status": "up", "rateMbps": 520, "utilization": 0.29 },
+    { "connectionId": "conn-fw-edge", "status": "up", "rateMbps": 260, "utilization": 0.18 },
+    { "connectionId": "conn-core2-dc", "status": "up", "rateMbps": 1900, "utilization": 0.55 },
+    { "connectionId": "conn-dc-app", "status": "up", "rateMbps": 460, "utilization": 0.36 },
+    { "connectionId": "conn-dc-db", "status": "up", "rateMbps": 580, "utilization": 0.42 },
+    { "connectionId": "conn-dc-hyper", "status": "up", "rateMbps": 820, "utilization": 0.54 },
+    { "connectionId": "conn-dc-nvr", "status": "down", "rateMbps": 0, "utilization": 0.0 },
+    { "connectionId": "conn-branch-edge", "status": "up", "rateMbps": 110, "utilization": 0.21 },
+    { "connectionId": "conn-branch-ap", "status": "up", "rateMbps": 45, "utilization": 0.14 }
+  ],
+  "updates": [
+    { "t": 3, "connectionId": "conn-dc-nvr", "status": "up" },
+    { "t": 3, "connectionId": "conn-dc-nvr", "rateMbps": 220 },
+    { "t": 3, "connectionId": "conn-dc-nvr", "utilization": 0.17 },
+
+    { "t": 6, "connectionId": "conn-core2-dc", "rateMbps": 4200 },
+    { "t": 6, "connectionId": "conn-core2-dc", "utilization": 0.88 },
+
+    { "t": 9, "connectionId": "conn-dist2-ap2", "rateMbps": 520 },
+    { "t": 9, "connectionId": "conn-dist2-ap2", "utilization": 0.74 },
+
+    { "t": 12, "connectionId": "conn-dist2-iot", "status": "down" },
+    { "t": 16, "connectionId": "conn-dist2-iot", "status": "up" },
+
+    { "t": 18, "connectionId": "conn-core2-dc", "rateMbps": 1700 },
+    { "t": 18, "connectionId": "conn-core2-dc", "utilization": 0.52 }
+  ]
+}
