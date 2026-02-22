@@ -1,0 +1,21 @@
+[
+  { "id": "core-1", "name": "Core Router 1", "brand": "Cisco", "model": "ASR 1001", "type": "router", "ports": [{ "id": "p1" }, { "id": "p2" }, { "id": "p3" }, { "id": "p4" }] },
+  { "id": "core-2", "name": "Core Router 2", "brand": "Juniper", "model": "MX204", "type": "router", "ports": [{ "id": "p1" }, { "id": "p2" }, { "id": "p3" }, { "id": "p4" }] },
+  { "id": "agg-1", "name": "Aggregation Switch 1", "brand": "Arista", "model": "7050X", "type": "switch", "ports": [{ "id": "p1" }, { "id": "p2" }, { "id": "p3" }, { "id": "p4" }, { "id": "p5" }] },
+  { "id": "agg-2", "name": "Aggregation Switch 2", "brand": "Aruba", "model": "8320", "type": "switch", "ports": [{ "id": "p1" }, { "id": "p2" }, { "id": "p3" }, { "id": "p4" }, { "id": "p5" }] },
+  { "id": "dist-1", "name": "Distribution Switch A", "brand": "Cisco", "model": "Catalyst 9300", "type": "switch", "ports": [{ "id": "p1" }, { "id": "p2" }, { "id": "p3" }, { "id": "p4" }, { "id": "p5" }] },
+  { "id": "dist-2", "name": "Distribution Switch B", "brand": "Juniper", "model": "EX4300", "type": "switch", "ports": [{ "id": "p1" }, { "id": "p2" }, { "id": "p3" }, { "id": "p4" }, { "id": "p5" }] },
+  { "id": "dc-1", "name": "Datacenter Switch", "brand": "Mikrotik", "model": "CRS326", "type": "switch", "ports": [{ "id": "p1" }, { "id": "p2" }, { "id": "p3" }, { "id": "p4" }, { "id": "p5" }] },
+  { "id": "fw-1", "name": "Firewall Cluster", "brand": "Palo Alto", "model": "PA-3220", "type": "firewall", "ports": [{ "id": "p1" }, { "id": "p2" }, { "id": "p3" }, { "id": "p4" }] },
+  { "id": "edge-1", "name": "Edge Router", "brand": "Ubiquiti", "model": "EdgeRouter 12", "type": "router", "ports": [{ "id": "p1" }, { "id": "p2" }, { "id": "p3" }, { "id": "p4" }] },
+  { "id": "wifi-ctrl", "name": "WiFi Controller", "brand": "Aruba", "model": "Mobility 7200", "type": "controller", "ports": [{ "id": "p1" }, { "id": "p2" }] },
+  { "id": "ap-1", "name": "Access Point - East", "brand": "Ubiquiti", "model": "UniFi 6", "type": "access point", "ports": [{ "id": "p1" }] },
+  { "id": "ap-2", "name": "Access Point - West", "brand": "Ubiquiti", "model": "UniFi 6 LR", "type": "access point", "ports": [{ "id": "p1" }] },
+  { "id": "iot-gw", "name": "IoT Gateway", "brand": "Raspberry Pi", "model": "CM4", "type": "iot gateway", "ports": [{ "id": "p1" }, { "id": "p2" }] },
+  { "id": "nvr-1", "name": "CCTV NVR", "brand": "Hikvision", "model": "NVR 7600", "type": "server", "ports": [{ "id": "p1" }, { "id": "p2" }] },
+  { "id": "app-1", "name": "App Server", "brand": "Dell", "model": "R740", "type": "server", "ports": [{ "id": "p1" }, { "id": "p2" }] },
+  { "id": "db-1", "name": "Database Server", "brand": "HPE", "model": "DL380", "type": "server", "ports": [{ "id": "p1" }, { "id": "p2" }] },
+  { "id": "hyper-1", "name": "Virtualization Host", "brand": "VMware", "model": "ESXi", "type": "virtualization", "ports": [{ "id": "p1" }, { "id": "p2" }, { "id": "p3" }] },
+  { "id": "branch-sw", "name": "Branch Switch", "brand": "Netgear", "model": "GS724T", "type": "switch", "ports": [{ "id": "p1" }, { "id": "p2" }, { "id": "p3" }] },
+  { "id": "branch-ap", "name": "Branch AP", "brand": "Cisco", "model": "Aironet", "type": "access point", "ports": [{ "id": "p1" }] }
+]

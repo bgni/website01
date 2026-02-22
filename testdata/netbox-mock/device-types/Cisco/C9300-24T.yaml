@@ -1,0 +1,16 @@
+---
+manufacturer: Cisco
+model: Catalyst 9300-24T
+part_number: C9300-24T
+slug: cisco-c9300-24t
+console-ports:
+  - name: con 0
+    type: rj-45
+interfaces:
+  - name: GigabitEthernet1/0/1
+    type: 1000base-t
+  - name: GigabitEthernet1/0/2
+    type: 1000base-t
+  - name: GigabitEthernet0/0
+    type: 1000base-t
+    mgmt_only: true
