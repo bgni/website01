@@ -1,13 +1,23 @@
 {
   "tasks": {
-    "dev": "deno run --no-lock --allow-net --allow-read --watch main.ts",
+    "dev": "deno run --no-lock --allow-net --allow-read --allow-env --watch main.ts",
+    "fmt": "deno fmt --check --ignore=vendor --ignore=docs/rendered --ignore=data",
+    "lint": "deno lint --ignore=vendor --ignore=docs/rendered",
+    "check": "deno check --no-lock main.ts deviceCatalog_test.ts scripts/**/*.ts",
     "test": "deno test --no-lock --allow-read",
+    "test:cov": "deno test --no-lock --allow-read --coverage=coverage",
+    "coverage:lcov": "deno coverage --lcov --output=coverage.lcov coverage",
+    "ci": "deno task fmt && deno task lint && deno task check && deno task test:cov && deno task coverage:lcov",
+    "validate": "deno run --no-lock --allow-read scripts/validateFixtures.ts",
+    "render:svgs": "deno run --no-lock --allow-read --allow-write scripts/renderNetworkSvgs.ts",
     "build:netbox": "deno run --no-lock --allow-read --allow-write scripts/buildNetboxCatalog.ts vendor/netbox-devicetype-library data/netbox-device-types.json"
   },
   "imports": {
+    "@deno/emit": "jsr:@deno/emit@0.46.0",
     "@std/assert": "jsr:@std/assert@1",
     "@std/fs": "jsr:@std/fs@^1.0.10",
     "@std/path": "jsr:@std/path@^1.0.8",
-    "@std/yaml": "jsr:@std/yaml@^1.0.12"
+    "@std/yaml": "jsr:@std/yaml@^1.0.12",
+    "d3-force": "npm:d3-force@3.0.0"
   }
 }

@@ -1,81 +1,112 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Network Device Inventory</title>
-  <link rel="stylesheet" href="styles.css" />
-  <script src="https://cdn.jsdelivr.net/npm/d3@7.8.5/dist/d3.min.js"></script>
-</head>
-<body>
-  <main class="layout">
-    <section class="panel graph-panel">
-      <div class="graph-stage">
-        <svg id="graph" viewBox="0 0 1200 720" aria-label="Network topology"></svg>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Network Device Inventory</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.8.5/dist/d3.min.js"></script>
+  </head>
+  <body>
+    <main class="layout">
+      <section class="panel graph-panel">
+        <div class="graph-stage">
+          <svg id="graph" viewBox="0 0 1200 720" aria-label="Network topology">
+          </svg>
 
-        <div class="graph-overlay top-left">
-          <div class="overlay-row">
-            <select id="networkSelect" aria-label="Select network"></select>
-            <select id="trafficVizSelect" aria-label="Traffic visualization"></select>
-          </div>
+          <div class="graph-overlay top-left">
+            <div class="overlay-row">
+              <select id="networkSelect" aria-label="Select network"></select>
+              <select id="trafficVizSelect" aria-label="Traffic visualization">
+              </select>
+              <select id="layoutSelect" aria-label="Layout">
+                <option value="force">Force</option>
+                <option value="tiered">Layered</option>
+              </select>
+            </div>
 
-          <div class="search-shell" id="searchShell">
-            <div class="search-input-row">
-              <div class="search-input-wrap">
-                <input type="search" id="searchInput" placeholder="Quick search…" aria-label="Search devices" />
-                <button id="clearSearch" class="icon-button" title="Clear search" aria-label="Clear search" type="button">×</button>
+            <div class="search-shell" id="searchShell">
+              <div class="search-input-row">
+                <div class="search-input-wrap">
+                  <input
+                    type="search"
+                    id="searchInput"
+                    placeholder="Quick search…"
+                    aria-label="Search devices"
+                  />
+                  <button
+                    id="clearSearch"
+                    class="icon-button"
+                    title="Clear search"
+                    aria-label="Clear search"
+                    type="button"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+              <div class="search-results" id="searchResults" aria-live="polite">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Brand</th>
+                      <th>Model</th>
+                      <th>Type</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+                <div class="search-pagination">
+                  <button id="prevPage" type="button">Prev</button>
+                  <span id="pageInfo"></span>
+                  <button id="nextPage" type="button">Next</button>
+                </div>
               </div>
             </div>
-            <div class="search-results" id="searchResults" aria-live="polite">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Brand</th>
-                    <th>Model</th>
-                    <th>Type</th>
-                  </tr>
-                </thead>
-                <tbody></tbody>
-              </table>
-              <div class="search-pagination">
-                <button id="prevPage" type="button">Prev</button>
-                <span id="pageInfo"></span>
-                <button id="nextPage" type="button">Next</button>
+          </div>
+
+          <div class="graph-overlay bottom-left">
+            <div class="legend">
+              <span><span
+                  class="dot"
+                  style="background: #22d3ee"
+                ></span>Switch</span>
+              <span><span
+                  class="dot"
+                  style="background: #34d399"
+                ></span>Router</span>
+              <span><span
+                  class="dot"
+                  style="background: #fbbf24"
+                ></span>Server</span>
+              <span><span
+                  class="dot"
+                  style="background: #c084fc"
+                ></span>Other</span>
+              <span class="traffic-pill low">Low util</span>
+              <span class="traffic-pill mid">Med util</span>
+              <span class="traffic-pill high">High util</span>
+              <span class="traffic-pill down">Link down</span>
+            </div>
+          </div>
+
+          <div class="graph-overlay right" id="selectedOverlay">
+            <div class="selected-panel">
+              <div class="selected-header">
+                <div>
+                  <strong>Selected</strong>
+                  <span class="status" id="status"></span>
+                </div>
+                <button id="clearSelection" type="button">Clear</button>
               </div>
+              <div id="selectedDevices" class="selected-devices"></div>
             </div>
           </div>
         </div>
+      </section>
+    </main>
 
-        <div class="graph-overlay bottom-left">
-          <div class="legend">
-            <span><span class="dot" style="background:#22d3ee"></span>Switch</span>
-            <span><span class="dot" style="background:#34d399"></span>Router</span>
-            <span><span class="dot" style="background:#fbbf24"></span>Server</span>
-            <span><span class="dot" style="background:#c084fc"></span>Other</span>
-            <span class="traffic-pill low">Low util</span>
-            <span class="traffic-pill mid">Med util</span>
-            <span class="traffic-pill high">High util</span>
-            <span class="traffic-pill down">Link down</span>
-          </div>
-        </div>
-
-        <div class="graph-overlay right" id="selectedOverlay">
-          <div class="selected-panel">
-            <div class="selected-header">
-              <div>
-                <strong>Selected</strong>
-                <span class="status" id="status"></span>
-              </div>
-              <button id="clearSelection" type="button">Clear</button>
-            </div>
-            <div id="selectedDevices" class="selected-devices"></div>
-          </div>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <script type="module" src="scripts/main.js"></script>
-</body>
+    <script type="module" src="scripts/main.ts"></script>
+  </body>
 </html>

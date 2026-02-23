@@ -1,4 +1,4 @@
 {
-  "kind": "generated",
-  "configPath": "traffic.generator.json"
+  "kind": "flow",
+  "configPath": "traffic.flow.json"
 }

@@ -6,6 +6,10 @@
       "name": "Small Office (flat star)"
     },
     {
+      "id": "home",
+      "name": "Home (router + WiFi + homelab)"
+    },
+    {
       "id": "branch-hq",
       "name": "Branch + HQ (hub-and-spoke VPN)"
     },

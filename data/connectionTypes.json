@@ -1,0 +1,18 @@
+{
+  "wan-500m": { "label": "WAN 500 Mbps", "capacityMbps": 500 },
+  "wan-1g": { "label": "WAN 1 Gbps", "capacityMbps": 1000 },
+  "wan-2g": { "label": "WAN 2 Gbps", "capacityMbps": 2000 },
+  "wan-10g": { "label": "WAN 10 Gbps", "capacityMbps": 10000 },
+
+  "tunnel-200m": { "label": "Tunnel 200 Mbps", "capacityMbps": 200 },
+
+  "lag-2g": { "label": "LAG 2 Gbps (2x1G)", "capacityMbps": 2000 },
+  "lag-4g": { "label": "LAG 4 Gbps (4x1G)", "capacityMbps": 4000 },
+
+  "eth-100m": { "label": "Ethernet 100 Mbps", "capacityMbps": 100 },
+  "eth-1g": { "label": "Ethernet 1 Gbps", "capacityMbps": 1000 },
+  "eth-10g": { "label": "Ethernet 10 Gbps", "capacityMbps": 10000 },
+  "eth-40g": { "label": "Ethernet 40 Gbps", "capacityMbps": 40000 },
+
+  "wifi-600m": { "label": "WiFi 600 Mbps", "capacityMbps": 600 }
+}

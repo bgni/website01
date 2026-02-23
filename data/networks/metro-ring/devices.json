@@ -1,20 +1,20 @@
 [
-  { "id": "transit-1", "name": "Transit-1", "role": "internet" },
-  { "id": "transit-2", "name": "Transit-2", "role": "internet" },
+  { "id": "transit-1", "name": "Transit-1", "role": "internet", "site": "transit" },
+  { "id": "transit-2", "name": "Transit-2", "role": "internet", "site": "transit" },
 
-  { "id": "pop-1", "name": "POP-1", "type_slug": "Cisco/C9300-48T", "role": "router" },
-  { "id": "pop-2", "name": "POP-2", "type_slug": "Cisco/C9300-48T", "role": "router" },
-  { "id": "pop-3", "name": "POP-3", "type_slug": "Cisco/C9300-48T", "role": "router" },
-  { "id": "pop-4", "name": "POP-4", "type_slug": "Cisco/C9300-48T", "role": "router" },
-  { "id": "pop-5", "name": "POP-5", "type_slug": "Cisco/C9300-48T", "role": "router" },
-  { "id": "pop-6", "name": "POP-6", "type_slug": "Cisco/C9300-48T", "role": "router" },
-  { "id": "pop-7", "name": "POP-7", "type_slug": "Cisco/C9300-48T", "role": "router" },
-  { "id": "pop-8", "name": "POP-8", "type_slug": "Cisco/C9300-48T", "role": "router" },
+  { "id": "pop-1", "name": "POP-1", "type_slug": "Cisco/C9300-48T", "role": "router", "site": "pop-1" },
+  { "id": "pop-2", "name": "POP-2", "type_slug": "Cisco/C9300-48T", "role": "router", "site": "pop-2" },
+  { "id": "pop-3", "name": "POP-3", "type_slug": "Cisco/C9300-48T", "role": "router", "site": "pop-3" },
+  { "id": "pop-4", "name": "POP-4", "type_slug": "Cisco/C9300-48T", "role": "router", "site": "pop-4" },
+  { "id": "pop-5", "name": "POP-5", "type_slug": "Cisco/C9300-48T", "role": "router", "site": "pop-5" },
+  { "id": "pop-6", "name": "POP-6", "type_slug": "Cisco/C9300-48T", "role": "router", "site": "pop-6" },
+  { "id": "pop-7", "name": "POP-7", "type_slug": "Cisco/C9300-48T", "role": "router", "site": "pop-7" },
+  { "id": "pop-8", "name": "POP-8", "type_slug": "Cisco/C9300-48T", "role": "router", "site": "pop-8" },
 
-  { "id": "cust-a", "name": "Cust-A", "type_slug": "Cisco/Meraki-MX68", "role": "customer edge" },
-  { "id": "cust-b", "name": "Cust-B", "type_slug": "Cisco/Meraki-MX68", "role": "customer edge" },
-  { "id": "cust-c", "name": "Cust-C", "type_slug": "Cisco/Meraki-MX68", "role": "customer edge" },
-  { "id": "cust-d", "name": "Cust-D", "type_slug": "Cisco/Meraki-MX68", "role": "customer edge" },
-  { "id": "cust-e", "name": "Cust-E", "type_slug": "Cisco/Meraki-MX68", "role": "customer edge" },
-  { "id": "cust-f", "name": "Cust-F", "type_slug": "Cisco/Meraki-MX68", "role": "customer edge" }
+  { "id": "cust-a", "name": "Cust-A", "type_slug": "Cisco/Meraki-MX68", "role": "customer edge", "site": "cust-a" },
+  { "id": "cust-b", "name": "Cust-B", "type_slug": "Cisco/Meraki-MX68", "role": "customer edge", "site": "cust-b" },
+  { "id": "cust-c", "name": "Cust-C", "type_slug": "Cisco/Meraki-MX68", "role": "customer edge", "site": "cust-c" },
+  { "id": "cust-d", "name": "Cust-D", "type_slug": "Cisco/Meraki-MX68", "role": "customer edge", "site": "cust-d" },
+  { "id": "cust-e", "name": "Cust-E", "type_slug": "Cisco/Meraki-MX68", "role": "customer edge", "site": "cust-e" },
+  { "id": "cust-f", "name": "Cust-F", "type_slug": "Cisco/Meraki-MX68", "role": "customer edge", "site": "cust-f" }
 ]

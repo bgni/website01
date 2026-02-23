@@ -1,0 +1,14 @@
+{
+  "tickSeconds": 1,
+  "flows": [
+    { "id": "wifi-a", "fromDeviceId": "bldg-a-ap-1", "toDeviceId": "campus-inet", "rateMbps": 300 },
+    { "id": "wifi-b", "fromDeviceId": "bldg-b-ap-1", "toDeviceId": "campus-inet", "rateMbps": 250 },
+    { "id": "wifi-c", "fromDeviceId": "bldg-c-ap-1", "toDeviceId": "campus-inet", "rateMbps": 200 },
+    { "id": "auth-a", "fromDeviceId": "bldg-a-ap-1", "toDeviceId": "campus-idp", "rateMbps": 20 },
+    { "id": "dns-b", "fromDeviceId": "bldg-b-ap-1", "toDeviceId": "campus-dns", "rateMbps": 10 }
+  ],
+  "events": [
+    { "t": 30, "flowId": "wifi-a", "rateMbps": 800 },
+    { "t": 70, "flowId": "wifi-a", "rateMbps": 300 }
+  ]
+}

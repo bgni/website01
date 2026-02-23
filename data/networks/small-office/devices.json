@@ -3,6 +3,7 @@
     "id": "isp-1",
     "name": "ISP CPE",
     "role": "internet",
+    "site": "small-office",
     "description": "Provider handoff / modem",
     "room_id": "telco-closet"
   },
@@ -11,6 +12,7 @@
     "name": "Edge Router",
     "type_slug": "Ubiquiti/ER-12",
     "role": "router",
+    "site": "small-office",
     "description": "Edge routing / NAT",
     "room_id": "telco-closet",
     "rack_id": "rack-1"
@@ -20,6 +22,7 @@
     "name": "Firewall",
     "type_slug": "Palo Alto/PA-220",
     "role": "firewall",
+    "site": "small-office",
     "description": "Security policy enforcement",
     "room_id": "telco-closet",
     "rack_id": "rack-1"
@@ -28,7 +31,8 @@
     "id": "core-sw-1",
     "name": "Core Switch",
     "type_slug": "Cisco/CBS350-24T-4X",
-    "role": "switch",
+    "role": "core",
+    "site": "small-office",
     "description": "Core switching",
     "room_id": "telco-closet",
     "rack_id": "rack-1"
@@ -37,7 +41,8 @@
     "id": "acc-sw-1",
     "name": "Access Switch",
     "type_slug": "Netgear/GS108",
-    "role": "switch",
+    "role": "access",
+    "site": "small-office",
     "description": "Office access layer",
     "room_id": "office",
     "rack_id": "wallbox-1"
@@ -47,6 +52,7 @@
     "name": "Access Point (Front)",
     "type_slug": "Ubiquiti/U6-LR",
     "role": "access point",
+    "site": "small-office",
     "description": "Front office WiFi",
     "room_id": "office-front"
   },
@@ -55,6 +61,7 @@
     "name": "Access Point (Back)",
     "type_slug": "Ubiquiti/U6-LR",
     "role": "access point",
+    "site": "small-office",
     "description": "Back office WiFi",
     "room_id": "office-back"
   },
@@ -64,6 +71,7 @@
     "brand": "Synology",
     "model": "DS923+",
     "role": "server",
+    "site": "small-office",
     "description": "Shared storage",
     "room_id": "telco-closet",
     "rack_id": "rack-1"
@@ -74,6 +82,7 @@
     "brand": "Dell",
     "model": "OptiPlex",
     "role": "endpoint",
+    "site": "small-office",
     "room_id": "office-front"
   },
   {
@@ -82,6 +91,7 @@
     "brand": "HP",
     "model": "LaserJet",
     "role": "endpoint",
+    "site": "small-office",
     "room_id": "office-front"
   },
   {
@@ -90,6 +100,7 @@
     "brand": "Raspberry Pi",
     "model": "CM4",
     "role": "iot gateway",
+    "site": "small-office",
     "description": "Bridges sensors to MQTT",
     "room_id": "office-back"
   }

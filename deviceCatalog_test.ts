@@ -3,7 +3,7 @@ import {
   createNetboxDeviceTypeCatalogJson,
   enrichDevicesFromNetbox,
   normalizeDevice,
-} from "./scripts/deviceCatalog.js";
+} from "./scripts/deviceCatalog.ts";
 
 Deno.test("deviceCatalog: normalizes device ports to objects with ids", () => {
   const d = normalizeDevice({ id: 1, name: "X", ports: ["p1", { id: 2 }, 3] });
@@ -21,7 +21,11 @@ Deno.test("deviceCatalog (NetBox): loads a device type by '<Manufacturer>/<Model
   assertEquals(d.brand, "Ubiquiti");
   assertEquals(d.model, "U6 Long-Range");
   // eth0 + wlan0 + wlan1 from the mock file
-  assertEquals(d.ports.map((p: { id: string }) => p.id), ["eth0", "wlan0", "wlan1"]);
+  assertEquals(d.ports.map((p) => p.id), [
+    "eth0",
+    "wlan0",
+    "wlan1",
+  ]);
 });
 
 Deno.test("deviceCatalog (NetBox): getMany returns exact number requested (or throws)", async () => {
@@ -33,7 +37,10 @@ Deno.test("deviceCatalog (NetBox): getMany returns exact number requested (or th
     "Ubiquiti/U6-LR",
     "Cisco/C9300-24T",
   ]);
-  assertEquals(res.map((d) => d.id), ["Ubiquiti/U6-LR", "Cisco/C9300-24T"]);
+  assertEquals(res.map((d) => d.id), [
+    "Ubiquiti/U6-LR",
+    "Cisco/C9300-24T",
+  ]);
 
   await assertRejects(
     () => catalog.getManyBySlugOrThrow(["Ubiquiti/U6-LR", "Nope/Missing"]),
@@ -56,6 +63,14 @@ Deno.test("deviceCatalog (NetBox): enriches device instances via deviceTypeSlug"
 
   assertEquals(devices[0].id, "ap-1");
   assertEquals(devices[0].deviceTypeSlug, "Ubiquiti/U6-LR");
-  assertEquals(devices[0].ports.map((p: { id: string }) => p.id), ["eth0", "wlan0", "wlan1"]);
+  const device0 = devices[0] as Record<string, unknown>;
+  const ports = Array.isArray(device0.ports)
+    ? (device0.ports as Array<{ id: string }>)
+    : [];
+  assertEquals(ports.map((p) => p.id), [
+    "eth0",
+    "wlan0",
+    "wlan1",
+  ]);
   assertEquals(devices[1].id, "sw-1");
 });
