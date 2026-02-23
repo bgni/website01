@@ -1,13 +1,16 @@
 # AI Agent Playbook (Repo-specific)
 
-This playbook is written for an AI coding agent (or a human using an agent) working in this repo. It focuses on safe defaults, validation loops, and repo-specific gotchas.
+This playbook is written for an AI coding agent (or a human using an agent)
+working in this repo. It focuses on safe defaults, validation loops, and
+repo-specific gotchas.
 
 ## Non-negotiables
 
 - **Target OS:** Linux only.
 - **Runtime/tooling:** Deno (CI pins `v2.6.10`).
 - **Quality gates:** do not merge changes that break `deno task ci`.
-- **TypeScript direction:** keep moving toward strict typing; avoid adding new `any` unless there is a clear, documented reason.
+- **TypeScript direction:** keep moving toward strict typing; avoid adding new
+  `any` unless there is a clear, documented reason.
 - **GitHub Pages:** must host a working app (static output).
 
 ## Quickstart loop (the default workflow)
@@ -46,7 +49,8 @@ If any step fails, fix it before moving on.
 
 ### Data fixtures
 
-- Networks: `data/networks/<networkId>/devices.json`, `connections.json`, and traffic fixtures.
+- Networks: `data/networks/<networkId>/devices.json`, `connections.json`, and
+  traffic fixtures.
 - Index: `data/networks/index.json`
 
 ## Safety and security rules (browser)
@@ -57,7 +61,8 @@ These are “don’t regress” rules.
   - user input (search box)
   - fixtures (`data/**`)
   - URL params
-- If you must use `innerHTML`, only do so with constant strings or with a sanitization story.
+- If you must use `innerHTML`, only do so with constant strings or with a
+  sanitization story.
 - Any time you add a new external script (CDN): pin it and consider SRI.
 
 See `docs/security.md` for build-time notes (YAML parsing).
@@ -114,7 +119,8 @@ Pages is static hosting.
 Agent rule:
 
 - Do not rely on `main.ts` (the Deno server) for production behavior.
-- Any production deployment must be output files that a static web server can host.
+- Any production deployment must be output files that a static web server can
+  host.
 
 If you are asked to “make Pages work”, your default approach should be:
 
@@ -124,7 +130,8 @@ If you are asked to “make Pages work”, your default approach should be:
 
 ## PR hygiene (what to include / exclude)
 
-- Keep PRs focused: 1 change theme per PR (typing cleanup *or* Pages build *or* fixture changes).
+- Keep PRs focused: 1 change theme per PR (typing cleanup _or_ Pages build _or_
+  fixture changes).
 - Avoid formatting or renaming unrelated files.
 - Generated outputs (`docs/rendered/**`) should be handled consistently:
   - If the repo commits them, include the regenerated diffs.

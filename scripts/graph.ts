@@ -23,7 +23,10 @@ type Connection = {
   [k: string]: unknown;
 };
 
-type Adjacency = Record<string, Array<{ neighbor: string; connectionId: string }>>;
+type Adjacency = Record<
+  string,
+  Array<{ neighbor: string; connectionId: string }>
+>;
 
 type SimNode = Device & {
   x?: number;
@@ -79,7 +82,12 @@ export function createGraph(
     onNodeSelect: (id: string) => void;
   },
 ): {
-  update: (args: { filteredIds?: Set<string> | Iterable<string>; selected: Set<string> }) => void;
+  update: (
+    args: {
+      filteredIds?: Set<string> | Iterable<string>;
+      selected: Set<string>;
+    },
+  ) => void;
   updateTraffic: (traffic?: TrafficUpdate[]) => void;
   destroy: () => void;
   setTrafficVisualization: (kind: string) => void;
@@ -98,9 +106,12 @@ export function createGraph(
     .attr("preserveAspectRatio", "xMidYMid meet");
   const container = svg.append("g");
 
-  const zoom = d3.zoom().scaleExtent([0.5, 3]).on("zoom", (event: { transform: { toString(): string } }) => {
-    container.attr("transform", event.transform.toString());
-  });
+  const zoom = d3.zoom().scaleExtent([0.5, 3]).on(
+    "zoom",
+    (event: { transform: { toString(): string } }) => {
+      container.attr("transform", event.transform.toString());
+    },
+  );
   svg.call(zoom);
 
   const nodes = devices.map((d: Device) => ({ ...d })) as SimNode[];
@@ -445,10 +456,11 @@ export function createGraph(
   };
 
   const setTrafficVisualization = (kind: string) => {
-    const k: TrafficVizKind = (kind === "util-width" || kind === "flow-dashes" ||
-        kind === "classic")
-      ? kind
-      : "classic";
+    const k: TrafficVizKind =
+      (kind === "util-width" || kind === "flow-dashes" ||
+          kind === "classic")
+        ? kind
+        : "classic";
     trafficViz = createTrafficFlowVisualization(k, trafficVizHelpers);
     startViz();
     // Force a style pass so viz overlays appear immediately.

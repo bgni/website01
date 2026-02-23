@@ -319,7 +319,9 @@ export function createNetboxDeviceTypeCatalogJson(
 
   const getBySlugOrThrow = async (slug: string) => {
     const index = await loadIndex();
-    const catalog = createNetboxDeviceTypeCatalogFromIndex<NetboxDeviceTypeSpec>(
+    const catalog = createNetboxDeviceTypeCatalogFromIndex<
+      NetboxDeviceTypeSpec
+    >(
       index,
     );
     return catalog.getBySlugOrThrow(slug);
@@ -327,7 +329,9 @@ export function createNetboxDeviceTypeCatalogJson(
 
   const getManyBySlugOrThrow = async (slugs: string[] | string) => {
     const index = await loadIndex();
-    const catalog = createNetboxDeviceTypeCatalogFromIndex<NetboxDeviceTypeSpec>(
+    const catalog = createNetboxDeviceTypeCatalogFromIndex<
+      NetboxDeviceTypeSpec
+    >(
       index,
     );
     return catalog.getManyBySlugOrThrow(slugs);

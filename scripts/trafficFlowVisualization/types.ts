@@ -28,7 +28,10 @@ export type LinkWidthArgs = {
   defaultWidth: number;
 };
 
-export type LinkDasharrayArgs = { traffic?: TrafficUpdate; highlighted: boolean };
+export type LinkDasharrayArgs = {
+  traffic?: TrafficUpdate;
+  highlighted: boolean;
+};
 
 export type TrafficVizStartArgs = {
   container: unknown;
@@ -49,7 +52,9 @@ export type TrafficViz = {
   getLinkWidth(args: LinkWidthArgs): number;
   getLinkDasharray(args: LinkDasharrayArgs): string;
   start?(args: TrafficVizStartArgs): () => void;
-  setTrafficGetter?(fn: (connectionId: string) => TrafficUpdate | undefined): void;
+  setTrafficGetter?(
+    fn: (connectionId: string) => TrafficUpdate | undefined,
+  ): void;
   onSimulationTick?(): void;
   afterLinkStyle?(args: TrafficVizAfterStyleArgs): void;
   destroy?(): void;

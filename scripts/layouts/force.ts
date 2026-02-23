@@ -1,24 +1,35 @@
 type LayoutNode = { fx?: number | null; fy?: number | null };
 
+type ForceLinkLike = {
+  distance?: (value: number) => unknown;
+  strength?: (value: number) => unknown;
+};
+
 type SimulationLike = {
-  // deno-lint-ignore no-explicit-any
-  force: (...args: any[]) => any;
+  force: {
+    (name: string, force: unknown): SimulationLike;
+    (name: string): ForceLinkLike | null | undefined;
+  };
   alpha: (value: number) => SimulationLike;
   restart: () => SimulationLike;
+};
+
+type D3Like = {
+  forceCenter: (x: number, y: number) => unknown;
+  forceManyBody: () => { strength: (value: number) => unknown };
+  forceCollide: (radius: number) => unknown;
 };
 
 export function applyForceLayout(
   {
     simulation,
-    // deno-lint-ignore no-explicit-any
     d3,
     nodes,
     width,
     height,
   }: {
     simulation: SimulationLike;
-    // deno-lint-ignore no-explicit-any
-    d3: any;
+    d3: D3Like;
     nodes: LayoutNode[];
     width: number;
     height: number;

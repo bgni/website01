@@ -38,7 +38,8 @@ export const applySort = <T extends SearchableDevice>(
   key: SortKey = "name",
   dir: SortDir = "asc",
 ): T[] => {
-  const sorter: Sorter<T> = (sorters[key] as Sorter<T>) || (sorters.name as Sorter<T>);
+  const sorter: Sorter<T> = (sorters[key] as Sorter<T>) ||
+    (sorters.name as Sorter<T>);
   const sorted = [...list].sort(sorter);
   return dir === "desc" ? sorted.reverse() : sorted;
 };

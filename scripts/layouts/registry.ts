@@ -13,7 +13,8 @@ export function applyLayout(kind: string, ctx: unknown) {
     ) || {};
     return { kind: "tiered", guides: meta.guides || [] };
   }
-  const meta = applyForceLayout(ctx as Parameters<typeof applyForceLayout>[0]) ||
+  const meta =
+    applyForceLayout(ctx as Parameters<typeof applyForceLayout>[0]) ||
     {};
   return { kind: "force", guides: meta.guides || [] };
 }

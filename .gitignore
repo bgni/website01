@@ -5,3 +5,7 @@ catalog/
 
 # Local editor settings
 .vscode/
+
+# Coverage artifacts
+coverage/
+coverage.lcov

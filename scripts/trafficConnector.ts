@@ -119,8 +119,10 @@ export function createTimelineTrafficConnector({
         ...rec,
       } as TimelineUpdate;
     })
-    .filter((u) => u && typeof u.connectionId === "string" &&
-      Number.isFinite(u.t) && u.t >= 0)
+    .filter((u) =>
+      u && typeof u.connectionId === "string" &&
+      Number.isFinite(u.t) && u.t >= 0
+    )
     .sort((a, b) => a.t - b.t);
 
   return {
@@ -177,12 +179,13 @@ export function createGeneratedTrafficConnector({
 
   const cfg = config as Record<string, unknown>;
 
-  const tickSeconds =
-    typeof cfg.tickSeconds === "number" && cfg.tickSeconds > 0
-      ? cfg.tickSeconds
-      : 1;
+  const tickSeconds = typeof cfg.tickSeconds === "number" && cfg.tickSeconds > 0
+    ? cfg.tickSeconds
+    : 1;
   const initial = Array.isArray(cfg.initial) ? cfg.initial : [];
-  const links = isObject(cfg.links) ? (cfg.links as Record<string, unknown>) : {};
+  const links = isObject(cfg.links)
+    ? (cfg.links as Record<string, unknown>)
+    : {};
   const events = Array.isArray(cfg.events) ? cfg.events : [];
 
   const eventsQueueBase = events
@@ -449,10 +452,9 @@ export function createFlowTrafficConnector({
     ? (connectionTypes as Record<string, { capacityMbps?: number }>)
     : {};
 
-  const tickSeconds =
-    typeof cfg.tickSeconds === "number" && cfg.tickSeconds > 0
-      ? cfg.tickSeconds
-      : 1;
+  const tickSeconds = typeof cfg.tickSeconds === "number" && cfg.tickSeconds > 0
+    ? cfg.tickSeconds
+    : 1;
   const flows = asArray<Record<string, unknown>>(cfg.flows);
   const events = asArray<Record<string, unknown>>(cfg.events);
 
@@ -588,18 +590,20 @@ export function createFlowTrafficConnector({
 
       // Seed.
       const seeded = computeTotals();
-      const initial: TrafficUpdate[] = Array.from(seeded.touched).map((connId) => {
-        const rate = seeded.totals.get(connId) || 0;
-        const cap = capacityByConnectionId.get(connId) || null;
-        const util = cap ? clamp(rate / cap, 0, 1) : 0;
-        prevByConn.set(connId, rate);
-        return {
-          connectionId: connId,
-          status: "up",
-          rateMbps: Math.round(rate),
-          utilization: Math.round(util * 100) / 100,
-        };
-      });
+      const initial: TrafficUpdate[] = Array.from(seeded.touched).map(
+        (connId) => {
+          const rate = seeded.totals.get(connId) || 0;
+          const cap = capacityByConnectionId.get(connId) || null;
+          const util = cap ? clamp(rate / cap, 0, 1) : 0;
+          prevByConn.set(connId, rate);
+          return {
+            connectionId: connId,
+            status: "up",
+            rateMbps: Math.round(rate),
+            utilization: Math.round(util * 100) / 100,
+          };
+        },
+      );
       onUpdate({ initial, updates: [] });
 
       const start = performance.now();

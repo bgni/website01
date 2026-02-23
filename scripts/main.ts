@@ -44,7 +44,10 @@ type TrafficUpdate = {
   [k: string]: unknown;
 };
 
-type Adjacency = Record<string, Array<{ neighbor: string; connectionId: string }>>;
+type Adjacency = Record<
+  string,
+  Array<{ neighbor: string; connectionId: string }>
+>;
 
 type State = {
   filter: string;
@@ -254,15 +257,15 @@ const wireEvents = () => {
   mustGetById<HTMLButtonElement>("clearSelection").addEventListener(
     "click",
     () => {
-    state.selected.clear();
-    renderSelected();
-    renderSearchDropdown();
-    if (graph) {
-      graph.update({
-        filteredIds: new Set(getFilteredDevices().map((d) => d.id)),
-        selected: state.selected,
-      });
-    }
+      state.selected.clear();
+      renderSelected();
+      renderSearchDropdown();
+      if (graph) {
+        graph.update({
+          filteredIds: new Set(getFilteredDevices().map((d) => d.id)),
+          selected: state.selected,
+        });
+      }
     },
   );
 
@@ -277,12 +280,12 @@ const wireEvents = () => {
   mustGetById<HTMLButtonElement>("clearSearch").addEventListener(
     "click",
     () => {
-    state.filter = "";
-    state.page = 1;
-    searchInput.value = "";
-    searchResults.classList.remove("visible");
-    renderSearchDropdown();
-    renderSelected();
+      state.filter = "";
+      state.page = 1;
+      searchInput.value = "";
+      searchResults.classList.remove("visible");
+      renderSearchDropdown();
+      renderSelected();
     },
   );
   mustGetById<HTMLButtonElement>("prevPage").addEventListener("click", () => {
@@ -356,7 +359,9 @@ const startTrafficConnector = async (
   const connector = await loadJsonOptional(connectorPath);
 
   const connectorRec = asRecord(connector);
-  const kind = typeof connectorRec?.kind === "string" ? connectorRec.kind : null;
+  const kind = typeof connectorRec?.kind === "string"
+    ? connectorRec.kind
+    : null;
 
   if (kind === "flow") {
     const configPath = typeof connectorRec?.configPath === "string"
@@ -392,7 +397,9 @@ const startTrafficConnector = async (
     if (sourceRec && Array.isArray(sourceRec.initial)) {
       const tl = createTimelineTrafficConnector({
         timeline: sourceRec,
-        tickMs: typeof connectorRec?.tickMs === "number" ? connectorRec.tickMs : 250,
+        tickMs: typeof connectorRec?.tickMs === "number"
+          ? connectorRec.tickMs
+          : 250,
         loop: Boolean(connectorRec?.loop),
       });
       return tl.start(attachTraffic);
@@ -402,7 +409,9 @@ const startTrafficConnector = async (
   }
 
   if (kind === "real") {
-    const url = typeof connectorRec?.url === "string" ? connectorRec.url : trafficPath;
+    const url = typeof connectorRec?.url === "string"
+      ? connectorRec.url
+      : trafficPath;
     const real = createRealTrafficConnector({
       url,
       intervalMs: typeof connectorRec?.intervalMs === "number"
@@ -454,7 +463,9 @@ async function initNetwork(networkId: string) {
     includeTraffic: false,
   });
   state.devices = Array.isArray(devices) ? devices as Device[] : [];
-  state.connections = Array.isArray(connections) ? connections as Connection[] : [];
+  state.connections = Array.isArray(connections)
+    ? connections as Connection[]
+    : [];
   adjacency = buildAdjacency(state.connections) as Adjacency;
 
   graph = createGraph({

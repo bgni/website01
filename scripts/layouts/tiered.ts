@@ -16,14 +16,19 @@ export type TieredLayoutNode = {
   __ty?: number;
 };
 
-export type TieredLayoutLink = { source: NodeRef; target: NodeRef; id?: string };
+export type TieredLayoutLink = {
+  source: NodeRef;
+  target: NodeRef;
+  id?: string;
+};
 
 type SimulationLike = { stop: () => void };
 
 const clamp = (v: number, min: number, max: number) =>
   Math.max(min, Math.min(max, v));
 
-const normalizeRole = (role: unknown) => String(role || "").trim().toLowerCase();
+const normalizeRole = (role: unknown) =>
+  String(role || "").trim().toLowerCase();
 
 const degreeFor = (links: TieredLayoutLink[]): Map<string, number> => {
   const deg = new Map<string, number>();
@@ -92,7 +97,9 @@ const tierIndexFor = (tier: string) => {
 
 const getNodeId = (
   nodeOrId: NodeRef | null | undefined,
-): string | undefined => (typeof nodeOrId === "string" ? nodeOrId : nodeOrId?.id);
+):
+  | string
+  | undefined => (typeof nodeOrId === "string" ? nodeOrId : nodeOrId?.id);
 
 const inferSiteKey = (name: unknown) => {
   const raw = String(name || "").trim();
@@ -205,7 +212,9 @@ const buildTree = ({
     queue.push(r);
   });
 
-  const nodeById = new Map<string, TieredLayoutNode>(nodes.map((n) => [n.id, n]));
+  const nodeById = new Map<string, TieredLayoutNode>(
+    nodes.map((n) => [n.id, n]),
+  );
   const siteKeyCache = new Map<string, string>();
   const siteKeyFor = (id: string) => {
     if (siteKeyCache.has(id)) return siteKeyCache.get(id);
@@ -386,9 +395,10 @@ export function applyTieredLayout(
     return paddingX + t * (width - paddingX * 2);
   };
   const yTarget = (n: TieredLayoutNode) => {
-    const idx = typeof n.__tierIndex === "number" && Number.isFinite(n.__tierIndex)
-      ? n.__tierIndex
-      : 0;
+    const idx =
+      typeof n.__tierIndex === "number" && Number.isFinite(n.__tierIndex)
+        ? n.__tierIndex
+        : 0;
     return paddingTop + (idx + 0.5) * bandH;
   };
 
@@ -417,7 +427,7 @@ export function applyTieredLayout(
   for (const tierNodes of byTier.values()) {
     tierNodes.sort((a, b) =>
       ((a.__tx ?? 0) - (b.__tx ?? 0)) ||
-        String(a.id).localeCompare(String(b.id))
+      String(a.id).localeCompare(String(b.id))
     );
     const count = tierNodes.length;
     if (count <= 1) continue;
