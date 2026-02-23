@@ -47,7 +47,7 @@ const buildIndex = async () => {
   const html = await Deno.readTextFile("index.html");
   const updated = html.replace(
     /src="scripts\/main\.ts"/g,
-    "src=\"scripts/main.js\"",
+    'src="scripts/main.js"',
   );
   await Deno.writeTextFile(join(DIST_DIR, "index.html"), updated);
 };
