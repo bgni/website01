@@ -1,0 +1,33 @@
+[
+  { "id": "conn-campus-inet-fw", "description": "WAN", "connectionType": "wan-2g", "from": { "deviceId": "campus-inet", "portId": "p1" }, "to": { "deviceId": "campus-fw-1", "portId": "p1" } },
+  { "id": "conn-campus-fw-core1", "description": "FW to Core1", "connectionType": "lag-2g", "from": { "deviceId": "campus-fw-1", "portId": "p2" }, "to": { "deviceId": "campus-core-1", "portId": "p1" } },
+  { "id": "conn-campus-fw-core2", "description": "FW to Core2", "connectionType": "lag-2g", "from": { "deviceId": "campus-fw-1", "portId": "p3" }, "to": { "deviceId": "campus-core-2", "portId": "p1" } },
+  { "id": "conn-campus-core1-core2", "description": "Core interlink", "connectionType": "eth-10g", "from": { "deviceId": "campus-core-1", "portId": "p2" }, "to": { "deviceId": "campus-core-2", "portId": "p2" } },
+
+  { "id": "conn-core1-a-agg1", "description": "Core1->A Agg1", "connectionType": "eth-10g", "from": { "deviceId": "campus-core-1", "portId": "p3" }, "to": { "deviceId": "bldg-a-agg-1", "portId": "p1" } },
+  { "id": "conn-core2-a-agg2", "description": "Core2->A Agg2", "connectionType": "eth-10g", "from": { "deviceId": "campus-core-2", "portId": "p3" }, "to": { "deviceId": "bldg-a-agg-2", "portId": "p1" } },
+  { "id": "conn-a-agg1-agg2", "description": "A Agg interlink", "connectionType": "eth-10g", "from": { "deviceId": "bldg-a-agg-1", "portId": "p3" }, "to": { "deviceId": "bldg-a-agg-2", "portId": "p3" } },
+  { "id": "conn-a-agg1-acc1", "description": "A Agg1->Acc1", "connectionType": "eth-1g", "from": { "deviceId": "bldg-a-agg-1", "portId": "p4" }, "to": { "deviceId": "bldg-a-acc-1", "portId": "p1" } },
+  { "id": "conn-a-agg2-acc2", "description": "A Agg2->Acc2", "connectionType": "eth-1g", "from": { "deviceId": "bldg-a-agg-2", "portId": "p4" }, "to": { "deviceId": "bldg-a-acc-2", "portId": "p1" } },
+  { "id": "conn-a-acc1-ap1", "description": "A AP1", "connectionType": "eth-1g", "from": { "deviceId": "bldg-a-acc-1", "portId": "p3" }, "to": { "deviceId": "bldg-a-ap-1", "portId": "p1" } },
+  { "id": "conn-a-acc2-ap2", "description": "A AP2", "connectionType": "eth-1g", "from": { "deviceId": "bldg-a-acc-2", "portId": "p3" }, "to": { "deviceId": "bldg-a-ap-2", "portId": "p1" } },
+
+  { "id": "conn-core1-b-agg1", "description": "Core1->B Agg1", "connectionType": "eth-10g", "from": { "deviceId": "campus-core-1", "portId": "p5" }, "to": { "deviceId": "bldg-b-agg-1", "portId": "p1" } },
+  { "id": "conn-core2-b-agg2", "description": "Core2->B Agg2", "connectionType": "eth-10g", "from": { "deviceId": "campus-core-2", "portId": "p5" }, "to": { "deviceId": "bldg-b-agg-2", "portId": "p1" } },
+  { "id": "conn-b-agg1-agg2", "description": "B Agg interlink", "connectionType": "eth-10g", "from": { "deviceId": "bldg-b-agg-1", "portId": "p3" }, "to": { "deviceId": "bldg-b-agg-2", "portId": "p3" } },
+  { "id": "conn-b-agg1-acc1", "description": "B Agg1->Acc1", "connectionType": "eth-1g", "from": { "deviceId": "bldg-b-agg-1", "portId": "p4" }, "to": { "deviceId": "bldg-b-acc-1", "portId": "p1" } },
+  { "id": "conn-b-agg2-acc2", "description": "B Agg2->Acc2", "connectionType": "eth-1g", "from": { "deviceId": "bldg-b-agg-2", "portId": "p4" }, "to": { "deviceId": "bldg-b-acc-2", "portId": "p1" } },
+  { "id": "conn-b-acc1-ap1", "description": "B AP1", "connectionType": "eth-1g", "from": { "deviceId": "bldg-b-acc-1", "portId": "p3" }, "to": { "deviceId": "bldg-b-ap-1", "portId": "p1" } },
+  { "id": "conn-b-acc2-ap2", "description": "B AP2", "connectionType": "eth-1g", "from": { "deviceId": "bldg-b-acc-2", "portId": "p3" }, "to": { "deviceId": "bldg-b-ap-2", "portId": "p1" } },
+
+  { "id": "conn-core1-c-agg1", "description": "Core1->C Agg1", "connectionType": "eth-10g", "from": { "deviceId": "campus-core-1", "portId": "p7" }, "to": { "deviceId": "bldg-c-agg-1", "portId": "p1" } },
+  { "id": "conn-core2-c-agg2", "description": "Core2->C Agg2", "connectionType": "eth-10g", "from": { "deviceId": "campus-core-2", "portId": "p7" }, "to": { "deviceId": "bldg-c-agg-2", "portId": "p1" } },
+  { "id": "conn-c-agg1-agg2", "description": "C Agg interlink", "connectionType": "eth-10g", "from": { "deviceId": "bldg-c-agg-1", "portId": "p3" }, "to": { "deviceId": "bldg-c-agg-2", "portId": "p3" } },
+  { "id": "conn-c-agg1-acc1", "description": "C Agg1->Acc1", "connectionType": "eth-1g", "from": { "deviceId": "bldg-c-agg-1", "portId": "p4" }, "to": { "deviceId": "bldg-c-acc-1", "portId": "p1" } },
+  { "id": "conn-c-agg2-acc2", "description": "C Agg2->Acc2", "connectionType": "eth-1g", "from": { "deviceId": "bldg-c-agg-2", "portId": "p4" }, "to": { "deviceId": "bldg-c-acc-2", "portId": "p1" } },
+  { "id": "conn-c-acc1-ap1", "description": "C AP1", "connectionType": "eth-1g", "from": { "deviceId": "bldg-c-acc-1", "portId": "p3" }, "to": { "deviceId": "bldg-c-ap-1", "portId": "p1" } },
+  { "id": "conn-c-acc2-ap2", "description": "C AP2", "connectionType": "eth-1g", "from": { "deviceId": "bldg-c-acc-2", "portId": "p3" }, "to": { "deviceId": "bldg-c-ap-2", "portId": "p1" } },
+
+  { "id": "conn-core1-dns", "description": "DNS/DHCP", "connectionType": "eth-1g", "from": { "deviceId": "campus-core-1", "portId": "p9" }, "to": { "deviceId": "campus-dns", "portId": "p1" } },
+  { "id": "conn-core2-idp", "description": "IdP", "connectionType": "eth-1g", "from": { "deviceId": "campus-core-2", "portId": "p9" }, "to": { "deviceId": "campus-idp", "portId": "p1" } }
+]

@@ -1,0 +1,72 @@
+[
+  {
+    "id": "conn-isp-edge",
+    "description": "WAN handoff",
+    "connectionType": "wan-500m",
+    "from": { "deviceId": "isp-1", "portId": "p1" },
+    "to": { "deviceId": "edge-1", "portId": "p1" }
+  },
+  {
+    "id": "conn-edge-fw",
+    "description": "Edge to firewall",
+    "connectionType": "eth-1g",
+    "from": { "deviceId": "edge-1", "portId": "p2" },
+    "to": { "deviceId": "fw-1", "portId": "p1" }
+  },
+  {
+    "id": "conn-fw-core",
+    "description": "Firewall to core",
+    "connectionType": "eth-1g",
+    "from": { "deviceId": "fw-1", "portId": "p2" },
+    "to": { "deviceId": "core-sw-1", "portId": "p1" }
+  },
+  {
+    "id": "conn-core-access",
+    "description": "Core to access",
+    "connectionType": "eth-1g",
+    "from": { "deviceId": "core-sw-1", "portId": "p2" },
+    "to": { "deviceId": "acc-sw-1", "portId": "p1" }
+  },
+  {
+    "id": "conn-core-nas",
+    "description": "NAS uplink",
+    "connectionType": "eth-1g",
+    "from": { "deviceId": "core-sw-1", "portId": "p3" },
+    "to": { "deviceId": "nas-1", "portId": "p1" }
+  },
+  {
+    "id": "conn-access-ap1",
+    "description": "AP Front uplink",
+    "connectionType": "eth-1g",
+    "from": { "deviceId": "acc-sw-1", "portId": "p2" },
+    "to": { "deviceId": "ap-1", "portId": "p1" }
+  },
+  {
+    "id": "conn-access-ap2",
+    "description": "AP Back uplink",
+    "connectionType": "eth-1g",
+    "from": { "deviceId": "acc-sw-1", "portId": "p3" },
+    "to": { "deviceId": "ap-2", "portId": "p1" }
+  },
+  {
+    "id": "conn-access-pc",
+    "description": "Wired client",
+    "connectionType": "eth-1g",
+    "from": { "deviceId": "acc-sw-1", "portId": "p4" },
+    "to": { "deviceId": "pc-1", "portId": "p1" }
+  },
+  {
+    "id": "conn-access-printer",
+    "description": "Printer",
+    "connectionType": "eth-100m",
+    "from": { "deviceId": "acc-sw-1", "portId": "p5" },
+    "to": { "deviceId": "printer-1", "portId": "p1" }
+  },
+  {
+    "id": "conn-access-iot",
+    "description": "IoT gateway uplink",
+    "connectionType": "eth-100m",
+    "from": { "deviceId": "acc-sw-1", "portId": "p6" },
+    "to": { "deviceId": "iot-gw-1", "portId": "p1" }
+  }
+]

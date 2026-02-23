@@ -1,0 +1,22 @@
+[
+  { "id": "conn-home-wan", "description": "Residential WAN", "connectionType": "wan-500m", "from": { "deviceId": "home-isp", "portId": "p1" }, "to": { "deviceId": "erx-1", "portId": "wan" } },
+
+  { "id": "conn-erx1-core", "description": "Router to core", "connectionType": "eth-1g", "from": { "deviceId": "erx-1", "portId": "lan1" }, "to": { "deviceId": "css326-1", "portId": "p1" } },
+  { "id": "conn-erx2-core", "description": "Lab/backup router", "connectionType": "eth-1g", "from": { "deviceId": "erx-2", "portId": "lan1" }, "to": { "deviceId": "css326-1", "portId": "p2" } },
+
+  { "id": "conn-core-office", "description": "Core to office", "connectionType": "eth-1g", "from": { "deviceId": "css326-1", "portId": "p3" }, "to": { "deviceId": "office-sw-1", "portId": "p1" } },
+  { "id": "conn-core-lab", "description": "Core to lab", "connectionType": "eth-1g", "from": { "deviceId": "css326-1", "portId": "p4" }, "to": { "deviceId": "lab-sw-1", "portId": "p1" } },
+  { "id": "conn-core-ap", "description": "AP uplink", "connectionType": "eth-1g", "from": { "deviceId": "css326-1", "portId": "p5" }, "to": { "deviceId": "ap-1", "portId": "p1" } },
+
+  { "id": "conn-office-pc1", "description": "Desktop-1", "connectionType": "eth-1g", "from": { "deviceId": "office-sw-1", "portId": "p2" }, "to": { "deviceId": "pc-1", "portId": "p1" } },
+  { "id": "conn-office-pc2", "description": "Desktop-2", "connectionType": "eth-1g", "from": { "deviceId": "office-sw-1", "portId": "p3" }, "to": { "deviceId": "pc-2", "portId": "p1" } },
+  { "id": "conn-office-pc3", "description": "Desktop-3", "connectionType": "eth-1g", "from": { "deviceId": "office-sw-1", "portId": "p4" }, "to": { "deviceId": "pc-3", "portId": "p1" } },
+
+  { "id": "conn-core-nas", "description": "NAS (10G)", "connectionType": "eth-10g", "from": { "deviceId": "css326-1", "portId": "sfp+1" }, "to": { "deviceId": "nas-1", "portId": "p1" } },
+  { "id": "conn-core-proxmox", "description": "Proxmox (10G)", "connectionType": "eth-10g", "from": { "deviceId": "css326-1", "portId": "sfp+2" }, "to": { "deviceId": "proxmox-1", "portId": "p1" } },
+  { "id": "conn-lab-media", "description": "Media server", "connectionType": "eth-1g", "from": { "deviceId": "lab-sw-1", "portId": "p2" }, "to": { "deviceId": "media-1", "portId": "p1" } },
+
+  { "id": "conn-wifi-laptop1", "description": "WiFi client", "connectionType": "wifi-600m", "from": { "deviceId": "ap-1", "portId": "w1" }, "to": { "deviceId": "laptop-1", "portId": "wlan" } },
+  { "id": "conn-wifi-phone1", "description": "WiFi client", "connectionType": "wifi-600m", "from": { "deviceId": "ap-1", "portId": "w2" }, "to": { "deviceId": "phone-1", "portId": "wlan" } },
+  { "id": "conn-wifi-phone2", "description": "WiFi client", "connectionType": "wifi-600m", "from": { "deviceId": "ap-1", "portId": "w3" }, "to": { "deviceId": "phone-2", "portId": "wlan" } }
+]

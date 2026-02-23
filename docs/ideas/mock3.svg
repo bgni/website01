@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160">
+  <rect width="320" height="160" fill="#0f172a" />
+  <rect
+    x="14"
+    y="14"
+    width="292"
+    height="90"
+    rx="12"
+    fill="#111827"
+    stroke="#1f2937"
+    stroke-width="2"
+  />
+  <rect
+    x="20"
+    y="22"
+    width="280"
+    height="26"
+    rx="8"
+    fill="#0b1220"
+    stroke="#1f2937"
+    stroke-width="1.5"
+  />
+  <rect
+    x="20"
+    y="54"
+    width="86"
+    height="40"
+    rx="10"
+    fill="#0b1220"
+    stroke="#1f2937"
+    stroke-width="1.5"
+  />
+  <rect
+    x="114"
+    y="54"
+    width="86"
+    height="40"
+    rx="10"
+    fill="#0b1220"
+    stroke="#1f2937"
+    stroke-width="1.5"
+  />
+  <rect
+    x="208"
+    y="54"
+    width="86"
+    height="40"
+    rx="10"
+    fill="#0b1220"
+    stroke="#1f2937"
+    stroke-width="1.5"
+  />
+  <text
+    x="24"
+    y="40"
+    fill="#e2e8f0"
+    font-size="11"
+    font-family="Segoe UI, Arial"
+  >Action bar: zoom presets, fit, clear</text>
+  <text
+    x="28"
+    y="72"
+    fill="#e2e8f0"
+    font-size="11"
+    font-family="Segoe UI, Arial"
+  >Alerts</text>
+  <text
+    x="122"
+    y="72"
+    fill="#e2e8f0"
+    font-size="11"
+    font-family="Segoe UI, Arial"
+  >Selected</text>
+  <text
+    x="214"
+    y="72"
+    fill="#e2e8f0"
+    font-size="11"
+    font-family="Segoe UI, Arial"
+  >Recent events</text>
+  <text
+    x="20"
+    y="142"
+    fill="#94a3b8"
+    font-size="11"
+    font-family="Segoe UI, Arial"
+  >Idea C: top action/status bar + small widgets under graph</text>
+</svg>

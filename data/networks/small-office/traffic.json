@@ -1,0 +1,35 @@
+{
+  "initial": [
+    { "connectionId": "conn-isp-edge", "status": "up", "rateMbps": 120, "utilization": 0.55 },
+    { "connectionId": "conn-edge-fw", "status": "up", "rateMbps": 120, "utilization": 0.55 },
+    { "connectionId": "conn-fw-core", "status": "up", "rateMbps": 95, "utilization": 0.40 },
+    { "connectionId": "conn-core-access", "status": "up", "rateMbps": 60, "utilization": 0.25 },
+    { "connectionId": "conn-core-nas", "status": "up", "rateMbps": 320, "utilization": 0.75 },
+    { "connectionId": "conn-access-ap1", "status": "up", "rateMbps": 45, "utilization": 0.30 },
+    { "connectionId": "conn-access-ap2", "status": "up", "rateMbps": 30, "utilization": 0.20 },
+    { "connectionId": "conn-access-pc", "status": "up", "rateMbps": 15, "utilization": 0.10 },
+    { "connectionId": "conn-access-printer", "status": "up", "rateMbps": 2, "utilization": 0.02 },
+    { "connectionId": "conn-access-iot", "status": "down", "rateMbps": 0, "utilization": 0.0 }
+  ],
+  "updates": [
+    { "t": 2, "connectionId": "conn-core-nas", "rateMbps": 900 },
+    { "t": 2, "connectionId": "conn-core-nas", "utilization": 0.92 },
+
+    { "t": 5, "connectionId": "conn-access-ap1", "rateMbps": 180 },
+    { "t": 5, "connectionId": "conn-access-ap1", "utilization": 0.62 },
+
+    { "t": 7, "connectionId": "conn-access-iot", "status": "up" },
+    { "t": 7, "connectionId": "conn-access-iot", "rateMbps": 6 },
+    { "t": 7, "connectionId": "conn-access-iot", "utilization": 0.06 },
+
+    { "t": 11, "connectionId": "conn-isp-edge", "rateMbps": 35 },
+    { "t": 11, "connectionId": "conn-isp-edge", "utilization": 0.18 },
+
+    { "t": 14, "connectionId": "conn-access-iot", "status": "down" },
+    { "t": 14, "connectionId": "conn-access-iot", "rateMbps": 0 },
+    { "t": 14, "connectionId": "conn-access-iot", "utilization": 0.0 },
+
+    { "t": 18, "connectionId": "conn-core-nas", "rateMbps": 220 },
+    { "t": 18, "connectionId": "conn-core-nas", "utilization": 0.55 }
+  ]
+}

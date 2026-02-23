@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-02-22T00:00:00.000Z",
+  "sourceRoot": "testdata/netbox-mock",
+  "items": {
+    "Ubiquiti/U6-LR": {
+      "id": "Ubiquiti/U6-LR",
+      "slug": "Ubiquiti/U6-LR",
+      "brand": "Ubiquiti",
+      "model": "U6 Long-Range",
+      "partNumber": "U6-LR",
+      "ports": [
+        {
+          "id": "eth0",
+          "kind": "interface",
+          "type": "1000base-t",
+          "mgmtOnly": false,
+          "poeMode": "pd",
+          "poeType": "type2-ieee802.3at"
+        },
+        {
+          "id": "wlan0",
+          "kind": "interface",
+          "type": "ieee802.11ax",
+          "mgmtOnly": false
+        },
+        {
+          "id": "wlan1",
+          "kind": "interface",
+          "type": "ieee802.11ax",
+          "mgmtOnly": false
+        }
+      ],
+      "sourcePath": "device-types/Ubiquiti/U6-LR.yaml"
+    },
+    "Cisco/C9300-24T": {
+      "id": "Cisco/C9300-24T",
+      "slug": "Cisco/C9300-24T",
+      "brand": "Cisco",
+      "model": "Catalyst 9300-24T",
+      "partNumber": "C9300-24T",
+      "ports": [
+        {
+          "id": "GigabitEthernet1/0/1",
+          "kind": "interface",
+          "type": "1000base-t",
+          "mgmtOnly": false
+        },
+        {
+          "id": "GigabitEthernet1/0/2",
+          "kind": "interface",
+          "type": "1000base-t",
+          "mgmtOnly": false
+        },
+        {
+          "id": "GigabitEthernet0/0",
+          "kind": "interface",
+          "type": "1000base-t",
+          "mgmtOnly": true
+        },
+        {
+          "id": "con 0",
+          "kind": "console",
+          "type": "rj-45",
+          "mgmtOnly": false
+        }
+      ],
+      "sourcePath": "device-types/Cisco/C9300-24T.yaml"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+[
+  { "id": "dc-inet", "name": "DC Internet", "role": "internet", "site": "dc-edge" },
+  { "id": "dc-fw-1", "name": "DC Firewall 1", "type_slug": "Palo Alto/PA-220", "role": "firewall", "site": "dc-edge", "room_id": "dc-edge" },
+  { "id": "dc-fw-2", "name": "DC Firewall 2", "type_slug": "Palo Alto/PA-220", "role": "firewall", "site": "dc-edge", "room_id": "dc-edge" },
+
+  { "id": "dc-spine-1", "name": "Spine-1", "type_slug": "Cisco/C9300-48T", "role": "core", "site": "dc-fabric", "room_id": "dc-fabric" },
+  { "id": "dc-spine-2", "name": "Spine-2", "type_slug": "Cisco/C9300-48T", "role": "core", "site": "dc-fabric", "room_id": "dc-fabric" },
+
+  { "id": "dc-leaf-1", "name": "Leaf-1", "type_slug": "Cisco/CBS350-24T-4X", "role": "access", "site": "dc-fabric", "room_id": "dc-fabric" },
+  { "id": "dc-leaf-2", "name": "Leaf-2", "type_slug": "Cisco/CBS350-24T-4X", "role": "access", "site": "dc-fabric", "room_id": "dc-fabric" },
+  { "id": "dc-leaf-3", "name": "Leaf-3", "type_slug": "Cisco/CBS350-24T-4X", "role": "access", "site": "dc-fabric", "room_id": "dc-fabric" },
+  { "id": "dc-leaf-4", "name": "Leaf-4", "type_slug": "Cisco/CBS350-24T-4X", "role": "access", "site": "dc-fabric", "room_id": "dc-fabric" },
+
+  { "id": "dc-lb-1", "name": "Load Balancer 1", "type_slug": "Cisco/Meraki-MX68", "role": "load balancer", "site": "dc-edge", "room_id": "dc-edge" },
+  { "id": "dc-lb-2", "name": "Load Balancer 2", "type_slug": "Cisco/Meraki-MX68", "role": "load balancer", "site": "dc-edge", "room_id": "dc-edge" },
+
+  { "id": "dc-app-1", "name": "App-1", "role": "server", "site": "dc-rack-a", "room_id": "dc-rack-a" },
+  { "id": "dc-app-2", "name": "App-2", "role": "server", "site": "dc-rack-a", "room_id": "dc-rack-a" },
+  { "id": "dc-db-1", "name": "DB-1", "role": "server", "site": "dc-rack-b", "room_id": "dc-rack-b" },
+  { "id": "dc-db-2", "name": "DB-2", "role": "server", "site": "dc-rack-b", "room_id": "dc-rack-b" }
+]

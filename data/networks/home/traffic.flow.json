@@ -1,0 +1,20 @@
+{
+  "tickSeconds": 1,
+  "flows": [
+    { "id": "laptop-web", "fromDeviceId": "laptop-1", "toDeviceId": "home-isp", "rateMbps": 50 },
+    { "id": "phone1-web", "fromDeviceId": "phone-1", "toDeviceId": "home-isp", "rateMbps": 15 },
+    { "id": "phone2-web", "fromDeviceId": "phone-2", "toDeviceId": "home-isp", "rateMbps": 12 },
+    { "id": "pc1-web", "fromDeviceId": "pc-1", "toDeviceId": "home-isp", "rateMbps": 30 },
+
+    { "id": "proxmox-download", "fromDeviceId": "proxmox-1", "toDeviceId": "home-isp", "rateMbps": 20 },
+    { "id": "pc2-backup", "fromDeviceId": "pc-2", "toDeviceId": "nas-1", "rateMbps": 40 },
+    { "id": "media-stream", "fromDeviceId": "media-1", "toDeviceId": "laptop-1", "rateMbps": 80 }
+  ],
+  "events": [
+    { "t": 10, "flowId": "proxmox-download", "rateMbps": 450 },
+    { "t": 60, "flowId": "proxmox-download", "rateMbps": 20 },
+
+    { "t": 20, "flowId": "pc2-backup", "rateMbps": 800 },
+    { "t": 55, "flowId": "pc2-backup", "rateMbps": 40 }
+  ]
+}

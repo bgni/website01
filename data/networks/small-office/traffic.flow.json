@@ -1,0 +1,14 @@
+{
+  "tickSeconds": 1,
+  "flows": [
+    { "id": "web-pc", "fromDeviceId": "pc-1", "toDeviceId": "isp-1", "rateMbps": 30 },
+    { "id": "cloud-iot", "fromDeviceId": "iot-gw-1", "toDeviceId": "isp-1", "rateMbps": 5 },
+    { "id": "print", "fromDeviceId": "pc-1", "toDeviceId": "printer-1", "rateMbps": 2 },
+    { "id": "nas-backup", "fromDeviceId": "pc-1", "toDeviceId": "nas-1", "rateMbps": 50 },
+    { "id": "nas-updates", "fromDeviceId": "nas-1", "toDeviceId": "isp-1", "rateMbps": 8 }
+  ],
+  "events": [
+    { "t": 15, "flowId": "nas-backup", "rateMbps": 450 },
+    { "t": 45, "flowId": "nas-backup", "rateMbps": 50 }
+  ]
+}

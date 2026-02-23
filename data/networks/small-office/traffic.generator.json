@@ -1,0 +1,32 @@
+{
+  "tickSeconds": 1,
+  "initial": [
+    { "connectionId": "conn-isp-edge", "status": "up", "rateMbps": 120, "utilization": 0.24 },
+    { "connectionId": "conn-edge-fw", "status": "up", "rateMbps": 120, "utilization": 0.12 },
+    { "connectionId": "conn-fw-core", "status": "up", "rateMbps": 95, "utilization": 0.1 },
+    { "connectionId": "conn-core-access", "status": "up", "rateMbps": 60, "utilization": 0.06 },
+    { "connectionId": "conn-core-nas", "status": "up", "rateMbps": 320, "utilization": 0.32 },
+    { "connectionId": "conn-access-ap1", "status": "up", "rateMbps": 45, "utilization": 0.05 },
+    { "connectionId": "conn-access-ap2", "status": "up", "rateMbps": 30, "utilization": 0.03 },
+    { "connectionId": "conn-access-pc", "status": "up", "rateMbps": 15, "utilization": 0.02 },
+    { "connectionId": "conn-access-printer", "status": "up", "rateMbps": 2, "utilization": 0.02 },
+    { "connectionId": "conn-access-iot", "status": "down", "rateMbps": 0, "utilization": 0 }
+  ],
+  "links": {
+    "conn-isp-edge": { "capacityMbps": 500, "rateMbps": { "min": 10, "max": 450, "delta": 40 }, "utilization": { "min": 0, "max": 0.98, "delta": 0.08 } },
+    "conn-edge-fw": { "capacityMbps": 1000, "rateMbps": { "min": 10, "max": 950, "delta": 60 }, "utilization": { "min": 0, "max": 0.98, "delta": 0.08 } },
+    "conn-fw-core": { "capacityMbps": 1000, "rateMbps": { "min": 5, "max": 950, "delta": 55 }, "utilization": { "min": 0, "max": 0.98, "delta": 0.07 } },
+    "conn-core-access": { "capacityMbps": 1000, "rateMbps": { "min": 1, "max": 850, "delta": 45 }, "utilization": { "min": 0, "max": 0.98, "delta": 0.06 } },
+    "conn-core-nas": { "capacityMbps": 1000, "rateMbps": { "min": 5, "max": 950, "delta": 120 }, "utilization": { "min": 0, "max": 0.98, "delta": 0.1 } },
+    "conn-access-ap1": { "capacityMbps": 1000, "rateMbps": { "min": 1, "max": 600, "delta": 80 }, "utilization": { "min": 0, "max": 0.95, "delta": 0.12 } },
+    "conn-access-ap2": { "capacityMbps": 1000, "rateMbps": { "min": 1, "max": 600, "delta": 80 }, "utilization": { "min": 0, "max": 0.95, "delta": 0.12 } },
+    "conn-access-pc": { "capacityMbps": 1000, "rateMbps": { "min": 0, "max": 220, "delta": 25 }, "utilization": { "min": 0, "max": 0.9, "delta": 0.05 } },
+    "conn-access-printer": { "capacityMbps": 100, "rateMbps": { "min": 0, "max": 25, "delta": 4 }, "utilization": { "min": 0, "max": 0.8, "delta": 0.04 } },
+    "conn-access-iot": { "capacityMbps": 100, "rateMbps": { "min": 0, "max": 60, "delta": 10 }, "utilization": { "min": 0, "max": 0.85, "delta": 0.06 } }
+  },
+  "events": [
+    { "t": 7, "connectionId": "conn-access-iot", "status": "up" },
+    { "t": 14, "connectionId": "conn-access-iot", "status": "down" },
+    { "t": 18, "connectionId": "conn-access-iot", "status": "up" }
+  ]
+}

@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160">
+  <rect width="320" height="160" fill="#0f172a" />
+  <rect
+    x="16"
+    y="20"
+    width="288"
+    height="96"
+    rx="12"
+    fill="#111827"
+    stroke="#1f2937"
+    stroke-width="2"
+  />
+  <rect
+    x="26"
+    y="32"
+    width="80"
+    height="72"
+    rx="10"
+    fill="#0b1220"
+    stroke="#1f2937"
+    stroke-width="2"
+  />
+  <rect
+    x="118"
+    y="32"
+    width="80"
+    height="72"
+    rx="10"
+    fill="#0b1220"
+    stroke="#1f2937"
+    stroke-width="2"
+  />
+  <rect
+    x="210"
+    y="32"
+    width="80"
+    height="72"
+    rx="10"
+    fill="#0b1220"
+    stroke="#1f2937"
+    stroke-width="2"
+  />
+  <text
+    x="32"
+    y="48"
+    fill="#e2e8f0"
+    font-size="11"
+    font-family="Segoe UI, Arial"
+  >Selected</text>
+  <text
+    x="124"
+    y="48"
+    fill="#e2e8f0"
+    font-size="11"
+    font-family="Segoe UI, Arial"
+  >Details</text>
+  <text
+    x="216"
+    y="48"
+    fill="#e2e8f0"
+    font-size="11"
+    font-family="Segoe UI, Arial"
+  >Traffic</text>
+  <text
+    x="20"
+    y="142"
+    fill="#94a3b8"
+    font-size="11"
+    font-family="Segoe UI, Arial"
+  >Idea B: bottom dock with tabs (summary / details / telemetry)</text>
+</svg>
