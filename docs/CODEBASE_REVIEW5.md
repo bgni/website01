@@ -2,12 +2,16 @@
 
 Date: 2026-02-24
 
-This review is the “next tranche” after CODEBASE_REVIEW4. REVIEW4 identified a set of maintainability wins (module placement, config/constants hygiene, and traffic connector modularity). Some of those have been completed during subsequent refactors, but several are still open.
+This review is the “next tranche” after CODEBASE_REVIEW4. REVIEW4 identified a
+set of maintainability wins (module placement, config/constants hygiene, and
+traffic connector modularity). Some of those have been completed during
+subsequent refactors, but several are still open.
 
 The goal of REVIEW5 is to:
 
 - Record what’s **done vs still pending** from REVIEW4.
-- Provide a **tight, low-risk PR sequence** to finish the remaining maintainability wins.
+- Provide a **tight, low-risk PR sequence** to finish the remaining
+  maintainability wins.
 
 ---
 
@@ -15,11 +19,14 @@ The goal of REVIEW5 is to:
 
 ### Completed since REVIEW4
 
-- Tiered layout domain heuristics moved to the domain boundary and consumed as numeric hints.
+- Tiered layout domain heuristics moved to the domain boundary and consumed as
+  numeric hints.
   - Domain: `scripts/domain/layoutHints.ts`
   - Layout consumes hints without string parsing: `scripts/layouts/tiered.ts`
-- Load-time strictness direction materially advanced (fixtures/device type integration, interface normalization, topology validation).
-  - This goes beyond REVIEW4’s “next wins”, but it reduces downstream defensive checks and supports the “boundary-only parsing” rule.
+- Load-time strictness direction materially advanced (fixtures/device type
+  integration, interface normalization, topology validation).
+  - This goes beyond REVIEW4’s “next wins”, but it reduces downstream defensive
+    checks and supports the “boundary-only parsing” rule.
 
 ### Still pending (carry forward)
 
@@ -35,24 +42,33 @@ The goal of REVIEW5 is to:
   - No `ResizeObserver`-driven sizing is present.
 - Traffic connector modularization + OCP improvements
   - `scripts/trafficConnector.ts` is still monolithic.
-  - `scripts/app/controller.ts` still selects connector kinds directly rather than delegating to a registry.
+  - `scripts/app/controller.ts` still selects connector kinds directly rather
+    than delegating to a registry.
 - Reduce DOM coupling in the renderer
   - Renderer still hard-codes `d3.select("#graph")`.
 - Reduce implicit global coupling to D3
-  - Renderer/layout code uses `d3` without an explicit import or injected dependency.
+  - Renderer/layout code uses `d3` without an explicit import or injected
+    dependency.
 - Module placement / top-level cleanup
-  - `scripts/search.ts` is still top-level (should move under `scripts/lib/**` with a shim).
-  - `scripts/dataLoader.ts` is still top-level (boundary loader; should move under `scripts/domain/**` with a shim).
-  - `scripts/deviceCatalog.ts` is still top-level (domain integration; should move under `scripts/domain/**` with a shim).
+  - `scripts/search.ts` is still top-level (should move under `scripts/lib/**`
+    with a shim).
+  - `scripts/dataLoader.ts` is still top-level (boundary loader; should move
+    under `scripts/domain/**` with a shim).
+  - `scripts/deviceCatalog.ts` is still top-level (domain integration; should
+    move under `scripts/domain/**` with a shim).
 
 ### Boundary rule follow-up (string comparisons)
 
-If we continue the “string parsing/comparisons only at the outside-world boundary” rule strictly, there are still internal string comparisons in graph-related code:
+If we continue the “string parsing/comparisons only at the outside-world
+boundary” rule strictly, there are still internal string comparisons in
+graph-related code:
 
-- `scripts/graph/trafficAdapter.ts` compares `status === "down"` and normalizes a string `kind`.
+- `scripts/graph/trafficAdapter.ts` compares `status === "down"` and normalizes
+  a string `kind`.
 - `scripts/graph/viewModel.ts` compares `t?.status === "down"`.
 
-These should be addressed by normalizing at the boundary into stable internal tags/unions (see PR plan below).
+These should be addressed by normalizing at the boundary into stable internal
+tags/unions (see PR plan below).
 
 ---
 
@@ -60,13 +76,16 @@ These should be addressed by normalizing at the boundary into stable internal ta
 
 ### PR1 — Add config + eliminate magic constants (highest ROI)
 
-Create `scripts/config.ts` containing only constants and plain objects (safe to import in browser and tools).
+Create `scripts/config.ts` containing only constants and plain objects (safe to
+import in browser and tools).
 
 Minimum suggested exports:
 
-- `GRAPH_DEFAULTS` (width/height fallback, simulation constants, transition durations)
+- `GRAPH_DEFAULTS` (width/height fallback, simulation constants, transition
+  durations)
 - `GRAPH_COLORS` (baseline palette used by renderer/view-model)
-- `TRAFFIC_STYLE` (down color, utilization “hot threshold”, link width scaling constants)
+- `TRAFFIC_STYLE` (down color, utilization “hot threshold”, link width scaling
+  constants)
 
 Then update:
 
@@ -83,7 +102,8 @@ Acceptance:
 ### PR2 — Move pure utilities out of top-level `scripts/`
 
 - Move `scripts/search.ts` → `scripts/lib/search.ts`
-- Keep `scripts/search.ts` as a shim that re-exports from `scripts/lib/search.ts`
+- Keep `scripts/search.ts` as a shim that re-exports from
+  `scripts/lib/search.ts`
 
 Acceptance:
 
@@ -92,10 +112,13 @@ Acceptance:
 
 ### PR3 — Make loader/boundaries explicit
 
-- Move `scripts/dataLoader.ts` → `scripts/domain/loadNetwork.ts` (or `scripts/domain/fixtureLoader.ts`)
+- Move `scripts/dataLoader.ts` → `scripts/domain/loadNetwork.ts` (or
+  `scripts/domain/fixtureLoader.ts`)
 - Keep `scripts/dataLoader.ts` as a shim re-export
 
-Optional (nice, but keep it small): add a typed helper like `loadJson(path, guard?)` so boundary modules can stop returning `unknown` everywhere.
+Optional (nice, but keep it small): add a typed helper like
+`loadJson(path, guard?)` so boundary modules can stop returning `unknown`
+everywhere.
 
 ### PR4 — Split `scripts/trafficConnector.ts`
 
@@ -128,11 +151,14 @@ Acceptance:
 
 Two focused improvements:
 
-1) Stop hard-coding `#graph`
+1. Stop hard-coding `#graph`
+
 - Update the renderer API to accept an SVG element or a selector.
 
-2) Stop relying on global `d3` implicitly
-- Either import D3 consistently or inject a `d3` dependency into the renderer/layout boundary.
+2. Stop relying on global `d3` implicitly
+
+- Either import D3 consistently or inject a `d3` dependency into the
+  renderer/layout boundary.
 
 If you want actual responsive behavior:
 
@@ -145,4 +171,8 @@ If you want actual responsive behavior:
 ## Notes / guardrails
 
 - Keep REVIEW5 work “mechanical” where possible: shims for moved modules, refactors that preserve behavior.
-- Keep string parsing/heuristics at the boundary. For graph code, normalize once into typed unions/tags (e.g. `TrafficStatus`, `TrafficVizKind`) and then switch on those.
+- Keep REVIEW5 work “mechanical” where possible: shims for moved modules,
+  refactors that preserve behavior.
+- Keep string parsing/heuristics at the boundary. For graph code, normalize once
+  into typed unions/tags (e.g. `TrafficStatus`, `TrafficVizKind`) and then
+  switch on those.
