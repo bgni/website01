@@ -1,5 +1,9 @@
 import { typeColor } from "../lib/colors.ts";
-import type { Connection, Device, TrafficUpdate } from "../domain/types.ts";
+import type {
+  Connection,
+  NetworkDevice,
+  TrafficUpdate,
+} from "../domain/types.ts";
 import { applyLayoutToGraph } from "./layoutAdapter.ts";
 import { createGraphRenderer, type Guide } from "./renderer.ts";
 import { createTrafficAdapter } from "./trafficAdapter.ts";
@@ -17,7 +21,7 @@ export function createGraph(
     adjacency,
     onNodeSelect,
   }: {
-    devices: Device[];
+    devices: NetworkDevice[];
     connections: Connection[];
     adjacency: Adjacency;
     onNodeSelect: (id: string) => void;
@@ -40,7 +44,7 @@ export function createGraph(
   const renderer = createGraphRenderer({
     devices,
     connections,
-    getNodeFill: (d) => typeColor(d.type),
+    getNodeFill: (d) => typeColor(d.deviceKind),
     onNodeSelect,
   });
 

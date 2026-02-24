@@ -1,6 +1,7 @@
 import { join } from "@std/path";
 import { applyTieredLayout } from "../scripts/layouts/tiered.ts";
 import { typeColor } from "../scripts/lib/colors.ts";
+import { inferDeviceKindFromType } from "../scripts/domain/deviceKind.ts";
 import {
   forceCenter,
   forceCollide,
@@ -11,7 +12,7 @@ import {
   type SimulationNodeDatum,
 } from "d3-force";
 
-type Device = {
+type NetworkDevice = {
   id: string;
   name?: string;
   role?: string;
@@ -27,7 +28,7 @@ type Connection = {
   to: { deviceId: string; portId?: string };
 };
 
-type LayoutNode = Device & {
+type LayoutNode = NetworkDevice & {
   x?: number;
   y?: number;
   fx?: number | null;
@@ -274,7 +275,7 @@ const renderSvg = ({
     .sort((a, b) => String(a.id).localeCompare(String(b.id)))
     .map((n) => {
       const type = String(n.type || n.role || "").trim();
-      const fill = typeColor(type);
+      const fill = typeColor(inferDeviceKindFromType(type));
       return `<circle data-id="${
         escapeXml(n.id)
       }" cx="${n.x}" cy="${n.y}" r="12" fill="${fill}" stroke="#0b1220" stroke-width="2" />`;
@@ -355,7 +356,9 @@ const main = async () => {
       const networkId = net.id;
       const basePath = join(root, "data", "networks", networkId);
 
-      const devices = await readJson<Device[]>(join(basePath, "devices.json"));
+      const devices = await readJson<NetworkDevice[]>(
+        join(basePath, "devices.json"),
+      );
       const connections = await readJson<Connection[]>(
         join(basePath, "connections.json"),
       );

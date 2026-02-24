@@ -24,6 +24,7 @@ export const reduce = (state: State, action: Action): State => {
         statusText: "",
         devices: action.devices,
         connections: action.connections,
+        deviceTypes: action.deviceTypes,
         page: 1,
         selected: new Set<string>(),
         traffic: [],

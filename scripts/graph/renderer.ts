@@ -1,6 +1,6 @@
-import type { Connection, Device } from "../domain/types.ts";
+import type { Connection, NetworkDevice } from "../domain/types.ts";
 
-export type SimNode = Device & {
+export type SimNode = NetworkDevice & {
   x?: number;
   y?: number;
   fx?: number | null;
@@ -39,7 +39,7 @@ export function createGraphRenderer(
     width = 1200,
     height = 720,
   }: {
-    devices: Device[];
+    devices: NetworkDevice[];
     connections: Connection[];
     getNodeFill: (d: SimNode) => string;
     onNodeSelect: (id: string) => void;
@@ -73,7 +73,7 @@ export function createGraphRenderer(
   const nodeLayer = container.append("g").attr("class", "node-layer");
   const labelLayer = container.append("g").attr("class", "label-layer");
 
-  const nodes = devices.map((d: Device) => ({ ...d })) as SimNode[];
+  const nodes = devices.map((d: NetworkDevice) => ({ ...d })) as SimNode[];
   const links = connections.map((c: Connection) => ({
     ...c,
     source: c.from.deviceId,

@@ -1,10 +1,20 @@
 import type { SortDir, SortKey } from "../search.ts";
-import type { Connection, Device, TrafficUpdate } from "../domain/types.ts";
+import type {
+  Connection,
+  DeviceType,
+  NetworkDevice,
+  TrafficUpdate,
+} from "../domain/types.ts";
 
 export type Action =
   | { type: "setNetworkId"; networkId: string }
   | { type: "setStatusText"; text: string }
-  | { type: "networkLoaded"; devices: Device[]; connections: Connection[] }
+  | {
+    type: "networkLoaded";
+    devices: NetworkDevice[];
+    connections: Connection[];
+    deviceTypes: Record<string, DeviceType>;
+  }
   | { type: "setFilter"; filter: string }
   | { type: "clearFilter" }
   | { type: "setSort"; sortKey: SortKey; sortDir: SortDir }

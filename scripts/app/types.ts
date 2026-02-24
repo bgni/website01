@@ -1,4 +1,9 @@
-import type { Connection, Device, TrafficUpdate } from "../domain/types.ts";
+import type {
+  Connection,
+  DeviceType,
+  NetworkDevice,
+  TrafficUpdate,
+} from "../domain/types.ts";
 import type { SortDir, SortKey } from "../search.ts";
 import type { Action } from "./actions.ts";
 
@@ -11,9 +16,10 @@ export type State = {
   selected: Set<string>;
   page: number;
   pageSize: number;
-  devices: Device[];
+  devices: NetworkDevice[];
   connections: Connection[];
   traffic: TrafficUpdate[];
+  deviceTypes: Record<string, DeviceType>;
   trafficVizKind: string;
   layoutKind: string;
 };

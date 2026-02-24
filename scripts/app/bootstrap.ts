@@ -24,6 +24,7 @@ export function bootstrap(doc: Document) {
     devices: [],
     connections: [],
     traffic: [],
+    deviceTypes: {},
     trafficVizKind: "classic",
     layoutKind: "force",
   };

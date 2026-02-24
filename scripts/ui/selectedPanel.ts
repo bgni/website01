@@ -2,6 +2,9 @@ import { typeColor } from "../lib/colors.ts";
 import type { Dispatch, State } from "../app/state.ts";
 import { getSelectedDevices } from "../app/state.ts";
 
+const PLACEHOLDER_THUMB =
+  "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
+
 const clearChildren = (el: Element) => {
   while (el.firstChild) el.removeChild(el.firstChild);
 };
@@ -32,18 +35,14 @@ export function createSelectedPanel(
         img.addEventListener(
           "error",
           () => {
-            const fallback = img.getAttribute("data-fallback");
-            if (fallback && img.src && !img.src.endsWith(".jpg")) {
+            const fallback = img.getAttribute("data-fallback") ||
+              PLACEHOLDER_THUMB;
+            if (img.src !== fallback) {
               img.src = fallback;
               return;
             }
-            img.remove();
-            // Keep layout stable if image missing.
-            const placeholder = document.createElement("div");
-            placeholder.className = "thumb";
-            placeholder.setAttribute("aria-hidden", "true");
-            const card = img.closest(".selected-card");
-            if (card) card.prepend(placeholder);
+            // If even fallback fails (shouldn't), ensure we stabilize on placeholder.
+            img.src = PLACEHOLDER_THUMB;
           },
           { once: true },
         );
@@ -71,35 +70,17 @@ export function createSelectedPanel(
       const card = document.createElement("div");
       card.className = "selected-card";
 
-      // Best-effort NetBox elevation image guess from strict type slug (Manufacturer/ModelFileBase).
-      const slug = d.deviceTypeSlug;
-
       const makeThumb = () => {
-        if (typeof slug === "string" && slug.includes("/")) {
-          const [mfg, modelFileBase] = slug.split("/");
-          const fileBase = `${String(mfg).toLowerCase()}-${
-            String(modelFileBase).toLowerCase()
-          }`
-            .replace(/[^a-z0-9\-]+/g, "-")
-            .replace(/\-+/g, "-")
-            .replace(/(^-|-$)/g, "");
-          const png =
-            `vendor/netbox-devicetype-library/elevation-images/${mfg}/${fileBase}.front.png`;
-          const jpg =
-            `vendor/netbox-devicetype-library/elevation-images/${mfg}/${fileBase}.front.jpg`;
-          const img = document.createElement("img");
-          img.className = "thumb";
-          img.alt = "";
-          img.loading = "lazy";
-          img.src = png;
-          img.setAttribute("data-fallback", jpg);
-          return img;
-        }
+        const img = document.createElement("img");
+        img.className = "thumb";
+        img.alt = "";
+        img.loading = "lazy";
 
-        const placeholder = document.createElement("div");
-        placeholder.className = "thumb";
-        placeholder.setAttribute("aria-hidden", "true");
-        return placeholder;
+        const src = d.thumbPng ?? d.thumbJpg ?? PLACEHOLDER_THUMB;
+        const fallback = d.thumbJpg ?? PLACEHOLDER_THUMB;
+        img.src = src;
+        img.setAttribute("data-fallback", fallback);
+        return img;
       };
 
       card.appendChild(makeThumb());
@@ -114,7 +95,7 @@ export function createSelectedPanel(
       dot.style.width = "10px";
       dot.style.height = "10px";
       dot.style.borderRadius = "50%";
-      dot.style.background = typeColor(d.type);
+      dot.style.background = typeColor(d.deviceKind);
       dot.style.display = "inline-block";
 
       const titleText = document.createElement("span");

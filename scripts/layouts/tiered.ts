@@ -3,9 +3,10 @@ type NodeRef = string | { id: string };
 export type TieredLayoutNode = {
   id: string;
   name?: string;
-  role?: string;
-  site?: string;
-  room_id?: string;
+  // Domain boundary can attach these hints to avoid parsing in the layout layer.
+  layoutTierIndexHint?: number;
+  layoutSiteRank?: number;
+  layoutStableKey?: number;
   x?: number;
   y?: number;
   fx?: number | null;
@@ -27,9 +28,6 @@ type SimulationLike = { stop: () => void };
 const clamp = (v: number, min: number, max: number) =>
   Math.max(min, Math.min(max, v));
 
-const normalizeRole = (role: unknown) =>
-  String(role || "").trim().toLowerCase();
-
 const degreeFor = (links: TieredLayoutLink[]): Map<string, number> => {
   const deg = new Map<string, number>();
   links.forEach((l: TieredLayoutLink) => {
@@ -39,45 +37,6 @@ const degreeFor = (links: TieredLayoutLink[]): Map<string, number> => {
     if (b) deg.set(b, (deg.get(b) || 0) + 1);
   });
   return deg;
-};
-
-const roleToTier = (role: unknown) => {
-  const r = normalizeRole(role);
-
-  if (r === "internet" || r === "isp") return "internet";
-  if (r.includes("firewall")) return "edge";
-  if (r.includes("router") || r.includes("wan") || r.includes("edge")) {
-    return "edge";
-  }
-
-  if (r === "core") return "core";
-  if (
-    r.includes("distribution") || r.includes("dist") || r.includes("agg") ||
-    r.includes("aggregation")
-  ) return "agg";
-  if (r.includes("access")) return "access";
-
-  if (
-    r.includes("server") || r.includes("service") || r.includes("dns") ||
-    r.includes("idp")
-  ) return "service";
-  if (
-    r.includes("load balancer") || r === "lb" || r.includes("load-balancer")
-  ) return "service";
-
-  if (r.includes("access point") || r === "ap" || r.includes("wifi")) {
-    return "endpoint";
-  }
-  if (
-    r.includes("endpoint") || r.includes("client") ||
-    r.includes("workstation") || r.includes("printer")
-  ) return "endpoint";
-  if (r.includes("iot")) return "endpoint";
-
-  // A generic "switch" needs inference.
-  if (r.includes("switch")) return "switch";
-
-  return "unknown";
 };
 
 const TIER_ORDER = [
@@ -90,46 +49,15 @@ const TIER_ORDER = [
   "endpoint",
   "unknown",
 ];
-const tierIndexFor = (tier: string) => {
-  const idx = TIER_ORDER.indexOf(tier);
-  return idx >= 0 ? idx : (TIER_ORDER.length - 1);
-};
+
+const TIER_UNKNOWN_INDEX = TIER_ORDER.length - 1;
+const TIER_SWITCH_SENTINEL = -1;
 
 const getNodeId = (
   nodeOrId: NodeRef | null | undefined,
 ):
   | string
   | undefined => (typeof nodeOrId === "string" ? nodeOrId : nodeOrId?.id);
-
-const inferSiteKey = (name: unknown) => {
-  const raw = String(name || "").trim();
-  if (!raw) return "";
-  const lower = raw.toLowerCase();
-
-  if (lower.startsWith("hq ")) return "hq";
-  if (lower === "hq") return "hq";
-
-  const branch = lower.match(/^branch\s*[-_]?\s*(\d+)\b/);
-  if (branch?.[1]) return `branch-${branch[1]}`;
-
-  if (lower.startsWith("campus ")) return "campus";
-  if (lower === "campus") return "campus";
-
-  const bldg = lower.match(/^bldg\s*[-_]?\s*([a-z0-9]+)\b/);
-  if (bldg?.[1]) return `bldg-${bldg[1]}`;
-
-  return "";
-};
-
-const siteKeyForNode = (node: TieredLayoutNode | undefined) => {
-  const explicit = String(node?.site || "").trim();
-  if (explicit) return explicit.toLowerCase();
-
-  const room = String(node?.room_id || "").trim();
-  if (room) return room.toLowerCase();
-
-  return inferSiteKey(node?.name);
-};
 
 const estimateLabelWidth = (node: TieredLayoutNode) => {
   const text = String(node?.name || node?.id || "");
@@ -164,7 +92,9 @@ const pickRoots = ({
   deg: Map<string, number>;
 }) => {
   const byId = new Map<string, TieredLayoutNode>(nodes.map((n) => [n.id, n]));
-  const internet = nodes.filter((n) => roleToTier(n.role) === "internet");
+  const internet = nodes.filter((n) =>
+    (n.layoutTierIndexHint ?? TIER_UNKNOWN_INDEX) === 0
+  );
   if (internet.length) return internet.map((n) => n.id);
 
   // Fall back: highest degree (often core/edge).
@@ -215,31 +145,37 @@ const buildTree = ({
   const nodeById = new Map<string, TieredLayoutNode>(
     nodes.map((n) => [n.id, n]),
   );
-  const siteKeyCache = new Map<string, string>();
-  const siteKeyFor = (id: string) => {
-    if (siteKeyCache.has(id)) return siteKeyCache.get(id);
-    const n = nodeById.get(id);
-    const key = siteKeyForNode(n);
-    siteKeyCache.set(id, key);
-    return key;
-  };
 
   const sortNeighbors = (ids: Set<string>) => {
     return [...ids].sort((a: string, b: string) => {
       const na = nodeById.get(a);
       const nb = nodeById.get(b);
-      const ta = tierIndexFor(roleToTier(na?.role));
-      const tb = tierIndexFor(roleToTier(nb?.role));
+      const ta = typeof na?.layoutTierIndexHint === "number"
+        ? na.layoutTierIndexHint
+        : TIER_UNKNOWN_INDEX;
+      const tb = typeof nb?.layoutTierIndexHint === "number"
+        ? nb.layoutTierIndexHint
+        : TIER_UNKNOWN_INDEX;
       if (ta !== tb) return ta - tb;
 
-      const sa = siteKeyFor(a);
-      const sb = siteKeyFor(b);
-      if (sa !== sb) return String(sa).localeCompare(String(sb));
+      const sa = typeof na?.layoutSiteRank === "number" ? na.layoutSiteRank : 0;
+      const sb = typeof nb?.layoutSiteRank === "number" ? nb.layoutSiteRank : 0;
+      if (sa !== sb) return sa - sb;
 
       const da = deg.get(a) || 0;
       const db = deg.get(b) || 0;
       if (db !== da) return db - da;
-      return String(na?.name || a).localeCompare(String(nb?.name || b));
+
+      const ka = typeof na?.layoutStableKey === "number"
+        ? na.layoutStableKey
+        : 0;
+      const kb = typeof nb?.layoutStableKey === "number"
+        ? nb.layoutStableKey
+        : 0;
+      if (ka !== kb) return ka - kb;
+
+      // Final deterministic fallback without additional parsing.
+      return a < b ? -1 : (a > b ? 1 : 0);
     });
   };
 
@@ -353,31 +289,40 @@ export function applyTieredLayout(
 
   // Tier assignment (role-driven, with deterministic inference for generic switches/unknowns).
   nodes.forEach((n) => {
-    const base = roleToTier(n.role);
-    let tier = base;
+    const baseIndex = typeof n.layoutTierIndexHint === "number"
+      ? n.layoutTierIndexHint
+      : TIER_UNKNOWN_INDEX;
 
-    if (tier === "switch") {
+    let tierIndex = baseIndex;
+
+    if (tierIndex === TIER_SWITCH_SENTINEL) {
       const d = deg.get(n.id) || 0;
-      if (d >= 6) tier = "core";
-      else if (d >= 4) tier = "agg";
-      else tier = "access";
+      if (d >= 6) tierIndex = 2;
+      else if (d >= 4) tierIndex = 3;
+      else tierIndex = 4;
     }
 
-    if (tier === "unknown") {
+    if (tierIndex === TIER_UNKNOWN_INDEX) {
       const p = parent.get(n.id);
       if (p) {
         const pn = nodeById.get(p);
-        const pt = pn?.__tier || roleToTier(pn?.role);
-        const pi = tierIndexFor(pt);
-        tier = TIER_ORDER[Math.min(pi + 1, TIER_ORDER.length - 1)] || "unknown";
+        const pi =
+          typeof pn?.__tierIndex === "number" && Number.isFinite(pn.__tierIndex)
+            ? pn.__tierIndex
+            : (typeof pn?.layoutTierIndexHint === "number" &&
+                Number.isFinite(pn.layoutTierIndexHint)
+              ? pn.layoutTierIndexHint
+              : TIER_UNKNOWN_INDEX);
+        tierIndex = Math.min(pi + 1, TIER_UNKNOWN_INDEX);
       } else {
         const d = deg.get(n.id) || 0;
-        if (d <= 1) tier = "endpoint";
+        if (d <= 1) tierIndex = 6;
       }
     }
 
-    n.__tier = tier;
-    n.__tierIndex = tierIndexFor(tier);
+    const clamped = Math.max(0, Math.min(TIER_UNKNOWN_INDEX, tierIndex));
+    n.__tierIndex = clamped;
+    n.__tier = TIER_ORDER[clamped] || "unknown";
   });
 
   const xVals = nodes

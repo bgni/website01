@@ -11,7 +11,7 @@ import {
 } from "../trafficConnector.ts";
 import type { TrafficUpdate } from "../domain/types.ts";
 import { FixtureValidationError } from "../domain/errors.ts";
-import { normalizeTrafficUpdatesPayload } from "../domain/fixtures.ts";
+import { parseTrafficUpdatesPayload } from "../domain/fixtures.ts";
 import {
   type Dispatch,
   getFilteredDevices,
@@ -80,7 +80,18 @@ export function createController(
   };
 
   const attachTraffic = (trafficUpdates: unknown) => {
-    const updates = normalizeTrafficUpdatesPayload(trafficUpdates);
+    let updates: TrafficUpdate[] = [];
+    try {
+      updates = parseTrafficUpdatesPayload(trafficUpdates);
+      dispatch({ type: "setStatusText", text: "" });
+    } catch (err) {
+      dispatch({
+        type: "setStatusText",
+        text: `Traffic payload invalid: ${formatStatusError(err)}`,
+      });
+      console.warn("Invalid traffic payload.", err);
+      return;
+    }
     updates.forEach((t) => {
       const prev = trafficByConn.get(t.connectionId) || {
         connectionId: t.connectionId,
@@ -200,18 +211,22 @@ export function createController(
       const basePath = getNetworkBasePath(networkId);
       const trafficPath = `${basePath}/traffic.json`;
 
-      const { devices: devicesOut, connections: connectionsOut } =
-        await loadData(
-          {
-            basePath,
-            includeTraffic: false,
-          },
-        );
+      const {
+        devices: devicesOut,
+        connections: connectionsOut,
+        deviceTypes,
+      } = await loadData(
+        {
+          basePath,
+          includeTraffic: false,
+        },
+      );
 
       dispatch({
         type: "networkLoaded",
         devices: devicesOut,
         connections: connectionsOut,
+        deviceTypes,
       });
 
       adjacency = buildAdjacency(connectionsOut) as Adjacency;
