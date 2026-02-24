@@ -49,20 +49,16 @@ The goal of REVIEW5 is to:
     multiple networks.
   - `home` was aligned to the device type catalog (exact slugs + interface ids).
 
+- Central graph/traffic constants are now consolidated.
+  - Added `scripts/config.ts` and updated the renderer/view-model/traffic
+    visualizations to pull shared constants from it.
+
 ### Still pending (carry forward)
 
-- Central config/constants module
-  - `scripts/config.ts` does not exist yet.
-  - Magic numbers / palette values remain spread across:
-    - `scripts/graph/renderer.ts`
-    - `scripts/graph/viewModel.ts`
-    - `scripts/graph/trafficAdapter.ts`
-    - `scripts/trafficFlowVisualization/*`
-  - Example hotspots (not exhaustive):
-    - `scripts/graph/viewModel.ts` default stroke/halo colors and filter
-      strings.
-    - `scripts/graph/trafficAdapter.ts` down color and utilization→color/width
-      scaling constants.
+- Continue consolidating remaining constants
+  - `scripts/config.ts` now exists and covers core graph/traffic constants.
+  - Remaining work is to keep migrating any lingering magic values in adjacent
+    modules as they’re touched (keeping refactors mechanical).
 - Responsive sizing (or at least centralized default sizing)
   - Renderer still defaults to `width = 1200`, `height = 720`.
   - No `ResizeObserver`-driven sizing is present.
@@ -106,6 +102,8 @@ traffic status and any other “outside-world” values flowing into graph logic
 ## Recommended PR plan (small, safe steps)
 
 ### PR1 — Add config + eliminate magic constants (highest ROI)
+
+Status: completed (2026-02-25)
 
 Create `scripts/config.ts` containing only constants and plain objects (safe to
 import in browser and tools).
