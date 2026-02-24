@@ -1,4 +1,4 @@
-import type { TrafficUpdate } from "../trafficConnector.ts";
+import type { TrafficUpdate } from "../domain/types.ts";
 import type {
   GraphLinkDatum,
   LinkDasharrayArgs,

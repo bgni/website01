@@ -1,10 +1,6 @@
-export type TrafficUpdate = {
-  connectionId: string;
-  status?: string;
-  rateMbps?: number;
-  utilization?: number;
-  [k: string]: unknown;
-};
+import type { TrafficUpdate } from "./domain/types.ts";
+
+export type { TrafficUpdate };
 
 export type TrafficTimeline = {
   initial?: TrafficUpdate[];

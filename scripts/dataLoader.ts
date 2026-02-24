@@ -2,6 +2,11 @@ import {
   createNetboxDeviceTypeCatalogJson,
   enrichDevicesFromNetbox,
 } from "./deviceCatalog.ts";
+import type { Connection, Device } from "./domain/types.ts";
+import {
+  parseConnectionsFixture,
+  parseDevicesFixture,
+} from "./domain/fixtures.ts";
 
 export async function loadJson(path: string): Promise<unknown> {
   const res = await fetch(path);
@@ -12,8 +17,8 @@ export async function loadJson(path: string): Promise<unknown> {
 type LoadDataOptions = { basePath?: string; includeTraffic?: boolean };
 
 type LoadDataResult = {
-  devices: unknown;
-  connections: unknown;
+  devices: Device[];
+  connections: Connection[];
   traffic: unknown | undefined;
 };
 
@@ -77,5 +82,10 @@ export async function loadData(
     }
   }
 
-  return { devices: devicesOut, connections, traffic };
+  const devicesParsed = parseDevicesFixture(devicesOut, devicesPath);
+  const connectionsParsed = parseConnectionsFixture(
+    connections,
+    connectionsPath,
+  );
+  return { devices: devicesParsed, connections: connectionsParsed, traffic };
 }
