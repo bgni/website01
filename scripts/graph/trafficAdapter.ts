@@ -1,7 +1,11 @@
 import { createTrafficFlowVisualization } from "../trafficFlowVisualization/registry.ts";
 import type { TrafficUpdate } from "../domain/types.ts";
 import type {
+  LinkDasharrayArgs,
+  LinkStrokeArgs,
+  LinkWidthArgs,
   TrafficViz,
+  TrafficVizAfterStyleArgs,
   TrafficVizHelpers,
   TrafficVizKind,
 } from "../trafficFlowVisualization/types.ts";
@@ -69,11 +73,13 @@ export function createTrafficAdapter(
   );
   let stopViz: Stop = () => {};
 
-  const attach = ({ container, links, linkSelection }: VizMount) => {
+  const cleanupCurrentViz = () => {
     stopViz?.();
     stopViz = () => {};
     trafficViz?.destroy?.();
+  };
 
+  const attach = ({ container, links, linkSelection }: VizMount) => {
     if (typeof trafficViz?.setTrafficGetter === "function") {
       trafficViz.setTrafficGetter(getTraffic);
     }
@@ -88,12 +94,11 @@ export function createTrafficAdapter(
   };
 
   const destroy = () => {
-    stopViz?.();
-    stopViz = () => {};
-    trafficViz?.destroy?.();
+    cleanupCurrentViz();
   };
 
   const setKind = (next: string, mount: VizMount) => {
+    cleanupCurrentViz();
     trafficViz = createTrafficFlowVisualization(toKind(next), helpers);
     attach(mount);
   };
@@ -102,10 +107,17 @@ export function createTrafficAdapter(
     attach,
     destroy,
     setKind,
-    getLinkStroke: trafficViz.getLinkStroke.bind(trafficViz),
-    getLinkWidth: trafficViz.getLinkWidth.bind(trafficViz),
-    getLinkDasharray: trafficViz.getLinkDasharray.bind(trafficViz),
-    afterLinkStyle: trafficViz.afterLinkStyle?.bind(trafficViz),
-    onSimulationTick: trafficViz.onSimulationTick?.bind(trafficViz),
+    // NOTE: these must delegate to the *current* trafficViz.
+    // Binding once would pin them to the initial instance and make
+    // runtime switching appear to "do nothing".
+    getLinkStroke: (args: LinkStrokeArgs) =>
+      trafficViz.getLinkStroke.call(trafficViz, args),
+    getLinkWidth: (args: LinkWidthArgs) =>
+      trafficViz.getLinkWidth.call(trafficViz, args),
+    getLinkDasharray: (args: LinkDasharrayArgs) =>
+      trafficViz.getLinkDasharray.call(trafficViz, args),
+    afterLinkStyle: (args: TrafficVizAfterStyleArgs) =>
+      trafficViz.afterLinkStyle?.call(trafficViz, args),
+    onSimulationTick: () => trafficViz.onSimulationTick?.call(trafficViz),
   };
 }
