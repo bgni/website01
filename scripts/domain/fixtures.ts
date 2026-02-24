@@ -1,10 +1,12 @@
 import type {
   Connection,
   ConnectionEnd,
-  Device,
+  NetworkDevice,
   TrafficUpdate,
 } from "./types.ts";
 import { FixtureValidationError } from "./errors.ts";
+import { computeTieredLayoutHints } from "./layoutHints.ts";
+import { inferDeviceKindFromType } from "./deviceKind.ts";
 
 type Rec = Record<string, unknown>;
 
@@ -19,6 +21,15 @@ const fail = (ctx: string, msg: string): never => {
   throw new FixtureValidationError(ctx, msg);
 };
 
+const optStr = (v: unknown, ctx: string): string | undefined => {
+  if (v == null) return undefined;
+  if (typeof v === "string") {
+    const s = v.trim();
+    return s ? s : undefined;
+  }
+  fail(ctx, "must be a string");
+};
+
 const toNum = (v: unknown): number | undefined => {
   if (typeof v === "number" && Number.isFinite(v)) return v;
   if (typeof v === "string") {
@@ -31,7 +42,7 @@ const toNum = (v: unknown): number | undefined => {
 export function parseDevicesFixture(
   raw: unknown,
   ctx = "devices",
-): Device[] {
+): NetworkDevice[] {
   if (!Array.isArray(raw)) fail(ctx, "expected an array");
   const list = raw as unknown[];
 
@@ -45,30 +56,32 @@ export function parseDevicesFixture(
 
     const name = nonEmptyStr(rec.name) || id;
 
-    // Fixtures frequently omit these when `type_slug` is present (NetBox enrichment fills them).
-    // Normalize to empty strings so UI rendering doesn't show "undefined".
-    const brand = toStr(rec.brand);
-    const model = toStr(rec.model);
-
     // Prefer explicit `type`, otherwise fall back to role.
     const type = nonEmptyStr(rec.type) || nonEmptyStr(rec.role) || "";
 
-    const ports = Array.isArray(rec.ports) ? rec.ports : [];
+    const deviceKind = inferDeviceKindFromType(type);
 
-    const deviceTypeSlug = nonEmptyStr(rec.deviceTypeSlug) ||
-      nonEmptyStr(rec.type_slug) ||
-      undefined;
+    const deviceTypeSlugMaybe =
+      optStr(rec.deviceTypeSlug, `${itemCtx}.deviceTypeSlug`) ??
+        optStr(rec.type_slug, `${itemCtx}.type_slug`);
+    const deviceTypeSlug = deviceTypeSlugMaybe;
+
+    // Precompute layout hints at the domain boundary so internal layout logic
+    // can avoid string parsing and heuristic inference.
+    const { layoutTierIndexHint, layoutSiteRank, layoutStableKey } =
+      computeTieredLayoutHints(rec);
 
     return {
       ...rec,
       id,
       name,
       type,
-      brand,
-      model,
-      ports,
-      deviceTypeSlug,
-    } satisfies Device;
+      deviceKind,
+      ...(deviceTypeSlug ? { deviceTypeSlug } : {}),
+      layoutTierIndexHint,
+      layoutSiteRank,
+      layoutStableKey,
+    } satisfies NetworkDevice;
   });
 }
 
@@ -81,11 +94,23 @@ const parseConnectionEnd = (
   const deviceId = nonEmptyStr(rec.deviceId);
   if (!deviceId) fail(ctx, "missing required field 'deviceId'");
 
-  const portId = nonEmptyStr(rec.portId);
+  // Preferred: `interfaceId` (real interface name like "GigabitEthernet1/0/1").
+  // Legacy: `portId` (including "pN" shorthand). We accept it at the boundary
+  // to keep fixture authoring simple, and normalize into `interfaceId`.
+  const interfaceId = optStr(rec.interfaceId, `${ctx}.interfaceId`) ??
+    optStr(rec.portId, `${ctx}.portId`);
+
+  if (
+    typeof rec.interfaceId === "string" && typeof rec.portId === "string" &&
+    rec.interfaceId.trim() && rec.portId.trim() &&
+    rec.interfaceId.trim() !== rec.portId.trim()
+  ) {
+    fail(ctx, "fields 'interfaceId' and legacy 'portId' disagree");
+  }
   return {
     ...rec,
     deviceId,
-    ...(portId ? { portId } : {}),
+    ...(interfaceId ? { interfaceId } : {}),
   } satisfies ConnectionEnd;
 };
 
@@ -144,42 +169,53 @@ export function parseTrafficUpdatesFixture(
     });
 }
 
-// Lenient helper for runtime traffic connectors.
+// Strict helper for runtime traffic connectors.
 // Accepts:
-// - a single update object
 // - an array of update objects
+// - a single update object
 // - a timeline object `{ initial, updates }` (uses `initial` when present)
-// Drops invalid entries rather than throwing.
-export function normalizeTrafficUpdatesPayload(
+// Throws on invalid payload shape or invalid update entries.
+export function parseTrafficUpdatesPayload(
   raw: unknown,
+  ctx = "trafficPayload",
 ): TrafficUpdate[] {
-  const asList = (v: unknown): unknown[] => {
-    if (Array.isArray(v)) return v;
-    if (!v || typeof v !== "object") return [];
-    const rec = v as Record<string, unknown>;
-    if (Array.isArray(rec.initial)) return rec.initial;
-    if (Array.isArray(rec.updates)) return rec.updates;
-    return [v];
-  };
+  const list: unknown[] = (() => {
+    if (Array.isArray(raw)) return raw;
 
-  const normalizeOne = (v: unknown): TrafficUpdate | null => {
-    if (!isRecord(v)) return null;
+    if (isRecord(raw)) {
+      const rec = raw as Record<string, unknown>;
+      if (Array.isArray(rec.initial)) return rec.initial;
+      if (Array.isArray(rec.updates)) return rec.updates;
+      return [raw];
+    }
+
+    return fail(ctx, "expected an array, an object, or a timeline object");
+  })();
+
+  return list.map((v, index) => {
+    const itemCtx = `${ctx}[${index}]`;
+    if (!isRecord(v)) fail(itemCtx, "expected an object");
     const rec = v as Rec;
-    const connectionId = nonEmptyStr(rec.connectionId);
-    if (!connectionId) return null;
 
-    const status = typeof rec.status === "string" ? rec.status.trim() : "";
-    const rateMbps = toNum(rec.rateMbps);
-    const utilization = toNum(rec.utilization);
+    const connectionId = nonEmptyStr(rec.connectionId);
+    if (!connectionId) fail(itemCtx, "missing required field 'connectionId'");
 
     const out: TrafficUpdate = { ...rec, connectionId };
-    if (status) out.status = status;
-    if (rateMbps != null) out.rateMbps = rateMbps;
-    if (utilization != null) out.utilization = utilization;
-    return out;
-  };
 
-  return asList(raw)
-    .map(normalizeOne)
-    .filter((x): x is TrafficUpdate => Boolean(x));
+    const statusRaw = rec.status;
+    if (typeof statusRaw === "string") {
+      const status = statusRaw.trim();
+      if (status) out.status = status;
+    } else if (statusRaw !== undefined) {
+      fail(itemCtx, "field 'status' must be a string when provided");
+    }
+
+    const rateMbps = toNum(rec.rateMbps);
+    if (rateMbps != null) out.rateMbps = rateMbps;
+
+    const utilization = toNum(rec.utilization);
+    if (utilization != null) out.utilization = utilization;
+
+    return out;
+  });
 }

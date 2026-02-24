@@ -1,8 +1,9 @@
+import type { Connection, DeviceType, NetworkDevice } from "./domain/types.ts";
+import { loadDeviceTypeIndex } from "./domain/deviceTypes.ts";
 import {
-  createNetboxDeviceTypeCatalogJson,
-  enrichDevicesFromNetbox,
-} from "./deviceCatalog.ts";
-import type { Connection, Device } from "./domain/types.ts";
+  normalizeLegacyInterfaceIds,
+  validateTopology,
+} from "./domain/topology.ts";
 import {
   parseConnectionsFixture,
   parseDevicesFixture,
@@ -17,9 +18,28 @@ export async function loadJson(path: string): Promise<unknown> {
 type LoadDataOptions = { basePath?: string; includeTraffic?: boolean };
 
 type LoadDataResult = {
-  devices: Device[];
+  devices: NetworkDevice[];
   connections: Connection[];
   traffic: unknown | undefined;
+  deviceTypes: Record<string, DeviceType>;
+};
+
+const hasInterfaceIds = (rawConnections: unknown): boolean => {
+  if (!Array.isArray(rawConnections)) return false;
+  for (const c of rawConnections) {
+    if (!c || typeof c !== "object") continue;
+    const rec = c as Record<string, unknown>;
+    for (const side of ["from", "to"] as const) {
+      const end = rec[side];
+      if (!end || typeof end !== "object") continue;
+      const endRec = end as Record<string, unknown>;
+      const interfaceId = endRec.interfaceId;
+      const portId = endRec.portId;
+      if (typeof interfaceId === "string" && interfaceId.trim()) return true;
+      if (typeof portId === "string" && portId.trim()) return true;
+    }
+  }
+  return false;
 };
 
 export async function loadData(
@@ -58,34 +78,45 @@ export async function loadData(
     })
     : devices;
 
-  let devicesOut = devicesWithSlug;
-  if (
-    Array.isArray(devicesWithSlug) &&
+  const shouldLoadDeviceTypes = (Array.isArray(devicesWithSlug) &&
     devicesWithSlug.some((d) =>
       d && typeof d.deviceTypeSlug === "string" &&
       d.deviceTypeSlug.trim().length
-    )
-  ) {
-    try {
-      const catalog = createNetboxDeviceTypeCatalogJson({
-        indexPath: "data/netbox-device-types.json",
-      });
-      devicesOut = await enrichDevicesFromNetbox({
-        devices: devicesWithSlug,
-        catalog,
-      });
-    } catch (err) {
-      console.warn(
-        "NetBox catalog unavailable; continuing without enrichment.",
-        err,
-      );
-    }
+    )) || hasInterfaceIds(connections);
+
+  let deviceTypes: Record<string, DeviceType> = {};
+  if (shouldLoadDeviceTypes) {
+    deviceTypes = await loadDeviceTypeIndex({
+      indexPath: "data/netbox-device-types.json",
+    });
   }
 
-  const devicesParsed = parseDevicesFixture(devicesOut, devicesPath);
+  const devicesParsed = parseDevicesFixture(devicesWithSlug, devicesPath);
   const connectionsParsed = parseConnectionsFixture(
     connections,
     connectionsPath,
   );
-  return { devices: devicesParsed, connections: connectionsParsed, traffic };
+
+  const connectionsNormalized = normalizeLegacyInterfaceIds({
+    devices: devicesParsed,
+    connections: connectionsParsed,
+    deviceTypes,
+    devicesCtx: devicesPath,
+    connectionsCtx: connectionsPath,
+  });
+
+  validateTopology({
+    devices: devicesParsed,
+    connections: connectionsNormalized,
+    deviceTypes,
+    devicesCtx: devicesPath,
+    connectionsCtx: connectionsPath,
+  });
+
+  return {
+    devices: devicesParsed,
+    connections: connectionsNormalized,
+    traffic,
+    deviceTypes,
+  };
 }
