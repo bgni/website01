@@ -8,6 +8,7 @@ import { applyLayoutToGraph } from "./layoutAdapter.ts";
 import { createGraphRenderer, type Guide } from "./renderer.ts";
 import { createTrafficAdapter } from "./trafficAdapter.ts";
 import { buildRendererUpdateArgs } from "./viewModel.ts";
+import { getD3 } from "../lib/d3.ts";
 
 type Adjacency = Record<
   string,
@@ -16,11 +17,13 @@ type Adjacency = Record<
 
 export function createGraph(
   {
+    svg,
     devices,
     connections,
     adjacency,
     onNodeSelect,
   }: {
+    svg: string | SVGSVGElement;
     devices: NetworkDevice[];
     connections: Connection[];
     adjacency: Adjacency;
@@ -37,11 +40,14 @@ export function createGraph(
   destroy: () => void;
   setTrafficVisualization: (kind: string) => void;
   setLayout: (kind: string) => void;
+  resize: (size: { width: number; height: number }) => void;
 } {
+  const d3 = getD3();
   const trafficById: Record<string, TrafficUpdate> = {};
   const getTraffic = (connectionId: string) => trafficById[connectionId];
 
   const renderer = createGraphRenderer({
+    svg,
     devices,
     connections,
     getNodeFill: (d) => typeColor(d.deviceKind),
@@ -141,5 +147,18 @@ export function createGraph(
     update(lastUpdateArgs);
   };
 
-  return { update, updateTraffic, destroy, setTrafficVisualization, setLayout };
+  const resize = ({ width, height }: { width: number; height: number }) => {
+    renderer.resize({ width, height });
+    // Re-apply active layout so tiered/force recompute based on new bounds.
+    setLayout(layoutKind);
+  };
+
+  return {
+    update,
+    updateTraffic,
+    destroy,
+    setTrafficVisualization,
+    setLayout,
+    resize,
+  };
 }

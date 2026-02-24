@@ -1,5 +1,6 @@
 import type { TrafficUpdate } from "../domain/types.ts";
 import { GRAPH_COLORS, GRAPH_DEFAULTS, TRAFFIC_STYLE } from "../config.ts";
+import { getD3 } from "../lib/d3.ts";
 import type {
   GraphLinkDatum,
   LinkDasharrayArgs,
@@ -24,6 +25,7 @@ const speedFromRate = (rateMbps: unknown) => {
 export function createFlowDashesTrafficVisualization(
   { trafficColor, trafficWidthRate }: TrafficVizHelpers = {},
 ): TrafficViz {
+  const d3 = getD3();
   // deno-lint-ignore no-explicit-any
   let overlay: any;
   let rafId = 0;

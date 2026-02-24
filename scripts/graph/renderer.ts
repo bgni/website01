@@ -1,5 +1,6 @@
 import type { Connection, NetworkDevice } from "../domain/types.ts";
 import { GRAPH_COLORS, GRAPH_DEFAULTS } from "../config.ts";
+import { getD3 } from "../lib/d3.ts";
 
 export type SimNode = NetworkDevice & {
   x?: number;
@@ -33,13 +34,15 @@ export type RendererUpdateArgs = {
 
 export function createGraphRenderer(
   {
+    svg,
     devices,
     connections,
     getNodeFill,
     onNodeSelect,
-    width = GRAPH_DEFAULTS.width,
-    height = GRAPH_DEFAULTS.height,
+    width: initialWidth = GRAPH_DEFAULTS.width,
+    height: initialHeight = GRAPH_DEFAULTS.height,
   }: {
+    svg: string | SVGSVGElement;
     devices: NetworkDevice[];
     connections: Connection[];
     getNodeFill: (d: SimNode) => string;
@@ -48,16 +51,21 @@ export function createGraphRenderer(
     height?: number;
   },
 ) {
-  const svg = d3.select("#graph");
+  const d3 = getD3();
+  const svgSel = d3.select(svg);
+
+  let width = initialWidth;
+  let height = initialHeight;
+  let lastGuides: Guide[] = [];
 
   // Clear any prior render (important when switching networks).
-  svg.on(".zoom", null);
-  svg.selectAll("*").remove();
+  svgSel.on(".zoom", null);
+  svgSel.selectAll("*").remove();
 
-  svg
+  svgSel
     .attr("viewBox", `0 0 ${width} ${height}`)
     .attr("preserveAspectRatio", "xMidYMid meet");
-  const container = svg.append("g");
+  const container = svgSel.append("g");
 
   const zoom = d3.zoom().scaleExtent([
     GRAPH_DEFAULTS.zoom.minScale,
@@ -68,7 +76,7 @@ export function createGraphRenderer(
       container.attr("transform", event.transform.toString());
     },
   );
-  svg.call(zoom);
+  svgSel.call(zoom);
 
   const guideLayer = container.append("g").attr("class", "guide-layer");
   const linkLayer = container.append("g").attr("class", "link-layer");
@@ -217,6 +225,7 @@ export function createGraphRenderer(
 
   const renderGuides = (guides: Guide[] = []) => {
     const g = Array.isArray(guides) ? guides : [];
+    lastGuides = g;
     guideLayer
       .attr("pointer-events", "none")
       .attr("opacity", g.length ? 1 : 0);
@@ -274,15 +283,38 @@ export function createGraphRenderer(
 
   simulation.on("tick", renderPositions);
 
+  const resize = (next: { width: number; height: number }) => {
+    const w = Math.max(1, Math.floor(Number(next?.width) || 0));
+    const h = Math.max(1, Math.floor(Number(next?.height) || 0));
+    if (!w || !h) return;
+
+    width = w;
+    height = h;
+
+    svgSel
+      .attr("viewBox", `0 0 ${width} ${height}`)
+      .attr("preserveAspectRatio", "xMidYMid meet");
+
+    simulation.force("center", d3.forceCenter(width / 2, height / 2));
+    if (layoutKind === "force") simulation.alpha(0.5).restart();
+
+    renderGuides(lastGuides);
+    renderPositions();
+  };
+
   const destroy = () => {
     simulation.stop();
-    svg.on(".zoom", null);
-    svg.selectAll("*").remove();
+    svgSel.on(".zoom", null);
+    svgSel.selectAll("*").remove();
   };
 
   return {
-    width,
-    height,
+    get width() {
+      return width;
+    },
+    get height() {
+      return height;
+    },
     nodes,
     links,
     simulation,
@@ -290,6 +322,7 @@ export function createGraphRenderer(
     linkSelection,
     renderPositions,
     renderGuides,
+    resize,
     setLayoutKind,
     setOnTickHook: (fn: (() => void) | null) => {
       onTickHook = fn;

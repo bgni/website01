@@ -1,14 +1,14 @@
-import { loadData, loadJson } from "../dataLoader.ts";
+import {
+  loadData as defaultLoadData,
+  loadJson as defaultLoadJson,
+} from "../dataLoader.ts";
 import { buildAdjacency } from "../lib/graph/adjacency.ts";
 import { createGraph } from "../graph.ts";
 import {
-  createFlowTrafficConnector,
-  createGeneratedTrafficConnector,
-  createRealTrafficConnector,
-  createStaticTrafficConnector,
-  createTimelineTrafficConnector,
-  type StopTraffic,
-} from "../trafficConnector.ts";
+  createTrafficConnector,
+  parseTrafficConnectorSpec,
+} from "../traffic/registry.ts";
+import type { StopTraffic } from "../traffic/types.ts";
 import type { TrafficUpdate } from "../domain/types.ts";
 import { FixtureValidationError } from "../domain/errors.ts";
 import { parseTrafficUpdatesPayload } from "../domain/fixtures.ts";
@@ -24,22 +24,19 @@ type Adjacency = Record<
   Array<{ neighbor: string; connectionId: string }>
 >;
 
-const asRecord = (v: unknown): Record<string, unknown> | null => {
-  if (!v || typeof v !== "object" || Array.isArray(v)) return null;
-  return v as Record<string, unknown>;
-};
-
 const formatStatusError = (err: unknown): string => {
   if (err instanceof FixtureValidationError) return err.message;
   if (err instanceof Error) return err.message;
   return String(err);
 };
 
-const loadJsonOptional = async (path: string): Promise<unknown | null> => {
-  const res = await fetch(path);
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`Failed to load ${path}`);
-  return await res.json();
+type LoadDataFn = typeof defaultLoadData;
+type LoadJsonFn = typeof defaultLoadJson;
+
+type ControllerDeps = {
+  loadData?: LoadDataFn;
+  loadJson?: LoadJsonFn;
+  fetch?: typeof fetch;
 };
 
 const getNetworkBasePath = (networkId: string) => {
@@ -57,12 +54,39 @@ export type Controller = {
 };
 
 export function createController(
-  { store, dispatch }: { store: Store; dispatch: Dispatch },
+  {
+    store,
+    dispatch,
+    graphSvg,
+    deps,
+  }: {
+    store: Store;
+    dispatch: Dispatch;
+    graphSvg: SVGSVGElement;
+    deps?: ControllerDeps;
+  },
 ): Controller {
+  const loadData = deps?.loadData ?? defaultLoadData;
+  const loadJson = deps?.loadJson ?? defaultLoadJson;
+  const doFetch = deps?.fetch ?? fetch;
+
+  const loadJsonOptional = async (path: string): Promise<unknown | null> => {
+    const res = await doFetch(path);
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error(`Failed to load ${path}`);
+    return await res.json();
+  };
+
   let adjacency: Adjacency = {};
   let graph: ReturnType<typeof createGraph> | null = null;
   let stopTraffic: StopTraffic = () => {};
   const trafficByConn = new Map<string, TrafficUpdate>();
+  let resizeObserver: ResizeObserver | null = null;
+
+  const getSvgSize = (svg: SVGSVGElement) => {
+    const rect = svg.getBoundingClientRect();
+    return { width: rect.width, height: rect.height };
+  };
 
   const updateGraphFromState = (state: State) => {
     if (!graph) return;
@@ -114,87 +138,19 @@ export function createController(
     const connectorPath = `${basePath}/traffic.connector.json`;
     const connector = await loadJsonOptional(connectorPath);
 
-    const connectorRec = asRecord(connector);
-    const kind = typeof connectorRec?.kind === "string"
-      ? connectorRec.kind
-      : null;
-
-    if (kind === "flow") {
-      const configPath = typeof connectorRec?.configPath === "string"
-        ? connectorRec.configPath
-        : "traffic.flow.json";
-      const full = `${basePath}/${configPath}`;
-      const config = await loadJson(full);
-
-      const connections = await loadJson(`${basePath}/connections.json`);
-      const connectionTypes = await loadJson("data/connectionTypes.json");
-
-      const flow = createFlowTrafficConnector({
-        config,
-        connections,
-        connectionTypes,
-      });
-      return flow.start(attachTraffic);
-    }
-
-    if (kind === "generated") {
-      const configPath = typeof connectorRec?.configPath === "string"
-        ? connectorRec.configPath
-        : "traffic.generator.json";
-      const full = `${basePath}/${configPath}`;
-      const config = await loadJson(full);
-      const generator = createGeneratedTrafficConnector({
-        config,
-      });
-      return generator.start(attachTraffic);
-    }
-
-    if (kind === "static") {
-      const configPath = typeof connectorRec?.configPath === "string"
-        ? connectorRec.configPath
-        : "traffic.json";
-      const full = `${basePath}/${configPath}`;
-      const source = await loadJson(full);
-      const staticConn = createStaticTrafficConnector({ source });
-      return staticConn.start(attachTraffic);
-    }
-
-    if (kind === "real") {
-      const url = typeof connectorRec?.url === "string"
-        ? connectorRec.url
-        : trafficPath;
-      const intervalMs = typeof connectorRec?.intervalMs === "number"
-        ? connectorRec.intervalMs
-        : 5000;
-      const real = createRealTrafficConnector({ url, intervalMs });
-      return real.start(attachTraffic);
-    }
-
-    if (kind === "timeline") {
-      const configPath = typeof connectorRec?.configPath === "string"
-        ? connectorRec.configPath
-        : "traffic.json";
-      const full = `${basePath}/${configPath}`;
-      const source = await loadJson(full);
-      const tl = createTimelineTrafficConnector({ timeline: source });
-      return tl.start(attachTraffic);
-    }
-
-    // Default behavior: if traffic.json is a timeline, play it; otherwise poll it.
-    const source = await loadJson(trafficPath);
-    const sourceRec = asRecord(source);
-    if (sourceRec && Array.isArray(sourceRec.initial)) {
-      const tl = createTimelineTrafficConnector({ timeline: sourceRec });
-      return tl.start(attachTraffic);
-    }
-    const real = createRealTrafficConnector({
-      url: trafficPath,
-      intervalMs: 5000,
+    const spec = parseTrafficConnectorSpec(connector);
+    const trafficConnector = await createTrafficConnector(spec, {
+      basePath,
+      trafficPath,
+      loadJson,
     });
-    return real.start(attachTraffic);
+
+    return trafficConnector.start(attachTraffic);
   };
 
   const destroyGraph = () => {
+    resizeObserver?.disconnect();
+    resizeObserver = null;
     if (graph?.destroy) graph.destroy();
     graph = null;
   };
@@ -232,15 +188,24 @@ export function createController(
       adjacency = buildAdjacency(connectionsOut) as Adjacency;
 
       graph = createGraph({
+        svg: graphSvg,
         devices: devicesOut,
         connections: connectionsOut,
         adjacency,
         onNodeSelect: (id: string) => dispatch({ type: "toggleSelect", id }),
       });
 
+      resizeObserver?.disconnect();
+      resizeObserver = new ResizeObserver(() => {
+        if (!graph) return;
+        graph.resize(getSvgSize(graphSvg));
+      });
+      resizeObserver.observe(graphSvg);
+
       const state = store.getState();
       graph.setTrafficVisualization(state.trafficVizKind);
       graph.setLayout(state.layoutKind);
+      graph.resize(getSvgSize(graphSvg));
       updateGraphFromState(state);
 
       stopTraffic = await startTrafficConnector({ basePath, trafficPath });

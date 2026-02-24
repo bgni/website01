@@ -6,6 +6,7 @@ import { createControls } from "../ui/controls.ts";
 import { createSearchPanel } from "../ui/searchPanel.ts";
 import { createSelectedPanel } from "../ui/selectedPanel.ts";
 import type { SortDir, SortKey } from "../search.ts";
+import { loadData, loadJson } from "../dataLoader.ts";
 
 type PersistedUiSettingsV1 = {
   v: 1;
@@ -112,16 +113,18 @@ const persistUiSettings = (storage: Storage | undefined, state: State) => {
   }
 };
 
-const mustGetById = <T extends HTMLElement>(doc: Document, id: string): T => {
+const mustGetById = <T extends Element>(doc: Document, id: string): T => {
   const el = doc.getElementById(id);
   if (!el) throw new Error(`Missing required element #${id}`);
-  return el as T;
+  return el as unknown as T;
 };
 
 export function bootstrap(doc: Document) {
   const storage = getLocalStorage(doc);
   const { settings: persistedSettings, hasNetworkId: hasPersistedNetworkId } =
     loadPersistedUiSettings(doc);
+
+  const graphSvg = mustGetById<SVGSVGElement>(doc, "graph");
 
   const initialState: State = {
     networkId: "small-office",
@@ -142,7 +145,15 @@ export function bootstrap(doc: Document) {
   };
 
   const store = createStore(initialState);
-  const controller = createController({ store, dispatch: store.dispatch });
+  const controller = createController({
+    store,
+    dispatch: store.dispatch,
+    graphSvg,
+    deps: {
+      loadData,
+      loadJson,
+    },
+  });
 
   const statusEl = mustGetById<HTMLElement>(doc, "status");
   const networkSelect = mustGetById<HTMLSelectElement>(doc, "networkSelect");
