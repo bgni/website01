@@ -114,8 +114,9 @@ leaf-module boundaries are in place; remaining gaps are optional refinements).
 ### P0 — correctness + maintainability
 
 - [x] Add typed domain parse errors + traffic normalization helpers
-  - `normalizeTrafficUpdatesPayload()` is used by the controller to accept both
-    arrays and timeline-shaped traffic payloads.
+  - `parseTrafficUpdatesPayload()` is used by the controller to accept both
+    arrays and timeline-shaped traffic payloads (and now rejects invalid shapes
+    instead of silently returning `[]`).
 
 ### P1 — enforce boundaries (optional but high value)
 
