@@ -3,16 +3,16 @@
     "dev": "deno run --no-lock --allow-net --allow-read --allow-env --watch main.ts",
     "fmt": "deno fmt --check --ignore=vendor --ignore=docs/rendered --ignore=data",
     "lint": "deno lint --ignore=vendor --ignore=docs/rendered",
-    "check": "deno check --no-lock main.ts deviceCatalog_test.ts scripts/**/*.ts",
+    "check": "deno check --no-lock main.ts deviceCatalog_test.ts scripts/**/*.ts tools/**/*.ts",
     "test": "deno test --no-lock --allow-read",
     "test:cov": "deno test --no-lock --allow-read --coverage=coverage",
     "coverage:lcov": "deno coverage --lcov --output=coverage.lcov coverage",
-    "coverage:check": "deno run --no-lock --allow-read scripts/checkCoverage.ts --min-line=39 --min-branch=59",
+    "coverage:check": "deno run --no-lock --allow-read tools/check_coverage.ts --min-line=39 --min-branch=59",
     "ci": "deno task fmt && deno task lint && deno task check && deno task test:cov && deno task coverage:lcov && deno task coverage:check",
-    "validate": "deno run --no-lock --allow-read scripts/validateFixtures.ts",
-    "render:svgs": "deno run --no-lock --allow-read --allow-write scripts/renderNetworkSvgs.ts",
-    "build:netbox": "deno run --no-lock --allow-read --allow-write scripts/buildNetboxCatalog.ts vendor/netbox-devicetype-library data/netbox-device-types.json",
-    "build:pages": "deno run --no-lock --allow-read --allow-write --allow-net --allow-env scripts/buildPages.ts"
+    "validate": "deno run --no-lock --allow-read tools/validate_fixtures.ts",
+    "render:svgs": "deno run --no-lock --allow-read --allow-write tools/render_network_svgs.ts",
+    "build:netbox": "deno run --no-lock --allow-read --allow-write tools/build_netbox_catalog.ts vendor/netbox-devicetype-library data/netbox-device-types.json",
+    "build:pages": "deno run --no-lock --allow-read --allow-write --allow-net --allow-env tools/build_pages.ts"
   },
   "imports": {
     "@deno/emit": "jsr:@deno/emit@0.46.0",
