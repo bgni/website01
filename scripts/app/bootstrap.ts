@@ -1,9 +1,116 @@
 import { TRAFFIC_VIZ_OPTIONS } from "../trafficFlowVisualization/registry.ts";
+import { LAYOUTS } from "../layouts/registry.ts";
 import { createController } from "./controller.ts";
 import { createStore, type State } from "./state.ts";
 import { createControls } from "../ui/controls.ts";
 import { createSearchPanel } from "../ui/searchPanel.ts";
 import { createSelectedPanel } from "../ui/selectedPanel.ts";
+import type { SortDir, SortKey } from "../search.ts";
+
+type PersistedUiSettingsV1 = {
+  v: 1;
+  networkId?: string;
+  filter?: string;
+  sortKey?: SortKey;
+  sortDir?: SortDir;
+  pageSize?: number;
+  trafficVizKind?: string;
+  layoutKind?: string;
+};
+
+const UI_SETTINGS_STORAGE_KEY = "website01.uiSettings.v1";
+
+const getLocalStorage = (doc: Document): Storage | undefined => {
+  try {
+    return doc.defaultView?.localStorage;
+  } catch {
+    return undefined;
+  }
+};
+
+const safeParseJsonObject = (text: string): Record<string, unknown> | null => {
+  try {
+    const parsed = JSON.parse(text);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : null;
+  } catch {
+    return null;
+  }
+};
+
+const isNonEmptyString = (v: unknown): v is string =>
+  typeof v === "string" && v.trim().length > 0;
+
+const isSortKey = (v: unknown): v is SortKey =>
+  v === "name" || v === "brand" || v === "model" || v === "type" ||
+  v === "ports";
+
+const isSortDir = (v: unknown): v is SortDir => v === "asc" || v === "desc";
+
+const isPositiveInt = (v: unknown): v is number =>
+  typeof v === "number" && Number.isInteger(v) && v > 0;
+
+const loadPersistedUiSettings = (
+  doc: Document,
+): { settings: Partial<State>; hasNetworkId: boolean } => {
+  const storage = getLocalStorage(doc);
+  if (!storage) return { settings: {}, hasNetworkId: false };
+
+  const raw = storage.getItem(UI_SETTINGS_STORAGE_KEY);
+  if (!raw) return { settings: {}, hasNetworkId: false };
+
+  const obj = safeParseJsonObject(raw);
+  if (!obj) return { settings: {}, hasNetworkId: false };
+  if (obj.v !== 1) return { settings: {}, hasNetworkId: false };
+
+  const settings: Partial<State> = {};
+  let hasNetworkId = false;
+
+  if (isNonEmptyString(obj.networkId)) {
+    settings.networkId = obj.networkId;
+    hasNetworkId = true;
+  }
+  if (typeof obj.filter === "string") settings.filter = obj.filter;
+  if (isSortKey(obj.sortKey)) settings.sortKey = obj.sortKey;
+  if (isSortDir(obj.sortDir)) settings.sortDir = obj.sortDir;
+
+  if (isPositiveInt(obj.pageSize)) {
+    settings.pageSize = Math.max(1, Math.min(50, obj.pageSize));
+  }
+
+  if (typeof obj.trafficVizKind === "string") {
+    const allowed = new Set(TRAFFIC_VIZ_OPTIONS.map((o) => o.id));
+    if (allowed.has(obj.trafficVizKind)) {
+      settings.trafficVizKind = obj.trafficVizKind;
+    }
+  }
+  if (typeof obj.layoutKind === "string") {
+    const allowed = new Set(LAYOUTS.map((o) => o.id));
+    if (allowed.has(obj.layoutKind)) settings.layoutKind = obj.layoutKind;
+  }
+
+  return { settings, hasNetworkId };
+};
+
+const persistUiSettings = (storage: Storage | undefined, state: State) => {
+  if (!storage) return;
+  const data: PersistedUiSettingsV1 = {
+    v: 1,
+    networkId: state.networkId,
+    filter: state.filter,
+    sortKey: state.sortKey,
+    sortDir: state.sortDir,
+    pageSize: state.pageSize,
+    trafficVizKind: state.trafficVizKind,
+    layoutKind: state.layoutKind,
+  };
+  try {
+    storage.setItem(UI_SETTINGS_STORAGE_KEY, JSON.stringify(data));
+  } catch {
+    // Ignore storage errors (private mode, quota, etc.)
+  }
+};
 
 const mustGetById = <T extends HTMLElement>(doc: Document, id: string): T => {
   const el = doc.getElementById(id);
@@ -12,6 +119,10 @@ const mustGetById = <T extends HTMLElement>(doc: Document, id: string): T => {
 };
 
 export function bootstrap(doc: Document) {
+  const storage = getLocalStorage(doc);
+  const { settings: persistedSettings, hasNetworkId: hasPersistedNetworkId } =
+    loadPersistedUiSettings(doc);
+
   const initialState: State = {
     networkId: "small-office",
     statusText: "",
@@ -27,6 +138,7 @@ export function bootstrap(doc: Document) {
     deviceTypes: {},
     trafficVizKind: "classic",
     layoutKind: "force",
+    ...persistedSettings,
   };
 
   const store = createStore(initialState);
@@ -93,11 +205,13 @@ export function bootstrap(doc: Document) {
   // Initial paint and subsequent updates.
   renderAll();
   store.subscribe(() => renderAll());
+  store.subscribe((state) => persistUiSettings(storage, state));
 
   return {
     start: async () => {
       // Networks list for the selector.
       let desiredNetworkId = store.getState().networkId;
+      let shouldPreferPersistedNetwork = hasPersistedNetworkId;
       try {
         const index = await (await fetch("data/networks/index.json")).json();
         const networks = Array.isArray(index?.networks)
@@ -117,9 +231,22 @@ export function bootstrap(doc: Document) {
         controls.setNetworkOptions(networks);
 
         if (
-          defaultId && networks.some((n: { id: string }) => n.id === defaultId)
+          desiredNetworkId &&
+          !networks.some((n: { id: string }) => n.id === desiredNetworkId)
         ) {
-          desiredNetworkId = defaultId;
+          // Persisted value is no longer valid; allow fallback to default.
+          shouldPreferPersistedNetwork = false;
+        }
+
+        if (!shouldPreferPersistedNetwork) {
+          if (
+            defaultId &&
+            networks.some((n: { id: string }) => n.id === defaultId)
+          ) {
+            desiredNetworkId = defaultId;
+          } else if (networks.length > 0) {
+            desiredNetworkId = networks[0].id;
+          }
         }
       } catch (err) {
         console.warn("Failed to load networks index.", err);
