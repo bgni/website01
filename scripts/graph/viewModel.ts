@@ -8,6 +8,7 @@ import type {
   TrafficVizAfterStyleArgs,
 } from "../trafficFlowVisualization/types.ts";
 import type { RendererUpdateArgs, SimLink, SimNode } from "./renderer.ts";
+import { GRAPH_COLORS, GRAPH_DEFAULTS, TRAFFIC_STYLE } from "../config.ts";
 
 type TrafficAdapter = {
   getLinkStroke(args: LinkStrokeArgs): string;
@@ -23,8 +24,8 @@ export const buildRendererUpdateArgs = (
     filteredSet,
     trafficById,
     trafficAdapter,
-    defaultStroke = "#334155",
-    defaultWidth = 1.4,
+    defaultStroke = GRAPH_COLORS.linkStroke,
+    defaultWidth = GRAPH_DEFAULTS.link.defaultWidth,
   }: {
     adjacency: Adjacency;
     selected: Set<string>;
@@ -60,7 +61,7 @@ export const buildRendererUpdateArgs = (
     getLinkOpacity: (d: SimLink) => {
       const t = trafficById[d.id];
       // Always make down links clearly visible.
-      if (t?.status === "down") return 1;
+      if (t?.status === TRAFFIC_STYLE.downStatus) return 1;
       if (hasSelection) {
         if (highlightedLinks.size) {
           return highlightedLinks.has(d.id) ? 1 : 0.2;
@@ -87,26 +88,34 @@ export const buildRendererUpdateArgs = (
       : undefined,
     getHalo: (d: SimNode) => {
       const r = selected.has(d.id)
-        ? 18
-        : (highlightedNodes.has(d.id) ? 16 : 16);
+        ? GRAPH_DEFAULTS.halo.radius.selected
+        : GRAPH_DEFAULTS.halo.radius.default;
       const stroke = selected.has(d.id)
-        ? "#e2e8f0"
-        : (highlightedNodes.has(d.id) ? "#94a3b8" : "#e2e8f0");
+        ? GRAPH_COLORS.halo.default
+        : (highlightedNodes.has(d.id)
+          ? GRAPH_COLORS.halo.highlighted
+          : GRAPH_COLORS.halo.default);
       const strokeWidth = selected.has(d.id)
-        ? 2.5
-        : (highlightedNodes.has(d.id) ? 2 : 2);
+        ? GRAPH_DEFAULTS.halo.strokeWidth.selected
+        : GRAPH_DEFAULTS.halo.strokeWidth.default;
       const opacity = !hasSelection
-        ? 0
-        : (selected.has(d.id) ? 0.95 : (highlightedNodes.has(d.id) ? 0.55 : 0));
+        ? GRAPH_DEFAULTS.halo.opacity.none
+        : (selected.has(d.id)
+          ? GRAPH_DEFAULTS.halo.opacity.selected
+          : (highlightedNodes.has(d.id)
+            ? GRAPH_DEFAULTS.halo.opacity.highlighted
+            : GRAPH_DEFAULTS.halo.opacity.none));
       return { r, stroke, strokeWidth, opacity };
     },
     getNodeFilter: (d: SimNode) => {
       if (hasSelection) {
         return highlightedNodes.has(d.id)
           ? "none"
-          : "brightness(0.65) saturate(0.4)";
+          : GRAPH_DEFAULTS.filters.selectedDim;
       }
-      return filteredSet.has(d.id) ? "none" : "brightness(0.78) saturate(0.55)";
+      return filteredSet.has(d.id)
+        ? "none"
+        : GRAPH_DEFAULTS.filters.filteredDim;
     },
     getLabelOpacity: (d: SimNode) => {
       if (hasSelection) return highlightedNodes.has(d.id) ? 0.95 : 0.25;

@@ -1,5 +1,6 @@
 import { createTrafficFlowVisualization } from "../trafficFlowVisualization/registry.ts";
 import type { TrafficUpdate } from "../domain/types.ts";
+import { TRAFFIC_STYLE } from "../config.ts";
 import type {
   LinkDasharrayArgs,
   LinkStrokeArgs,
@@ -25,26 +26,35 @@ const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
 // - "up" is neutral; brightness indicates utilization.
 // - Near saturation, hue drifts slightly toward orange to signal "hot" without implying "bad" at moderate levels.
 const trafficColor = (status: string | undefined, util: number | undefined) => {
-  if (status === "down") return "#f87171";
+  if (status === TRAFFIC_STYLE.downStatus) return TRAFFIC_STYLE.downColor;
   const u = clamp01(Number(util) || 0);
 
   // Neutral slate/blue baseline.
-  const baseHue = 215;
-  const hotHue = 35; // orange
-  const hotT = clamp01((u - 0.9) / 0.1); // only last 10% shifts hue
+  const baseHue = TRAFFIC_STYLE.utilColor.baseHue;
+  const hotHue = TRAFFIC_STYLE.utilColor.hotHue; // orange
+  const hotT = clamp01(
+    (u - TRAFFIC_STYLE.utilColor.hotThreshold) /
+      (1 - TRAFFIC_STYLE.utilColor.hotThreshold),
+  ); // only last stretch shifts hue
   const hue = baseHue + (hotHue - baseHue) * hotT;
 
-  const saturation = 18 + u * 32; // 18..50
-  const lightness = 26 + u * 46; // 26..72
+  const saturation = TRAFFIC_STYLE.utilColor.saturationBase +
+    u * TRAFFIC_STYLE.utilColor.saturationScale;
+  const lightness = TRAFFIC_STYLE.utilColor.lightnessBase +
+    u * TRAFFIC_STYLE.utilColor.lightnessScale;
   return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 };
 
 const trafficWidth = (rateMbps: number | undefined) => {
-  const minWidth = 0.7; // about half prior base
-  const maxWidth = 14; // 10x base for 10Gbps+
-  const clamped = Math.min(rateMbps || 0, 10000); // 10Gbps ceiling
-  if (clamped <= 0.008) return minWidth; // ~1kB/s
-  const scaled = minWidth + (clamped / 10000) * (maxWidth - minWidth);
+  const minWidth = TRAFFIC_STYLE.rateWidth.minWidth; // about half prior base
+  const maxWidth = TRAFFIC_STYLE.rateWidth.maxWidth; // 10x base for 10Gbps+
+  const clamped = Math.min(
+    rateMbps || 0,
+    TRAFFIC_STYLE.rateWidth.maxRateMbps,
+  ); // 10Gbps ceiling
+  if (clamped <= TRAFFIC_STYLE.rateWidth.tinyRateMbps) return minWidth; // ~1kB/s
+  const scaled = minWidth +
+    (clamped / TRAFFIC_STYLE.rateWidth.maxRateMbps) * (maxWidth - minWidth);
   return Math.min(maxWidth, Math.max(minWidth, scaled));
 };
 

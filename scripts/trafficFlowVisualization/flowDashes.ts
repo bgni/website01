@@ -1,4 +1,5 @@
 import type { TrafficUpdate } from "../domain/types.ts";
+import { GRAPH_COLORS, GRAPH_DEFAULTS, TRAFFIC_STYLE } from "../config.ts";
 import type {
   GraphLinkDatum,
   LinkDasharrayArgs,
@@ -19,8 +20,6 @@ const speedFromRate = (rateMbps: unknown) => {
   const clamped = Math.min(r, 10000);
   return 2 + (clamped / 10000) * 26; // 2..28
 };
-
-const DASH_UP = "10 8";
 
 export function createFlowDashesTrafficVisualization(
   { trafficColor, trafficWidthRate }: TrafficVizHelpers = {},
@@ -62,8 +61,8 @@ export function createFlowDashesTrafficVisualization(
 
     // Base line stays understated; overlay carries most of the traffic encoding.
     getLinkStroke({ traffic, highlighted, defaultStroke }: LinkStrokeArgs) {
-      if (traffic) return "#334155";
-      return highlighted ? "#e2e8f0" : defaultStroke;
+      if (traffic) return GRAPH_COLORS.linkStroke;
+      return highlighted ? GRAPH_COLORS.highlight : defaultStroke;
     },
     getLinkWidth({ traffic, highlighted, defaultWidth }: LinkWidthArgs) {
       const base = traffic
@@ -72,11 +71,15 @@ export function createFlowDashesTrafficVisualization(
           (trafficWidthRate?.(traffic.rateMbps) ?? defaultWidth) * 0.45,
         )
         : defaultWidth;
-      return highlighted ? Math.max(base, 3) : base;
+      return highlighted
+        ? Math.max(base, TRAFFIC_STYLE.highlightMinWidth)
+        : base;
     },
     getLinkDasharray({ traffic }: LinkDasharrayArgs) {
-      if (traffic?.status === "down") return "6 4";
-      return "0";
+      if (traffic?.status === TRAFFIC_STYLE.downStatus) {
+        return TRAFFIC_STYLE.dash.down;
+      }
+      return TRAFFIC_STYLE.dash.none;
     },
 
     start({ container, links, link }: TrafficVizStartArgs) {
@@ -129,7 +132,9 @@ export function createFlowDashesTrafficVisualization(
     ) {
       if (!overlay) return;
 
-      const o = overlay.interrupt().transition().duration(220).ease(
+      const o = overlay.interrupt().transition().duration(
+        GRAPH_DEFAULTS.transitionMs,
+      ).ease(
         d3.easeCubicOut,
       );
 
@@ -137,18 +142,22 @@ export function createFlowDashesTrafficVisualization(
         .attr("stroke", (d: GraphLinkDatum) => {
           const t = getTraffic?.(d.id);
           if (!t) return "transparent";
-          return trafficColor?.(t.status, t.utilization) || "#38bdf8";
+          return trafficColor?.(t.status, t.utilization) ||
+            GRAPH_COLORS.trafficOverlayFallback;
         })
         .attr("stroke-width", (d: GraphLinkDatum) => {
           const t = getTraffic?.(d.id);
           if (!t) return 0;
-          const base = trafficWidthRate?.(t.rateMbps) ?? 1.4;
+          const base = trafficWidthRate?.(t.rateMbps) ??
+            GRAPH_DEFAULTS.link.defaultWidth;
           const w = clamp(base * 0.35 + 0.8, 1.2, 6);
-          return t?.status === "down" ? Math.max(w, 3) : w;
+          return t?.status === TRAFFIC_STYLE.downStatus
+            ? Math.max(w, TRAFFIC_STYLE.highlightMinWidth)
+            : w;
         })
         .attr("opacity", (d: GraphLinkDatum) => {
           const t = getTraffic?.(d.id);
-          if (t?.status === "down") return 1;
+          if (t?.status === TRAFFIC_STYLE.downStatus) return 1;
           // Mirror base-link opacity rules.
           if (hasSelection) {
             if (highlightedLinks.size) {
@@ -164,10 +173,12 @@ export function createFlowDashesTrafficVisualization(
       // Keep dasharray changes immediate (avoids odd tweening artifacts).
       overlay.attr("stroke-dasharray", (d: GraphLinkDatum) => {
         const t = getTraffic?.(d.id);
-        if (!t) return "0";
-        if (t.status === "down") return "6 4";
+        if (!t) return TRAFFIC_STYLE.dash.none;
+        if (t.status === TRAFFIC_STYLE.downStatus) {
+          return TRAFFIC_STYLE.dash.down;
+        }
         // Keep pattern stable; only speed should change.
-        return DASH_UP;
+        return TRAFFIC_STYLE.dash.up;
       });
     },
 

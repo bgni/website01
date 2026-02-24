@@ -1,4 +1,5 @@
 import type { Connection, NetworkDevice } from "../domain/types.ts";
+import { GRAPH_COLORS, GRAPH_DEFAULTS } from "../config.ts";
 
 export type SimNode = NetworkDevice & {
   x?: number;
@@ -36,8 +37,8 @@ export function createGraphRenderer(
     connections,
     getNodeFill,
     onNodeSelect,
-    width = 1200,
-    height = 720,
+    width = GRAPH_DEFAULTS.width,
+    height = GRAPH_DEFAULTS.height,
   }: {
     devices: NetworkDevice[];
     connections: Connection[];
@@ -58,7 +59,10 @@ export function createGraphRenderer(
     .attr("preserveAspectRatio", "xMidYMid meet");
   const container = svg.append("g");
 
-  const zoom = d3.zoom().scaleExtent([0.5, 3]).on(
+  const zoom = d3.zoom().scaleExtent([
+    GRAPH_DEFAULTS.zoom.minScale,
+    GRAPH_DEFAULTS.zoom.maxScale,
+  ]).on(
     "zoom",
     (event: { transform: { toString(): string } }) => {
       container.attr("transform", event.transform.toString());
@@ -81,12 +85,12 @@ export function createGraphRenderer(
   })) as SimLink[];
 
   const linkSelection = linkLayer
-    .attr("stroke", "#334155")
-    .attr("stroke-opacity", 0.6)
+    .attr("stroke", GRAPH_COLORS.linkStroke)
+    .attr("stroke-opacity", GRAPH_DEFAULTS.link.defaultOpacity)
     .selectAll("line")
     .data(links, (d: SimLink) => d.id)
     .join("line")
-    .attr("stroke-width", 1.4);
+    .attr("stroke-width", GRAPH_DEFAULTS.link.defaultWidth);
 
   // Selection/highlight indicator that doesn't compete with fill colors.
   const haloSelection = haloLayer
@@ -94,10 +98,10 @@ export function createGraphRenderer(
     .selectAll("circle")
     .data(nodes, (d: SimNode) => d.id)
     .join("circle")
-    .attr("r", 16)
+    .attr("r", GRAPH_DEFAULTS.halo.radius.default)
     .attr("fill", "none")
-    .attr("stroke", "#e2e8f0")
-    .attr("stroke-width", 2.5)
+    .attr("stroke", GRAPH_COLORS.halo.default)
+    .attr("stroke-width", GRAPH_DEFAULTS.halo.strokeWidth.selected)
     .attr("opacity", 0);
 
   let layoutKind = "force";
@@ -105,21 +109,26 @@ export function createGraphRenderer(
   const simulation = d3.forceSimulation(nodes)
     .force(
       "link",
-      d3.forceLink(links).id((d: { id: string }) => d.id).distance(130)
-        .strength(0.6),
+      d3.forceLink(links).id((d: { id: string }) => d.id).distance(
+        GRAPH_DEFAULTS.link.force.distance,
+      )
+        .strength(GRAPH_DEFAULTS.link.force.strength),
     )
-    .force("charge", d3.forceManyBody().strength(-260))
+    .force(
+      "charge",
+      d3.forceManyBody().strength(GRAPH_DEFAULTS.simulation.chargeStrength),
+    )
     .force("center", d3.forceCenter(width / 2, height / 2))
-    .force("collide", d3.forceCollide(26));
+    .force("collide", d3.forceCollide(GRAPH_DEFAULTS.simulation.collideRadius));
 
   const nodeSelection = nodeLayer
     .selectAll("circle")
     .data(nodes, (d: SimNode) => d.id)
     .join("circle")
-    .attr("r", 12)
+    .attr("r", GRAPH_DEFAULTS.node.radius)
     .attr("fill", (d: SimNode) => getNodeFill(d))
-    .attr("stroke", "#0b1220")
-    .attr("stroke-width", 2)
+    .attr("stroke", GRAPH_COLORS.nodeStroke)
+    .attr("stroke-width", GRAPH_DEFAULTS.node.strokeWidth)
     .on("click", (_event: unknown, d: SimNode) => onNodeSelect(d.id))
     .call(
       d3.drag()
@@ -163,10 +172,10 @@ export function createGraphRenderer(
     .selectAll("text")
     .data(nodes, (d: SimNode) => d.id)
     .join("text")
-    .attr("fill", "#e2e8f0")
-    .attr("font-size", 11)
+    .attr("fill", GRAPH_COLORS.label)
+    .attr("font-size", GRAPH_DEFAULTS.label.fontSize)
     .attr("text-anchor", "middle")
-    .attr("dy", 22)
+    .attr("dy", GRAPH_DEFAULTS.label.dy)
     .text((d: SimNode) => d.name);
 
   let onTickHook: (() => void) | null = null;
@@ -181,11 +190,20 @@ export function createGraphRenderer(
     onTickHook?.();
     nodeSelection
       .attr("cx", (d: SimNode) => {
-        d.x = Math.max(20, Math.min(width - 20, d.x || width / 2));
+        d.x = Math.max(
+          GRAPH_DEFAULTS.node.boundsPadding,
+          Math.min(width - GRAPH_DEFAULTS.node.boundsPadding, d.x || width / 2),
+        );
         return d.x;
       })
       .attr("cy", (d: SimNode) => {
-        d.y = Math.max(20, Math.min(height - 20, d.y || height / 2));
+        d.y = Math.max(
+          GRAPH_DEFAULTS.node.boundsPadding,
+          Math.min(
+            height - GRAPH_DEFAULTS.node.boundsPadding,
+            d.y || height / 2,
+          ),
+        );
         return d.y;
       });
 
@@ -194,7 +212,7 @@ export function createGraphRenderer(
       .attr("cy", (d: SimNode) => d.y);
     labelSelection
       .attr("x", (d: SimNode) => d.x)
-      .attr("y", (d: SimNode) => (d.y ?? 0) + 24);
+      .attr("y", (d: SimNode) => (d.y ?? 0) + GRAPH_DEFAULTS.label.yOffset);
   };
 
   const renderGuides = (guides: Guide[] = []) => {
@@ -211,9 +229,9 @@ export function createGraphRenderer(
       .attr("x2", width)
       .attr("y1", (d: Guide) => d.y)
       .attr("y2", (d: Guide) => d.y)
-      .attr("stroke", "#1f2937")
-      .attr("stroke-width", 1)
-      .attr("stroke-opacity", 0.75);
+      .attr("stroke", GRAPH_COLORS.guide)
+      .attr("stroke-width", GRAPH_DEFAULTS.guides.strokeWidth)
+      .attr("stroke-opacity", GRAPH_DEFAULTS.guides.strokeOpacity);
   };
 
   const setLayoutKind = (kind: string) => {
@@ -221,7 +239,9 @@ export function createGraphRenderer(
   };
 
   const updateStyles = (args: RendererUpdateArgs) => {
-    const linkT = linkSelection.interrupt().transition().duration(220).ease(
+    const linkT = linkSelection.interrupt().transition().duration(
+      GRAPH_DEFAULTS.transitionMs,
+    ).ease(
       d3.easeCubicOut,
     );
 
@@ -240,10 +260,10 @@ export function createGraphRenderer(
       .attr("opacity", (d: SimNode) => args.getHalo(d).opacity);
 
     nodeSelection
-      .attr("r", 12)
+      .attr("r", GRAPH_DEFAULTS.node.radius)
       .attr("fill", (d: SimNode) => getNodeFill(d))
-      .attr("stroke", "#0b1220")
-      .attr("stroke-width", 2)
+      .attr("stroke", GRAPH_COLORS.nodeStroke)
+      .attr("stroke-width", GRAPH_DEFAULTS.node.strokeWidth)
       // Keep nodes opaque so links never visually "sit on top" of devices.
       .attr("opacity", 1)
       // De-emphasize via filter rather than transparency.
