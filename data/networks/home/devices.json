@@ -9,7 +9,7 @@
   {
     "id": "erx-1",
     "name": "EdgeRouter X (Primary)",
-    "type_slug": "Ubiquiti/EdgeRouter-X",
+    "type_slug": "Ubiquiti/ER-X",
     "role": "router",
     "site": "home",
     "room_id": "utility",
@@ -18,7 +18,7 @@
   {
     "id": "erx-2",
     "name": "EdgeRouter X (Lab/Backup)",
-    "type_slug": "Ubiquiti/EdgeRouter-X",
+    "type_slug": "Ubiquiti/ER-X",
     "role": "router",
     "site": "home",
     "room_id": "utility",
@@ -28,7 +28,7 @@
   {
     "id": "css326-1",
     "name": "MikroTik CSS326 (Core)",
-    "type_slug": "MikroTik/CSS326-24G-2S+",
+    "type_slug": "MikroTik/CSS326-24G-2S-Plus-RM",
     "role": "core",
     "site": "home",
     "room_id": "utility",

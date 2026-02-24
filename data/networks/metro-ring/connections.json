@@ -3,14 +3,14 @@
     "id": "conn-transit1-pop1",
     "description": "Transit1 uplink",
     "connectionType": "eth-10g",
-    "from": { "deviceId": "transit-1", "portId": "p1" },
+    "from": { "deviceId": "transit-1" },
     "to": { "deviceId": "pop-1", "portId": "p1" }
   },
   {
     "id": "conn-transit2-pop5",
     "description": "Transit2 uplink",
     "connectionType": "eth-10g",
-    "from": { "deviceId": "transit-2", "portId": "p1" },
+    "from": { "deviceId": "transit-2" },
     "to": { "deviceId": "pop-5", "portId": "p1" }
   },
 

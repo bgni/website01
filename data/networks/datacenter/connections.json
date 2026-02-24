@@ -3,14 +3,14 @@
     "id": "conn-dc-inet-fw1",
     "description": "WAN to FW1",
     "connectionType": "wan-10g",
-    "from": { "deviceId": "dc-inet", "portId": "p1" },
+    "from": { "deviceId": "dc-inet" },
     "to": { "deviceId": "dc-fw-1", "portId": "p1" }
   },
   {
     "id": "conn-dc-inet-fw2",
     "description": "WAN to FW2",
     "connectionType": "wan-10g",
-    "from": { "deviceId": "dc-inet", "portId": "p2" },
+    "from": { "deviceId": "dc-inet" },
     "to": { "deviceId": "dc-fw-2", "portId": "p1" }
   },
 
@@ -148,27 +148,27 @@
     "description": "Leaf-3 -> App-1",
     "connectionType": "eth-10g",
     "from": { "deviceId": "dc-leaf-3", "portId": "p6" },
-    "to": { "deviceId": "dc-app-1", "portId": "p1" }
+    "to": { "deviceId": "dc-app-1" }
   },
   {
     "id": "conn-leaf3-app2",
     "description": "Leaf-3 -> App-2",
     "connectionType": "eth-10g",
     "from": { "deviceId": "dc-leaf-3", "portId": "p7" },
-    "to": { "deviceId": "dc-app-2", "portId": "p1" }
+    "to": { "deviceId": "dc-app-2" }
   },
   {
     "id": "conn-leaf4-db1",
     "description": "Leaf-4 -> DB-1",
     "connectionType": "eth-10g",
     "from": { "deviceId": "dc-leaf-4", "portId": "p6" },
-    "to": { "deviceId": "dc-db-1", "portId": "p1" }
+    "to": { "deviceId": "dc-db-1" }
   },
   {
     "id": "conn-leaf4-db2",
     "description": "Leaf-4 -> DB-2",
     "connectionType": "eth-10g",
     "from": { "deviceId": "dc-leaf-4", "portId": "p7" },
-    "to": { "deviceId": "dc-db-2", "portId": "p1" }
+    "to": { "deviceId": "dc-db-2" }
   }
 ]

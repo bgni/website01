@@ -3,14 +3,14 @@
     "id": "conn-hq-inet-edge1",
     "description": "HQ WAN1",
     "connectionType": "wan-1g",
-    "from": { "deviceId": "hq-inet", "portId": "p1" },
+    "from": { "deviceId": "hq-inet" },
     "to": { "deviceId": "hq-edge-1", "portId": "p1" }
   },
   {
     "id": "conn-hq-inet-edge2",
     "description": "HQ WAN2",
     "connectionType": "wan-1g",
-    "from": { "deviceId": "hq-inet", "portId": "p2" },
+    "from": { "deviceId": "hq-inet" },
     "to": { "deviceId": "hq-edge-2", "portId": "p1" }
   },
 
@@ -56,14 +56,14 @@
     "description": "App uplink",
     "connectionType": "eth-1g",
     "from": { "deviceId": "hq-core-1", "portId": "p3" },
-    "to": { "deviceId": "hq-app-1", "portId": "p1" }
+    "to": { "deviceId": "hq-app-1" }
   },
   {
     "id": "conn-hq-core2-db",
     "description": "DB uplink",
     "connectionType": "eth-1g",
     "from": { "deviceId": "hq-core-2", "portId": "p3" },
-    "to": { "deviceId": "hq-db-1", "portId": "p1" }
+    "to": { "deviceId": "hq-db-1" }
   },
 
   {
@@ -115,7 +115,7 @@
     "description": "Branch-1 POS",
     "connectionType": "eth-100m",
     "from": { "deviceId": "b1-sw", "portId": "p3" },
-    "to": { "deviceId": "b1-pos", "portId": "p1" }
+    "to": { "deviceId": "b1-pos" }
   },
 
   {
@@ -152,7 +152,7 @@
     "description": "Branch-2 POS",
     "connectionType": "eth-100m",
     "from": { "deviceId": "b2-sw", "portId": "p3" },
-    "to": { "deviceId": "b2-pos", "portId": "p1" }
+    "to": { "deviceId": "b2-pos" }
   },
 
   {
@@ -174,6 +174,6 @@
     "description": "Branch-3 POS",
     "connectionType": "eth-100m",
     "from": { "deviceId": "b3-sw", "portId": "p3" },
-    "to": { "deviceId": "b3-pos", "portId": "p1" }
+    "to": { "deviceId": "b3-pos" }
   }
 ]

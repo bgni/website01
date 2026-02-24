@@ -3,7 +3,7 @@
     "id": "conn-campus-inet-fw",
     "description": "WAN",
     "connectionType": "wan-2g",
-    "from": { "deviceId": "campus-inet", "portId": "p1" },
+    "from": { "deviceId": "campus-inet" },
     "to": { "deviceId": "campus-fw-1", "portId": "p1" }
   },
   {
@@ -183,13 +183,13 @@
     "description": "DNS/DHCP",
     "connectionType": "eth-1g",
     "from": { "deviceId": "campus-core-1", "portId": "p9" },
-    "to": { "deviceId": "campus-dns", "portId": "p1" }
+    "to": { "deviceId": "campus-dns" }
   },
   {
     "id": "conn-core2-idp",
     "description": "IdP",
     "connectionType": "eth-1g",
     "from": { "deviceId": "campus-core-2", "portId": "p9" },
-    "to": { "deviceId": "campus-idp", "portId": "p1" }
+    "to": { "deviceId": "campus-idp" }
   }
 ]
