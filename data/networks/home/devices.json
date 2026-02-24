@@ -1,23 +1,148 @@
 [
-  { "id": "home-isp", "name": "ISP ONT/Modem", "role": "internet", "site": "home", "room_id": "utility" },
-  { "id": "erx-1", "name": "EdgeRouter X (Primary)", "type_slug": "Ubiquiti/EdgeRouter-X", "role": "router", "site": "home", "room_id": "utility", "rack_id": "home-rack" },
-  { "id": "erx-2", "name": "EdgeRouter X (Lab/Backup)", "type_slug": "Ubiquiti/EdgeRouter-X", "role": "router", "site": "home", "room_id": "utility", "rack_id": "home-rack" },
+  {
+    "id": "home-isp",
+    "name": "ISP ONT/Modem",
+    "role": "internet",
+    "site": "home",
+    "room_id": "utility"
+  },
+  {
+    "id": "erx-1",
+    "name": "EdgeRouter X (Primary)",
+    "type_slug": "Ubiquiti/EdgeRouter-X",
+    "role": "router",
+    "site": "home",
+    "room_id": "utility",
+    "rack_id": "home-rack"
+  },
+  {
+    "id": "erx-2",
+    "name": "EdgeRouter X (Lab/Backup)",
+    "type_slug": "Ubiquiti/EdgeRouter-X",
+    "role": "router",
+    "site": "home",
+    "room_id": "utility",
+    "rack_id": "home-rack"
+  },
 
-  { "id": "css326-1", "name": "MikroTik CSS326 (Core)", "type_slug": "MikroTik/CSS326-24G-2S+", "role": "core", "site": "home", "room_id": "utility", "rack_id": "home-rack" },
-  { "id": "office-sw-1", "name": "Office Switch", "type_slug": "Netgear/GS108", "role": "access", "site": "home", "room_id": "office" },
-  { "id": "lab-sw-1", "name": "Lab Switch", "type_slug": "Netgear/GS108", "role": "access", "site": "home", "room_id": "lab" },
+  {
+    "id": "css326-1",
+    "name": "MikroTik CSS326 (Core)",
+    "type_slug": "MikroTik/CSS326-24G-2S+",
+    "role": "core",
+    "site": "home",
+    "room_id": "utility",
+    "rack_id": "home-rack"
+  },
+  {
+    "id": "office-sw-1",
+    "name": "Office Switch",
+    "type_slug": "Netgear/GS108",
+    "role": "access",
+    "site": "home",
+    "room_id": "office"
+  },
+  {
+    "id": "lab-sw-1",
+    "name": "Lab Switch",
+    "type_slug": "Netgear/GS108",
+    "role": "access",
+    "site": "home",
+    "room_id": "lab"
+  },
 
-  { "id": "ap-1", "name": "WiFi AP", "type_slug": "Ubiquiti/U6-LR", "role": "access point", "site": "home", "room_id": "hallway" },
+  {
+    "id": "ap-1",
+    "name": "WiFi AP",
+    "type_slug": "Ubiquiti/U6-LR",
+    "role": "access point",
+    "site": "home",
+    "room_id": "hallway"
+  },
 
-  { "id": "pc-1", "name": "Desktop-1", "brand": "Custom", "model": "ATX", "role": "endpoint", "site": "home", "room_id": "office" },
-  { "id": "pc-2", "name": "Desktop-2", "brand": "Custom", "model": "mATX", "role": "endpoint", "site": "home", "room_id": "office" },
-  { "id": "pc-3", "name": "Desktop-3", "brand": "Dell", "model": "OptiPlex", "role": "endpoint", "site": "home", "room_id": "office" },
+  {
+    "id": "pc-1",
+    "name": "Desktop-1",
+    "brand": "Custom",
+    "model": "ATX",
+    "role": "endpoint",
+    "site": "home",
+    "room_id": "office"
+  },
+  {
+    "id": "pc-2",
+    "name": "Desktop-2",
+    "brand": "Custom",
+    "model": "mATX",
+    "role": "endpoint",
+    "site": "home",
+    "room_id": "office"
+  },
+  {
+    "id": "pc-3",
+    "name": "Desktop-3",
+    "brand": "Dell",
+    "model": "OptiPlex",
+    "role": "endpoint",
+    "site": "home",
+    "room_id": "office"
+  },
 
-  { "id": "laptop-1", "name": "Laptop", "brand": "Lenovo", "model": "ThinkPad", "role": "endpoint", "site": "home", "room_id": "living" },
-  { "id": "phone-1", "name": "Phone-1", "brand": "Apple", "model": "iPhone", "role": "endpoint", "site": "home", "room_id": "living" },
-  { "id": "phone-2", "name": "Phone-2", "brand": "Samsung", "model": "Galaxy", "role": "endpoint", "site": "home", "room_id": "bedroom" },
+  {
+    "id": "laptop-1",
+    "name": "Laptop",
+    "brand": "Lenovo",
+    "model": "ThinkPad",
+    "role": "endpoint",
+    "site": "home",
+    "room_id": "living"
+  },
+  {
+    "id": "phone-1",
+    "name": "Phone-1",
+    "brand": "Apple",
+    "model": "iPhone",
+    "role": "endpoint",
+    "site": "home",
+    "room_id": "living"
+  },
+  {
+    "id": "phone-2",
+    "name": "Phone-2",
+    "brand": "Samsung",
+    "model": "Galaxy",
+    "role": "endpoint",
+    "site": "home",
+    "room_id": "bedroom"
+  },
 
-  { "id": "nas-1", "name": "NAS", "brand": "Synology", "model": "DS923+", "role": "server", "site": "home", "room_id": "lab", "rack_id": "home-rack" },
-  { "id": "proxmox-1", "name": "Proxmox Host", "brand": "Supermicro", "model": "Mini", "role": "server", "site": "home", "room_id": "lab", "rack_id": "home-rack" },
-  { "id": "media-1", "name": "Media Server", "brand": "Intel", "model": "NUC", "role": "server", "site": "home", "room_id": "lab" }
+  {
+    "id": "nas-1",
+    "name": "NAS",
+    "brand": "Synology",
+    "model": "DS923+",
+    "role": "server",
+    "site": "home",
+    "room_id": "lab",
+    "rack_id": "home-rack"
+  },
+  {
+    "id": "proxmox-1",
+    "name": "Proxmox Host",
+    "brand": "Supermicro",
+    "model": "Mini",
+    "role": "server",
+    "site": "home",
+    "room_id": "lab",
+    "rack_id": "home-rack"
+  },
+  {
+    "id": "media-1",
+    "name": "Media Server",
+    "brand": "Intel",
+    "model": "NUC",
+    "role": "server",
+    "site": "home",
+    "room_id": "lab"
+  }
 ]

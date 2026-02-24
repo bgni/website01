@@ -1,35 +1,179 @@
 [
-  { "id": "conn-hq-inet-edge1", "description": "HQ WAN1", "connectionType": "wan-1g", "from": { "deviceId": "hq-inet", "portId": "p1" }, "to": { "deviceId": "hq-edge-1", "portId": "p1" } },
-  { "id": "conn-hq-inet-edge2", "description": "HQ WAN2", "connectionType": "wan-1g", "from": { "deviceId": "hq-inet", "portId": "p2" }, "to": { "deviceId": "hq-edge-2", "portId": "p1" } },
+  {
+    "id": "conn-hq-inet-edge1",
+    "description": "HQ WAN1",
+    "connectionType": "wan-1g",
+    "from": { "deviceId": "hq-inet", "portId": "p1" },
+    "to": { "deviceId": "hq-edge-1", "portId": "p1" }
+  },
+  {
+    "id": "conn-hq-inet-edge2",
+    "description": "HQ WAN2",
+    "connectionType": "wan-1g",
+    "from": { "deviceId": "hq-inet", "portId": "p2" },
+    "to": { "deviceId": "hq-edge-2", "portId": "p1" }
+  },
 
-  { "id": "conn-hq-edge1-fw", "description": "Edge1 to FW", "connectionType": "eth-1g", "from": { "deviceId": "hq-edge-1", "portId": "p2" }, "to": { "deviceId": "hq-fw-1", "portId": "p1" } },
-  { "id": "conn-hq-edge2-fw", "description": "Edge2 to FW", "connectionType": "eth-1g", "from": { "deviceId": "hq-edge-2", "portId": "p2" }, "to": { "deviceId": "hq-fw-1", "portId": "p2" } },
+  {
+    "id": "conn-hq-edge1-fw",
+    "description": "Edge1 to FW",
+    "connectionType": "eth-1g",
+    "from": { "deviceId": "hq-edge-1", "portId": "p2" },
+    "to": { "deviceId": "hq-fw-1", "portId": "p1" }
+  },
+  {
+    "id": "conn-hq-edge2-fw",
+    "description": "Edge2 to FW",
+    "connectionType": "eth-1g",
+    "from": { "deviceId": "hq-edge-2", "portId": "p2" },
+    "to": { "deviceId": "hq-fw-1", "portId": "p2" }
+  },
 
-  { "id": "conn-hq-fw-core1", "description": "FW to Core1", "connectionType": "lag-2g", "from": { "deviceId": "hq-fw-1", "portId": "p3" }, "to": { "deviceId": "hq-core-1", "portId": "p1" } },
-  { "id": "conn-hq-fw-core2", "description": "FW to Core2", "connectionType": "lag-2g", "from": { "deviceId": "hq-fw-1", "portId": "p4" }, "to": { "deviceId": "hq-core-2", "portId": "p1" } },
-  { "id": "conn-hq-core1-core2", "description": "Core interlink", "connectionType": "lag-4g", "from": { "deviceId": "hq-core-1", "portId": "p2" }, "to": { "deviceId": "hq-core-2", "portId": "p2" } },
+  {
+    "id": "conn-hq-fw-core1",
+    "description": "FW to Core1",
+    "connectionType": "lag-2g",
+    "from": { "deviceId": "hq-fw-1", "portId": "p3" },
+    "to": { "deviceId": "hq-core-1", "portId": "p1" }
+  },
+  {
+    "id": "conn-hq-fw-core2",
+    "description": "FW to Core2",
+    "connectionType": "lag-2g",
+    "from": { "deviceId": "hq-fw-1", "portId": "p4" },
+    "to": { "deviceId": "hq-core-2", "portId": "p1" }
+  },
+  {
+    "id": "conn-hq-core1-core2",
+    "description": "Core interlink",
+    "connectionType": "lag-4g",
+    "from": { "deviceId": "hq-core-1", "portId": "p2" },
+    "to": { "deviceId": "hq-core-2", "portId": "p2" }
+  },
 
-  { "id": "conn-hq-core1-app", "description": "App uplink", "connectionType": "eth-1g", "from": { "deviceId": "hq-core-1", "portId": "p3" }, "to": { "deviceId": "hq-app-1", "portId": "p1" } },
-  { "id": "conn-hq-core2-db", "description": "DB uplink", "connectionType": "eth-1g", "from": { "deviceId": "hq-core-2", "portId": "p3" }, "to": { "deviceId": "hq-db-1", "portId": "p1" } },
+  {
+    "id": "conn-hq-core1-app",
+    "description": "App uplink",
+    "connectionType": "eth-1g",
+    "from": { "deviceId": "hq-core-1", "portId": "p3" },
+    "to": { "deviceId": "hq-app-1", "portId": "p1" }
+  },
+  {
+    "id": "conn-hq-core2-db",
+    "description": "DB uplink",
+    "connectionType": "eth-1g",
+    "from": { "deviceId": "hq-core-2", "portId": "p3" },
+    "to": { "deviceId": "hq-db-1", "portId": "p1" }
+  },
 
-  { "id": "conn-hq-core1-ap1", "description": "HQ AP-1", "connectionType": "eth-1g", "from": { "deviceId": "hq-core-1", "portId": "p4" }, "to": { "deviceId": "hq-wifi-1", "portId": "p1" } },
-  { "id": "conn-hq-core2-ap2", "description": "HQ AP-2", "connectionType": "eth-1g", "from": { "deviceId": "hq-core-2", "portId": "p4" }, "to": { "deviceId": "hq-wifi-2", "portId": "p1" } },
+  {
+    "id": "conn-hq-core1-ap1",
+    "description": "HQ AP-1",
+    "connectionType": "eth-1g",
+    "from": { "deviceId": "hq-core-1", "portId": "p4" },
+    "to": { "deviceId": "hq-wifi-1", "portId": "p1" }
+  },
+  {
+    "id": "conn-hq-core2-ap2",
+    "description": "HQ AP-2",
+    "connectionType": "eth-1g",
+    "from": { "deviceId": "hq-core-2", "portId": "p4" },
+    "to": { "deviceId": "hq-wifi-2", "portId": "p1" }
+  },
 
-  { "id": "conn-b1-vpn-hq1", "description": "Branch-1 VPN to HQ1", "connectionType": "tunnel-200m", "from": { "deviceId": "b1-edge", "portId": "p1" }, "to": { "deviceId": "hq-edge-1", "portId": "p3" } },
-  { "id": "conn-b1-vpn-hq2", "description": "Branch-1 VPN to HQ2", "connectionType": "tunnel-200m", "from": { "deviceId": "b1-edge", "portId": "p2" }, "to": { "deviceId": "hq-edge-2", "portId": "p3" } },
+  {
+    "id": "conn-b1-vpn-hq1",
+    "description": "Branch-1 VPN to HQ1",
+    "connectionType": "tunnel-200m",
+    "from": { "deviceId": "b1-edge", "portId": "p1" },
+    "to": { "deviceId": "hq-edge-1", "portId": "p3" }
+  },
+  {
+    "id": "conn-b1-vpn-hq2",
+    "description": "Branch-1 VPN to HQ2",
+    "connectionType": "tunnel-200m",
+    "from": { "deviceId": "b1-edge", "portId": "p2" },
+    "to": { "deviceId": "hq-edge-2", "portId": "p3" }
+  },
 
-  { "id": "conn-b1-edge-sw", "description": "Branch-1 LAN", "connectionType": "eth-1g", "from": { "deviceId": "b1-edge", "portId": "p3" }, "to": { "deviceId": "b1-sw", "portId": "p1" } },
-  { "id": "conn-b1-sw-ap", "description": "Branch-1 AP", "connectionType": "eth-1g", "from": { "deviceId": "b1-sw", "portId": "p2" }, "to": { "deviceId": "b1-ap", "portId": "p1" } },
-  { "id": "conn-b1-sw-pos", "description": "Branch-1 POS", "connectionType": "eth-100m", "from": { "deviceId": "b1-sw", "portId": "p3" }, "to": { "deviceId": "b1-pos", "portId": "p1" } },
+  {
+    "id": "conn-b1-edge-sw",
+    "description": "Branch-1 LAN",
+    "connectionType": "eth-1g",
+    "from": { "deviceId": "b1-edge", "portId": "p3" },
+    "to": { "deviceId": "b1-sw", "portId": "p1" }
+  },
+  {
+    "id": "conn-b1-sw-ap",
+    "description": "Branch-1 AP",
+    "connectionType": "eth-1g",
+    "from": { "deviceId": "b1-sw", "portId": "p2" },
+    "to": { "deviceId": "b1-ap", "portId": "p1" }
+  },
+  {
+    "id": "conn-b1-sw-pos",
+    "description": "Branch-1 POS",
+    "connectionType": "eth-100m",
+    "from": { "deviceId": "b1-sw", "portId": "p3" },
+    "to": { "deviceId": "b1-pos", "portId": "p1" }
+  },
 
-  { "id": "conn-b2-vpn-hq1", "description": "Branch-2 VPN to HQ1", "connectionType": "tunnel-200m", "from": { "deviceId": "b2-edge", "portId": "p1" }, "to": { "deviceId": "hq-edge-1", "portId": "p4" } },
-  { "id": "conn-b2-vpn-hq2", "description": "Branch-2 VPN to HQ2", "connectionType": "tunnel-200m", "from": { "deviceId": "b2-edge", "portId": "p2" }, "to": { "deviceId": "hq-edge-2", "portId": "p4" } },
+  {
+    "id": "conn-b2-vpn-hq1",
+    "description": "Branch-2 VPN to HQ1",
+    "connectionType": "tunnel-200m",
+    "from": { "deviceId": "b2-edge", "portId": "p1" },
+    "to": { "deviceId": "hq-edge-1", "portId": "p4" }
+  },
+  {
+    "id": "conn-b2-vpn-hq2",
+    "description": "Branch-2 VPN to HQ2",
+    "connectionType": "tunnel-200m",
+    "from": { "deviceId": "b2-edge", "portId": "p2" },
+    "to": { "deviceId": "hq-edge-2", "portId": "p4" }
+  },
 
-  { "id": "conn-b2-edge-sw", "description": "Branch-2 LAN", "connectionType": "eth-1g", "from": { "deviceId": "b2-edge", "portId": "p3" }, "to": { "deviceId": "b2-sw", "portId": "p1" } },
-  { "id": "conn-b2-sw-ap", "description": "Branch-2 AP", "connectionType": "eth-1g", "from": { "deviceId": "b2-sw", "portId": "p2" }, "to": { "deviceId": "b2-ap", "portId": "p1" } },
-  { "id": "conn-b2-sw-pos", "description": "Branch-2 POS", "connectionType": "eth-100m", "from": { "deviceId": "b2-sw", "portId": "p3" }, "to": { "deviceId": "b2-pos", "portId": "p1" } },
+  {
+    "id": "conn-b2-edge-sw",
+    "description": "Branch-2 LAN",
+    "connectionType": "eth-1g",
+    "from": { "deviceId": "b2-edge", "portId": "p3" },
+    "to": { "deviceId": "b2-sw", "portId": "p1" }
+  },
+  {
+    "id": "conn-b2-sw-ap",
+    "description": "Branch-2 AP",
+    "connectionType": "eth-1g",
+    "from": { "deviceId": "b2-sw", "portId": "p2" },
+    "to": { "deviceId": "b2-ap", "portId": "p1" }
+  },
+  {
+    "id": "conn-b2-sw-pos",
+    "description": "Branch-2 POS",
+    "connectionType": "eth-100m",
+    "from": { "deviceId": "b2-sw", "portId": "p3" },
+    "to": { "deviceId": "b2-pos", "portId": "p1" }
+  },
 
-  { "id": "conn-b3-edge-sw", "description": "Branch-3 LAN", "connectionType": "eth-1g", "from": { "deviceId": "b3-edge", "portId": "p3" }, "to": { "deviceId": "b3-sw", "portId": "p1" } },
-  { "id": "conn-b3-sw-ap", "description": "Branch-3 AP", "connectionType": "eth-1g", "from": { "deviceId": "b3-sw", "portId": "p2" }, "to": { "deviceId": "b3-ap", "portId": "p1" } },
-  { "id": "conn-b3-sw-pos", "description": "Branch-3 POS", "connectionType": "eth-100m", "from": { "deviceId": "b3-sw", "portId": "p3" }, "to": { "deviceId": "b3-pos", "portId": "p1" } }
+  {
+    "id": "conn-b3-edge-sw",
+    "description": "Branch-3 LAN",
+    "connectionType": "eth-1g",
+    "from": { "deviceId": "b3-edge", "portId": "p3" },
+    "to": { "deviceId": "b3-sw", "portId": "p1" }
+  },
+  {
+    "id": "conn-b3-sw-ap",
+    "description": "Branch-3 AP",
+    "connectionType": "eth-1g",
+    "from": { "deviceId": "b3-sw", "portId": "p2" },
+    "to": { "deviceId": "b3-ap", "portId": "p1" }
+  },
+  {
+    "id": "conn-b3-sw-pos",
+    "description": "Branch-3 POS",
+    "connectionType": "eth-100m",
+    "from": { "deviceId": "b3-sw", "portId": "p3" },
+    "to": { "deviceId": "b3-pos", "portId": "p1" }
+  }
 ]

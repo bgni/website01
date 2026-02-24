@@ -1,11 +1,36 @@
 {
   "tickSeconds": 1,
   "flows": [
-    { "id": "hq-web", "fromDeviceId": "hq-app-1", "toDeviceId": "hq-inet", "rateMbps": 90 },
-    { "id": "b1-pos-app", "fromDeviceId": "b1-pos", "toDeviceId": "hq-app-1", "rateMbps": 15 },
-    { "id": "b2-pos-app", "fromDeviceId": "b2-pos", "toDeviceId": "hq-app-1", "rateMbps": 18 },
-    { "id": "b1-pos-db", "fromDeviceId": "b1-pos", "toDeviceId": "hq-db-1", "rateMbps": 8 },
-    { "id": "b2-pos-db", "fromDeviceId": "b2-pos", "toDeviceId": "hq-db-1", "rateMbps": 8 }
+    {
+      "id": "hq-web",
+      "fromDeviceId": "hq-app-1",
+      "toDeviceId": "hq-inet",
+      "rateMbps": 90
+    },
+    {
+      "id": "b1-pos-app",
+      "fromDeviceId": "b1-pos",
+      "toDeviceId": "hq-app-1",
+      "rateMbps": 15
+    },
+    {
+      "id": "b2-pos-app",
+      "fromDeviceId": "b2-pos",
+      "toDeviceId": "hq-app-1",
+      "rateMbps": 18
+    },
+    {
+      "id": "b1-pos-db",
+      "fromDeviceId": "b1-pos",
+      "toDeviceId": "hq-db-1",
+      "rateMbps": 8
+    },
+    {
+      "id": "b2-pos-db",
+      "fromDeviceId": "b2-pos",
+      "toDeviceId": "hq-db-1",
+      "rateMbps": 8
+    }
   ],
   "events": [
     { "t": 20, "flowId": "b1-pos-app", "rateMbps": 60 },

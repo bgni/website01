@@ -1,12 +1,42 @@
 {
   "tickSeconds": 1,
   "flows": [
-    { "id": "public-lb1", "fromDeviceId": "dc-inet", "toDeviceId": "dc-lb-1", "rateMbps": 2000 },
-    { "id": "public-lb2", "fromDeviceId": "dc-inet", "toDeviceId": "dc-lb-2", "rateMbps": 1800 },
-    { "id": "lb1-app1", "fromDeviceId": "dc-lb-1", "toDeviceId": "dc-app-1", "rateMbps": 1600 },
-    { "id": "lb2-app2", "fromDeviceId": "dc-lb-2", "toDeviceId": "dc-app-2", "rateMbps": 1500 },
-    { "id": "app1-db1", "fromDeviceId": "dc-app-1", "toDeviceId": "dc-db-1", "rateMbps": 900 },
-    { "id": "app2-db2", "fromDeviceId": "dc-app-2", "toDeviceId": "dc-db-2", "rateMbps": 800 }
+    {
+      "id": "public-lb1",
+      "fromDeviceId": "dc-inet",
+      "toDeviceId": "dc-lb-1",
+      "rateMbps": 2000
+    },
+    {
+      "id": "public-lb2",
+      "fromDeviceId": "dc-inet",
+      "toDeviceId": "dc-lb-2",
+      "rateMbps": 1800
+    },
+    {
+      "id": "lb1-app1",
+      "fromDeviceId": "dc-lb-1",
+      "toDeviceId": "dc-app-1",
+      "rateMbps": 1600
+    },
+    {
+      "id": "lb2-app2",
+      "fromDeviceId": "dc-lb-2",
+      "toDeviceId": "dc-app-2",
+      "rateMbps": 1500
+    },
+    {
+      "id": "app1-db1",
+      "fromDeviceId": "dc-app-1",
+      "toDeviceId": "dc-db-1",
+      "rateMbps": 900
+    },
+    {
+      "id": "app2-db2",
+      "fromDeviceId": "dc-app-2",
+      "toDeviceId": "dc-db-2",
+      "rateMbps": 800
+    }
   ],
   "events": [
     { "t": 25, "flowId": "public-lb1", "rateMbps": 6000 },

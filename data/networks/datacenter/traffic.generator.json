@@ -1,69 +1,285 @@
 {
   "tickSeconds": 1,
   "initial": [
-    { "connectionId": "conn-dc-inet-fw1", "status": "up", "rateMbps": 900, "utilization": 0.09 },
-    { "connectionId": "conn-dc-inet-fw2", "status": "up", "rateMbps": 850, "utilization": 0.09 },
+    {
+      "connectionId": "conn-dc-inet-fw1",
+      "status": "up",
+      "rateMbps": 900,
+      "utilization": 0.09
+    },
+    {
+      "connectionId": "conn-dc-inet-fw2",
+      "status": "up",
+      "rateMbps": 850,
+      "utilization": 0.09
+    },
 
-    { "connectionId": "conn-dc-fw1-leaf1", "status": "up", "rateMbps": 820, "utilization": 0.08 },
-    { "connectionId": "conn-dc-fw1-leaf2", "status": "up", "rateMbps": 760, "utilization": 0.08 },
-    { "connectionId": "conn-dc-fw2-leaf1", "status": "up", "rateMbps": 780, "utilization": 0.08 },
-    { "connectionId": "conn-dc-fw2-leaf2", "status": "up", "rateMbps": 740, "utilization": 0.07 },
+    {
+      "connectionId": "conn-dc-fw1-leaf1",
+      "status": "up",
+      "rateMbps": 820,
+      "utilization": 0.08
+    },
+    {
+      "connectionId": "conn-dc-fw1-leaf2",
+      "status": "up",
+      "rateMbps": 760,
+      "utilization": 0.08
+    },
+    {
+      "connectionId": "conn-dc-fw2-leaf1",
+      "status": "up",
+      "rateMbps": 780,
+      "utilization": 0.08
+    },
+    {
+      "connectionId": "conn-dc-fw2-leaf2",
+      "status": "up",
+      "rateMbps": 740,
+      "utilization": 0.07
+    },
 
-    { "connectionId": "conn-dc-leaf1-leaf2", "status": "up", "rateMbps": 1200, "utilization": 0.12 },
+    {
+      "connectionId": "conn-dc-leaf1-leaf2",
+      "status": "up",
+      "rateMbps": 1200,
+      "utilization": 0.12
+    },
 
-    { "connectionId": "conn-sp1-leaf1", "status": "up", "rateMbps": 1400, "utilization": 0.04 },
-    { "connectionId": "conn-sp2-leaf1", "status": "up", "rateMbps": 1300, "utilization": 0.03 },
-    { "connectionId": "conn-sp1-leaf2", "status": "up", "rateMbps": 1500, "utilization": 0.04 },
-    { "connectionId": "conn-sp2-leaf2", "status": "up", "rateMbps": 1450, "utilization": 0.04 },
+    {
+      "connectionId": "conn-sp1-leaf1",
+      "status": "up",
+      "rateMbps": 1400,
+      "utilization": 0.04
+    },
+    {
+      "connectionId": "conn-sp2-leaf1",
+      "status": "up",
+      "rateMbps": 1300,
+      "utilization": 0.03
+    },
+    {
+      "connectionId": "conn-sp1-leaf2",
+      "status": "up",
+      "rateMbps": 1500,
+      "utilization": 0.04
+    },
+    {
+      "connectionId": "conn-sp2-leaf2",
+      "status": "up",
+      "rateMbps": 1450,
+      "utilization": 0.04
+    },
 
-    { "connectionId": "conn-sp1-leaf3", "status": "up", "rateMbps": 1600, "utilization": 0.04 },
-    { "connectionId": "conn-sp2-leaf3", "status": "up", "rateMbps": 1550, "utilization": 0.04 },
-    { "connectionId": "conn-sp1-leaf4", "status": "up", "rateMbps": 1700, "utilization": 0.04 },
-    { "connectionId": "conn-sp2-leaf4", "status": "up", "rateMbps": 1650, "utilization": 0.04 },
+    {
+      "connectionId": "conn-sp1-leaf3",
+      "status": "up",
+      "rateMbps": 1600,
+      "utilization": 0.04
+    },
+    {
+      "connectionId": "conn-sp2-leaf3",
+      "status": "up",
+      "rateMbps": 1550,
+      "utilization": 0.04
+    },
+    {
+      "connectionId": "conn-sp1-leaf4",
+      "status": "up",
+      "rateMbps": 1700,
+      "utilization": 0.04
+    },
+    {
+      "connectionId": "conn-sp2-leaf4",
+      "status": "up",
+      "rateMbps": 1650,
+      "utilization": 0.04
+    },
 
-    { "connectionId": "conn-dc-leaf3-leaf4", "status": "up", "rateMbps": 900, "utilization": 0.09 },
+    {
+      "connectionId": "conn-dc-leaf3-leaf4",
+      "status": "up",
+      "rateMbps": 900,
+      "utilization": 0.09
+    },
 
-    { "connectionId": "conn-dc-lb1-leaf3", "status": "up", "rateMbps": 620, "utilization": 0.06 },
-    { "connectionId": "conn-dc-lb1-leaf4", "status": "up", "rateMbps": 610, "utilization": 0.06 },
-    { "connectionId": "conn-dc-lb2-leaf3", "status": "up", "rateMbps": 580, "utilization": 0.06 },
-    { "connectionId": "conn-dc-lb2-leaf4", "status": "up", "rateMbps": 590, "utilization": 0.06 },
+    {
+      "connectionId": "conn-dc-lb1-leaf3",
+      "status": "up",
+      "rateMbps": 620,
+      "utilization": 0.06
+    },
+    {
+      "connectionId": "conn-dc-lb1-leaf4",
+      "status": "up",
+      "rateMbps": 610,
+      "utilization": 0.06
+    },
+    {
+      "connectionId": "conn-dc-lb2-leaf3",
+      "status": "up",
+      "rateMbps": 580,
+      "utilization": 0.06
+    },
+    {
+      "connectionId": "conn-dc-lb2-leaf4",
+      "status": "up",
+      "rateMbps": 590,
+      "utilization": 0.06
+    },
 
-    { "connectionId": "conn-leaf3-app1", "status": "up", "rateMbps": 420, "utilization": 0.04 },
-    { "connectionId": "conn-leaf3-app2", "status": "up", "rateMbps": 380, "utilization": 0.04 },
-    { "connectionId": "conn-leaf4-db1", "status": "up", "rateMbps": 460, "utilization": 0.05 },
-    { "connectionId": "conn-leaf4-db2", "status": "up", "rateMbps": 410, "utilization": 0.04 }
+    {
+      "connectionId": "conn-leaf3-app1",
+      "status": "up",
+      "rateMbps": 420,
+      "utilization": 0.04
+    },
+    {
+      "connectionId": "conn-leaf3-app2",
+      "status": "up",
+      "rateMbps": 380,
+      "utilization": 0.04
+    },
+    {
+      "connectionId": "conn-leaf4-db1",
+      "status": "up",
+      "rateMbps": 460,
+      "utilization": 0.05
+    },
+    {
+      "connectionId": "conn-leaf4-db2",
+      "status": "up",
+      "rateMbps": 410,
+      "utilization": 0.04
+    }
   ],
   "links": {
-    "conn-dc-inet-fw1": { "capacityMbps": 10000, "rateMbps": { "min": 200, "max": 9000, "delta": 320 }, "utilization": { "min": 0, "max": 0.98, "delta": 0.08 } },
-    "conn-dc-inet-fw2": { "capacityMbps": 10000, "rateMbps": { "min": 200, "max": 9000, "delta": 320 }, "utilization": { "min": 0, "max": 0.98, "delta": 0.08 } },
+    "conn-dc-inet-fw1": {
+      "capacityMbps": 10000,
+      "rateMbps": { "min": 200, "max": 9000, "delta": 320 },
+      "utilization": { "min": 0, "max": 0.98, "delta": 0.08 }
+    },
+    "conn-dc-inet-fw2": {
+      "capacityMbps": 10000,
+      "rateMbps": { "min": 200, "max": 9000, "delta": 320 },
+      "utilization": { "min": 0, "max": 0.98, "delta": 0.08 }
+    },
 
-    "conn-dc-fw1-leaf1": { "capacityMbps": 10000, "rateMbps": { "min": 120, "max": 4200, "delta": 260 }, "utilization": { "min": 0, "max": 0.95, "delta": 0.1 } },
-    "conn-dc-fw1-leaf2": { "capacityMbps": 10000, "rateMbps": { "min": 120, "max": 4200, "delta": 260 }, "utilization": { "min": 0, "max": 0.95, "delta": 0.1 } },
-    "conn-dc-fw2-leaf1": { "capacityMbps": 10000, "rateMbps": { "min": 120, "max": 4200, "delta": 260 }, "utilization": { "min": 0, "max": 0.95, "delta": 0.1 } },
-    "conn-dc-fw2-leaf2": { "capacityMbps": 10000, "rateMbps": { "min": 120, "max": 4200, "delta": 260 }, "utilization": { "min": 0, "max": 0.95, "delta": 0.1 } },
+    "conn-dc-fw1-leaf1": {
+      "capacityMbps": 10000,
+      "rateMbps": { "min": 120, "max": 4200, "delta": 260 },
+      "utilization": { "min": 0, "max": 0.95, "delta": 0.1 }
+    },
+    "conn-dc-fw1-leaf2": {
+      "capacityMbps": 10000,
+      "rateMbps": { "min": 120, "max": 4200, "delta": 260 },
+      "utilization": { "min": 0, "max": 0.95, "delta": 0.1 }
+    },
+    "conn-dc-fw2-leaf1": {
+      "capacityMbps": 10000,
+      "rateMbps": { "min": 120, "max": 4200, "delta": 260 },
+      "utilization": { "min": 0, "max": 0.95, "delta": 0.1 }
+    },
+    "conn-dc-fw2-leaf2": {
+      "capacityMbps": 10000,
+      "rateMbps": { "min": 120, "max": 4200, "delta": 260 },
+      "utilization": { "min": 0, "max": 0.95, "delta": 0.1 }
+    },
 
-    "conn-dc-leaf1-leaf2": { "capacityMbps": 10000, "rateMbps": { "min": 50, "max": 2500, "delta": 180 }, "utilization": { "min": 0, "max": 0.9, "delta": 0.08 } },
+    "conn-dc-leaf1-leaf2": {
+      "capacityMbps": 10000,
+      "rateMbps": { "min": 50, "max": 2500, "delta": 180 },
+      "utilization": { "min": 0, "max": 0.9, "delta": 0.08 }
+    },
 
-    "conn-sp1-leaf1": { "capacityMbps": 40000, "rateMbps": { "min": 200, "max": 18000, "delta": 720 }, "utilization": { "min": 0, "max": 0.95, "delta": 0.08 } },
-    "conn-sp2-leaf1": { "capacityMbps": 40000, "rateMbps": { "min": 200, "max": 18000, "delta": 720 }, "utilization": { "min": 0, "max": 0.95, "delta": 0.08 } },
-    "conn-sp1-leaf2": { "capacityMbps": 40000, "rateMbps": { "min": 200, "max": 18000, "delta": 720 }, "utilization": { "min": 0, "max": 0.95, "delta": 0.08 } },
-    "conn-sp2-leaf2": { "capacityMbps": 40000, "rateMbps": { "min": 200, "max": 18000, "delta": 720 }, "utilization": { "min": 0, "max": 0.95, "delta": 0.08 } },
-    "conn-sp1-leaf3": { "capacityMbps": 40000, "rateMbps": { "min": 200, "max": 20000, "delta": 760 }, "utilization": { "min": 0, "max": 0.95, "delta": 0.08 } },
-    "conn-sp2-leaf3": { "capacityMbps": 40000, "rateMbps": { "min": 200, "max": 20000, "delta": 760 }, "utilization": { "min": 0, "max": 0.95, "delta": 0.08 } },
-    "conn-sp1-leaf4": { "capacityMbps": 40000, "rateMbps": { "min": 200, "max": 20000, "delta": 760 }, "utilization": { "min": 0, "max": 0.95, "delta": 0.08 } },
-    "conn-sp2-leaf4": { "capacityMbps": 40000, "rateMbps": { "min": 200, "max": 20000, "delta": 760 }, "utilization": { "min": 0, "max": 0.95, "delta": 0.08 } },
+    "conn-sp1-leaf1": {
+      "capacityMbps": 40000,
+      "rateMbps": { "min": 200, "max": 18000, "delta": 720 },
+      "utilization": { "min": 0, "max": 0.95, "delta": 0.08 }
+    },
+    "conn-sp2-leaf1": {
+      "capacityMbps": 40000,
+      "rateMbps": { "min": 200, "max": 18000, "delta": 720 },
+      "utilization": { "min": 0, "max": 0.95, "delta": 0.08 }
+    },
+    "conn-sp1-leaf2": {
+      "capacityMbps": 40000,
+      "rateMbps": { "min": 200, "max": 18000, "delta": 720 },
+      "utilization": { "min": 0, "max": 0.95, "delta": 0.08 }
+    },
+    "conn-sp2-leaf2": {
+      "capacityMbps": 40000,
+      "rateMbps": { "min": 200, "max": 18000, "delta": 720 },
+      "utilization": { "min": 0, "max": 0.95, "delta": 0.08 }
+    },
+    "conn-sp1-leaf3": {
+      "capacityMbps": 40000,
+      "rateMbps": { "min": 200, "max": 20000, "delta": 760 },
+      "utilization": { "min": 0, "max": 0.95, "delta": 0.08 }
+    },
+    "conn-sp2-leaf3": {
+      "capacityMbps": 40000,
+      "rateMbps": { "min": 200, "max": 20000, "delta": 760 },
+      "utilization": { "min": 0, "max": 0.95, "delta": 0.08 }
+    },
+    "conn-sp1-leaf4": {
+      "capacityMbps": 40000,
+      "rateMbps": { "min": 200, "max": 20000, "delta": 760 },
+      "utilization": { "min": 0, "max": 0.95, "delta": 0.08 }
+    },
+    "conn-sp2-leaf4": {
+      "capacityMbps": 40000,
+      "rateMbps": { "min": 200, "max": 20000, "delta": 760 },
+      "utilization": { "min": 0, "max": 0.95, "delta": 0.08 }
+    },
 
-    "conn-dc-leaf3-leaf4": { "capacityMbps": 10000, "rateMbps": { "min": 40, "max": 2200, "delta": 170 }, "utilization": { "min": 0, "max": 0.9, "delta": 0.08 } },
+    "conn-dc-leaf3-leaf4": {
+      "capacityMbps": 10000,
+      "rateMbps": { "min": 40, "max": 2200, "delta": 170 },
+      "utilization": { "min": 0, "max": 0.9, "delta": 0.08 }
+    },
 
-    "conn-dc-lb1-leaf3": { "capacityMbps": 10000, "rateMbps": { "min": 30, "max": 3500, "delta": 240 }, "utilization": { "min": 0, "max": 0.95, "delta": 0.08 } },
-    "conn-dc-lb1-leaf4": { "capacityMbps": 10000, "rateMbps": { "min": 30, "max": 3500, "delta": 240 }, "utilization": { "min": 0, "max": 0.95, "delta": 0.08 } },
-    "conn-dc-lb2-leaf3": { "capacityMbps": 10000, "rateMbps": { "min": 30, "max": 3500, "delta": 240 }, "utilization": { "min": 0, "max": 0.95, "delta": 0.08 } },
-    "conn-dc-lb2-leaf4": { "capacityMbps": 10000, "rateMbps": { "min": 30, "max": 3500, "delta": 240 }, "utilization": { "min": 0, "max": 0.95, "delta": 0.08 } },
+    "conn-dc-lb1-leaf3": {
+      "capacityMbps": 10000,
+      "rateMbps": { "min": 30, "max": 3500, "delta": 240 },
+      "utilization": { "min": 0, "max": 0.95, "delta": 0.08 }
+    },
+    "conn-dc-lb1-leaf4": {
+      "capacityMbps": 10000,
+      "rateMbps": { "min": 30, "max": 3500, "delta": 240 },
+      "utilization": { "min": 0, "max": 0.95, "delta": 0.08 }
+    },
+    "conn-dc-lb2-leaf3": {
+      "capacityMbps": 10000,
+      "rateMbps": { "min": 30, "max": 3500, "delta": 240 },
+      "utilization": { "min": 0, "max": 0.95, "delta": 0.08 }
+    },
+    "conn-dc-lb2-leaf4": {
+      "capacityMbps": 10000,
+      "rateMbps": { "min": 30, "max": 3500, "delta": 240 },
+      "utilization": { "min": 0, "max": 0.95, "delta": 0.08 }
+    },
 
-    "conn-leaf3-app1": { "capacityMbps": 10000, "rateMbps": { "min": 10, "max": 6500, "delta": 320 }, "utilization": { "min": 0, "max": 0.95, "delta": 0.1 } },
-    "conn-leaf3-app2": { "capacityMbps": 10000, "rateMbps": { "min": 10, "max": 6500, "delta": 320 }, "utilization": { "min": 0, "max": 0.95, "delta": 0.1 } },
-    "conn-leaf4-db1": { "capacityMbps": 10000, "rateMbps": { "min": 10, "max": 6500, "delta": 320 }, "utilization": { "min": 0, "max": 0.95, "delta": 0.1 } },
-    "conn-leaf4-db2": { "capacityMbps": 10000, "rateMbps": { "min": 10, "max": 6500, "delta": 320 }, "utilization": { "min": 0, "max": 0.95, "delta": 0.1 } }
+    "conn-leaf3-app1": {
+      "capacityMbps": 10000,
+      "rateMbps": { "min": 10, "max": 6500, "delta": 320 },
+      "utilization": { "min": 0, "max": 0.95, "delta": 0.1 }
+    },
+    "conn-leaf3-app2": {
+      "capacityMbps": 10000,
+      "rateMbps": { "min": 10, "max": 6500, "delta": 320 },
+      "utilization": { "min": 0, "max": 0.95, "delta": 0.1 }
+    },
+    "conn-leaf4-db1": {
+      "capacityMbps": 10000,
+      "rateMbps": { "min": 10, "max": 6500, "delta": 320 },
+      "utilization": { "min": 0, "max": 0.95, "delta": 0.1 }
+    },
+    "conn-leaf4-db2": {
+      "capacityMbps": 10000,
+      "rateMbps": { "min": 10, "max": 6500, "delta": 320 },
+      "utilization": { "min": 0, "max": 0.95, "delta": 0.1 }
+    }
   },
   "events": [
     { "t": 15, "connectionId": "conn-leaf4-db2", "status": "down" },

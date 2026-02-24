@@ -1,30 +1,174 @@
 [
-  { "id": "conn-dc-inet-fw1", "description": "WAN to FW1", "connectionType": "wan-10g", "from": { "deviceId": "dc-inet", "portId": "p1" }, "to": { "deviceId": "dc-fw-1", "portId": "p1" } },
-  { "id": "conn-dc-inet-fw2", "description": "WAN to FW2", "connectionType": "wan-10g", "from": { "deviceId": "dc-inet", "portId": "p2" }, "to": { "deviceId": "dc-fw-2", "portId": "p1" } },
+  {
+    "id": "conn-dc-inet-fw1",
+    "description": "WAN to FW1",
+    "connectionType": "wan-10g",
+    "from": { "deviceId": "dc-inet", "portId": "p1" },
+    "to": { "deviceId": "dc-fw-1", "portId": "p1" }
+  },
+  {
+    "id": "conn-dc-inet-fw2",
+    "description": "WAN to FW2",
+    "connectionType": "wan-10g",
+    "from": { "deviceId": "dc-inet", "portId": "p2" },
+    "to": { "deviceId": "dc-fw-2", "portId": "p1" }
+  },
 
-  { "id": "conn-dc-fw1-leaf1", "description": "FW1 to Border Leaf-1", "connectionType": "eth-10g", "from": { "deviceId": "dc-fw-1", "portId": "p2" }, "to": { "deviceId": "dc-leaf-1", "portId": "p1" } },
-  { "id": "conn-dc-fw1-leaf2", "description": "FW1 to Border Leaf-2", "connectionType": "eth-10g", "from": { "deviceId": "dc-fw-1", "portId": "p3" }, "to": { "deviceId": "dc-leaf-2", "portId": "p1" } },
-  { "id": "conn-dc-fw2-leaf1", "description": "FW2 to Border Leaf-1", "connectionType": "eth-10g", "from": { "deviceId": "dc-fw-2", "portId": "p2" }, "to": { "deviceId": "dc-leaf-1", "portId": "p2" } },
-  { "id": "conn-dc-fw2-leaf2", "description": "FW2 to Border Leaf-2", "connectionType": "eth-10g", "from": { "deviceId": "dc-fw-2", "portId": "p3" }, "to": { "deviceId": "dc-leaf-2", "portId": "p2" } },
-  { "id": "conn-dc-leaf1-leaf2", "description": "Border Leaf peer-link (MLAG)", "connectionType": "eth-10g", "from": { "deviceId": "dc-leaf-1", "portId": "p3" }, "to": { "deviceId": "dc-leaf-2", "portId": "p3" } },
+  {
+    "id": "conn-dc-fw1-leaf1",
+    "description": "FW1 to Border Leaf-1",
+    "connectionType": "eth-10g",
+    "from": { "deviceId": "dc-fw-1", "portId": "p2" },
+    "to": { "deviceId": "dc-leaf-1", "portId": "p1" }
+  },
+  {
+    "id": "conn-dc-fw1-leaf2",
+    "description": "FW1 to Border Leaf-2",
+    "connectionType": "eth-10g",
+    "from": { "deviceId": "dc-fw-1", "portId": "p3" },
+    "to": { "deviceId": "dc-leaf-2", "portId": "p1" }
+  },
+  {
+    "id": "conn-dc-fw2-leaf1",
+    "description": "FW2 to Border Leaf-1",
+    "connectionType": "eth-10g",
+    "from": { "deviceId": "dc-fw-2", "portId": "p2" },
+    "to": { "deviceId": "dc-leaf-1", "portId": "p2" }
+  },
+  {
+    "id": "conn-dc-fw2-leaf2",
+    "description": "FW2 to Border Leaf-2",
+    "connectionType": "eth-10g",
+    "from": { "deviceId": "dc-fw-2", "portId": "p3" },
+    "to": { "deviceId": "dc-leaf-2", "portId": "p2" }
+  },
+  {
+    "id": "conn-dc-leaf1-leaf2",
+    "description": "Border Leaf peer-link (MLAG)",
+    "connectionType": "eth-10g",
+    "from": { "deviceId": "dc-leaf-1", "portId": "p3" },
+    "to": { "deviceId": "dc-leaf-2", "portId": "p3" }
+  },
 
-  { "id": "conn-sp1-leaf1", "description": "Spine-1 uplink -> Leaf-1", "connectionType": "eth-40g", "from": { "deviceId": "dc-spine-1", "portId": "p1" }, "to": { "deviceId": "dc-leaf-1", "portId": "p4" } },
-  { "id": "conn-sp2-leaf1", "description": "Spine-2 uplink -> Leaf-1", "connectionType": "eth-40g", "from": { "deviceId": "dc-spine-2", "portId": "p1" }, "to": { "deviceId": "dc-leaf-1", "portId": "p5" } },
-  { "id": "conn-sp1-leaf2", "description": "Spine-1 uplink -> Leaf-2", "connectionType": "eth-40g", "from": { "deviceId": "dc-spine-1", "portId": "p2" }, "to": { "deviceId": "dc-leaf-2", "portId": "p4" } },
-  { "id": "conn-sp2-leaf2", "description": "Spine-2 uplink -> Leaf-2", "connectionType": "eth-40g", "from": { "deviceId": "dc-spine-2", "portId": "p2" }, "to": { "deviceId": "dc-leaf-2", "portId": "p5" } },
-  { "id": "conn-sp1-leaf3", "description": "Spine-1 uplink -> Leaf-3", "connectionType": "eth-40g", "from": { "deviceId": "dc-spine-1", "portId": "p3" }, "to": { "deviceId": "dc-leaf-3", "portId": "p1" } },
-  { "id": "conn-sp2-leaf3", "description": "Spine-2 uplink -> Leaf-3", "connectionType": "eth-40g", "from": { "deviceId": "dc-spine-2", "portId": "p3" }, "to": { "deviceId": "dc-leaf-3", "portId": "p2" } },
-  { "id": "conn-sp1-leaf4", "description": "Spine-1 uplink -> Leaf-4", "connectionType": "eth-40g", "from": { "deviceId": "dc-spine-1", "portId": "p4" }, "to": { "deviceId": "dc-leaf-4", "portId": "p1" } },
-  { "id": "conn-sp2-leaf4", "description": "Spine-2 uplink -> Leaf-4", "connectionType": "eth-40g", "from": { "deviceId": "dc-spine-2", "portId": "p4" }, "to": { "deviceId": "dc-leaf-4", "portId": "p2" } },
+  {
+    "id": "conn-sp1-leaf1",
+    "description": "Spine-1 uplink -> Leaf-1",
+    "connectionType": "eth-40g",
+    "from": { "deviceId": "dc-spine-1", "portId": "p1" },
+    "to": { "deviceId": "dc-leaf-1", "portId": "p4" }
+  },
+  {
+    "id": "conn-sp2-leaf1",
+    "description": "Spine-2 uplink -> Leaf-1",
+    "connectionType": "eth-40g",
+    "from": { "deviceId": "dc-spine-2", "portId": "p1" },
+    "to": { "deviceId": "dc-leaf-1", "portId": "p5" }
+  },
+  {
+    "id": "conn-sp1-leaf2",
+    "description": "Spine-1 uplink -> Leaf-2",
+    "connectionType": "eth-40g",
+    "from": { "deviceId": "dc-spine-1", "portId": "p2" },
+    "to": { "deviceId": "dc-leaf-2", "portId": "p4" }
+  },
+  {
+    "id": "conn-sp2-leaf2",
+    "description": "Spine-2 uplink -> Leaf-2",
+    "connectionType": "eth-40g",
+    "from": { "deviceId": "dc-spine-2", "portId": "p2" },
+    "to": { "deviceId": "dc-leaf-2", "portId": "p5" }
+  },
+  {
+    "id": "conn-sp1-leaf3",
+    "description": "Spine-1 uplink -> Leaf-3",
+    "connectionType": "eth-40g",
+    "from": { "deviceId": "dc-spine-1", "portId": "p3" },
+    "to": { "deviceId": "dc-leaf-3", "portId": "p1" }
+  },
+  {
+    "id": "conn-sp2-leaf3",
+    "description": "Spine-2 uplink -> Leaf-3",
+    "connectionType": "eth-40g",
+    "from": { "deviceId": "dc-spine-2", "portId": "p3" },
+    "to": { "deviceId": "dc-leaf-3", "portId": "p2" }
+  },
+  {
+    "id": "conn-sp1-leaf4",
+    "description": "Spine-1 uplink -> Leaf-4",
+    "connectionType": "eth-40g",
+    "from": { "deviceId": "dc-spine-1", "portId": "p4" },
+    "to": { "deviceId": "dc-leaf-4", "portId": "p1" }
+  },
+  {
+    "id": "conn-sp2-leaf4",
+    "description": "Spine-2 uplink -> Leaf-4",
+    "connectionType": "eth-40g",
+    "from": { "deviceId": "dc-spine-2", "portId": "p4" },
+    "to": { "deviceId": "dc-leaf-4", "portId": "p2" }
+  },
 
-  { "id": "conn-dc-leaf3-leaf4", "description": "Server leaf peer-link (MLAG)", "connectionType": "eth-10g", "from": { "deviceId": "dc-leaf-3", "portId": "p3" }, "to": { "deviceId": "dc-leaf-4", "portId": "p3" } },
-  { "id": "conn-dc-lb1-leaf3", "description": "LB1 -> Leaf-3", "connectionType": "eth-10g", "from": { "deviceId": "dc-lb-1", "portId": "p1" }, "to": { "deviceId": "dc-leaf-3", "portId": "p4" } },
-  { "id": "conn-dc-lb1-leaf4", "description": "LB1 -> Leaf-4", "connectionType": "eth-10g", "from": { "deviceId": "dc-lb-1", "portId": "p2" }, "to": { "deviceId": "dc-leaf-4", "portId": "p4" } },
-  { "id": "conn-dc-lb2-leaf3", "description": "LB2 -> Leaf-3", "connectionType": "eth-10g", "from": { "deviceId": "dc-lb-2", "portId": "p1" }, "to": { "deviceId": "dc-leaf-3", "portId": "p5" } },
-  { "id": "conn-dc-lb2-leaf4", "description": "LB2 -> Leaf-4", "connectionType": "eth-10g", "from": { "deviceId": "dc-lb-2", "portId": "p2" }, "to": { "deviceId": "dc-leaf-4", "portId": "p5" } },
+  {
+    "id": "conn-dc-leaf3-leaf4",
+    "description": "Server leaf peer-link (MLAG)",
+    "connectionType": "eth-10g",
+    "from": { "deviceId": "dc-leaf-3", "portId": "p3" },
+    "to": { "deviceId": "dc-leaf-4", "portId": "p3" }
+  },
+  {
+    "id": "conn-dc-lb1-leaf3",
+    "description": "LB1 -> Leaf-3",
+    "connectionType": "eth-10g",
+    "from": { "deviceId": "dc-lb-1", "portId": "p1" },
+    "to": { "deviceId": "dc-leaf-3", "portId": "p4" }
+  },
+  {
+    "id": "conn-dc-lb1-leaf4",
+    "description": "LB1 -> Leaf-4",
+    "connectionType": "eth-10g",
+    "from": { "deviceId": "dc-lb-1", "portId": "p2" },
+    "to": { "deviceId": "dc-leaf-4", "portId": "p4" }
+  },
+  {
+    "id": "conn-dc-lb2-leaf3",
+    "description": "LB2 -> Leaf-3",
+    "connectionType": "eth-10g",
+    "from": { "deviceId": "dc-lb-2", "portId": "p1" },
+    "to": { "deviceId": "dc-leaf-3", "portId": "p5" }
+  },
+  {
+    "id": "conn-dc-lb2-leaf4",
+    "description": "LB2 -> Leaf-4",
+    "connectionType": "eth-10g",
+    "from": { "deviceId": "dc-lb-2", "portId": "p2" },
+    "to": { "deviceId": "dc-leaf-4", "portId": "p5" }
+  },
 
-  { "id": "conn-leaf3-app1", "description": "Leaf-3 -> App-1", "connectionType": "eth-10g", "from": { "deviceId": "dc-leaf-3", "portId": "p6" }, "to": { "deviceId": "dc-app-1", "portId": "p1" } },
-  { "id": "conn-leaf3-app2", "description": "Leaf-3 -> App-2", "connectionType": "eth-10g", "from": { "deviceId": "dc-leaf-3", "portId": "p7" }, "to": { "deviceId": "dc-app-2", "portId": "p1" } },
-  { "id": "conn-leaf4-db1", "description": "Leaf-4 -> DB-1", "connectionType": "eth-10g", "from": { "deviceId": "dc-leaf-4", "portId": "p6" }, "to": { "deviceId": "dc-db-1", "portId": "p1" } },
-  { "id": "conn-leaf4-db2", "description": "Leaf-4 -> DB-2", "connectionType": "eth-10g", "from": { "deviceId": "dc-leaf-4", "portId": "p7" }, "to": { "deviceId": "dc-db-2", "portId": "p1" } }
+  {
+    "id": "conn-leaf3-app1",
+    "description": "Leaf-3 -> App-1",
+    "connectionType": "eth-10g",
+    "from": { "deviceId": "dc-leaf-3", "portId": "p6" },
+    "to": { "deviceId": "dc-app-1", "portId": "p1" }
+  },
+  {
+    "id": "conn-leaf3-app2",
+    "description": "Leaf-3 -> App-2",
+    "connectionType": "eth-10g",
+    "from": { "deviceId": "dc-leaf-3", "portId": "p7" },
+    "to": { "deviceId": "dc-app-2", "portId": "p1" }
+  },
+  {
+    "id": "conn-leaf4-db1",
+    "description": "Leaf-4 -> DB-1",
+    "connectionType": "eth-10g",
+    "from": { "deviceId": "dc-leaf-4", "portId": "p6" },
+    "to": { "deviceId": "dc-db-1", "portId": "p1" }
+  },
+  {
+    "id": "conn-leaf4-db2",
+    "description": "Leaf-4 -> DB-2",
+    "connectionType": "eth-10g",
+    "from": { "deviceId": "dc-leaf-4", "portId": "p7" },
+    "to": { "deviceId": "dc-db-2", "portId": "p1" }
+  }
 ]

@@ -1,15 +1,65 @@
 {
   "initial": [
-    { "connectionId": "conn-isp-edge", "status": "up", "rateMbps": 120, "utilization": 0.55 },
-    { "connectionId": "conn-edge-fw", "status": "up", "rateMbps": 120, "utilization": 0.55 },
-    { "connectionId": "conn-fw-core", "status": "up", "rateMbps": 95, "utilization": 0.40 },
-    { "connectionId": "conn-core-access", "status": "up", "rateMbps": 60, "utilization": 0.25 },
-    { "connectionId": "conn-core-nas", "status": "up", "rateMbps": 320, "utilization": 0.75 },
-    { "connectionId": "conn-access-ap1", "status": "up", "rateMbps": 45, "utilization": 0.30 },
-    { "connectionId": "conn-access-ap2", "status": "up", "rateMbps": 30, "utilization": 0.20 },
-    { "connectionId": "conn-access-pc", "status": "up", "rateMbps": 15, "utilization": 0.10 },
-    { "connectionId": "conn-access-printer", "status": "up", "rateMbps": 2, "utilization": 0.02 },
-    { "connectionId": "conn-access-iot", "status": "down", "rateMbps": 0, "utilization": 0.0 }
+    {
+      "connectionId": "conn-isp-edge",
+      "status": "up",
+      "rateMbps": 120,
+      "utilization": 0.55
+    },
+    {
+      "connectionId": "conn-edge-fw",
+      "status": "up",
+      "rateMbps": 120,
+      "utilization": 0.55
+    },
+    {
+      "connectionId": "conn-fw-core",
+      "status": "up",
+      "rateMbps": 95,
+      "utilization": 0.40
+    },
+    {
+      "connectionId": "conn-core-access",
+      "status": "up",
+      "rateMbps": 60,
+      "utilization": 0.25
+    },
+    {
+      "connectionId": "conn-core-nas",
+      "status": "up",
+      "rateMbps": 320,
+      "utilization": 0.75
+    },
+    {
+      "connectionId": "conn-access-ap1",
+      "status": "up",
+      "rateMbps": 45,
+      "utilization": 0.30
+    },
+    {
+      "connectionId": "conn-access-ap2",
+      "status": "up",
+      "rateMbps": 30,
+      "utilization": 0.20
+    },
+    {
+      "connectionId": "conn-access-pc",
+      "status": "up",
+      "rateMbps": 15,
+      "utilization": 0.10
+    },
+    {
+      "connectionId": "conn-access-printer",
+      "status": "up",
+      "rateMbps": 2,
+      "utilization": 0.02
+    },
+    {
+      "connectionId": "conn-access-iot",
+      "status": "down",
+      "rateMbps": 0,
+      "utilization": 0.0
+    }
   ],
   "updates": [
     { "t": 2, "connectionId": "conn-core-nas", "rateMbps": 900 },
