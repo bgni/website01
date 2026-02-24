@@ -216,6 +216,64 @@ Examples that help a lot:
 - If you want “reviewable slices,” say so early; it changes how we group changes
   and tests.
 
+## 2026-02-25 — Process update: cooperation + refactor style
+
+This tranche of work shifted from “feature building” into “make future changes
+cheap” work: tightening boundaries, making dependencies explicit, and keeping
+refactors mechanical (with compatibility shims) so we could keep CI green.
+
+### What changed in how we worked
+
+- We treated the docs (CODEBASE_REVIEW*) as a living plan: small PR-sized
+  refactors with clear acceptance criteria, rather than a single big rewrite.
+- We biased toward behavior-preserving changes first (move code + add shims),
+  and only then fixed small correctness/UX issues.
+- We kept CI as the feedback loop: every refactor was validated by
+  `deno task ci`, including fixture validation, not just unit tests.
+
+### How the new structure affected change effort
+
+- **Lower cost to change:** moving code behind shims and registries reduced
+  “search and edit everywhere” changes. Example: connector selection moved into
+  a registry, so adding a connector is now mostly “add file + register it”.
+- **Less accidental coupling:** the renderer no longer hard-codes `#graph` and
+  no longer relies on an implicit global `d3` reference; this made follow-up
+  changes (like adding resize support) straightforward and localized.
+- **More explicit boundaries:** strict fixture/domain validation and
+  normalization at the boundary means fewer downstream surprises in layouts and
+  rendering.
+
+### How it affected bug-fixing effort
+
+- **Bugs got cheaper to isolate:** when modules have explicit deps (e.g.
+  controller receives `graphSvg`, renderer receives `svg`, D3 access is
+  centralized), “what can this code touch?” becomes obvious, which narrows the
+  debugging surface.
+- **Failures moved earlier:** strict validation + CI fixture validation caught
+  inconsistent fixtures and interface IDs before they showed up as confusing UI
+  breakage.
+- **Cleanup reduced regression risk:** mechanical refactors plus shims meant we
+  could change file structure without breaking imports or forcing a flag day.
+
+### Lessons learned
+
+- Mechanical refactors with shims are a strong default: they reduce risk and
+  keep changes reviewable.
+- Make implicit runtime dependencies explicit (DOM nodes, global libraries,
+  loaders). Even a small accessor (`getD3()`) improves error messages and makes
+  refactors tractable.
+- CI should mirror runtime strictness: “green” only matters if it validates the
+  same invariants the app relies on.
+
+### Process improvements to adopt
+
+- Prefer multiple small commits that each keep CI green, rather than one big
+  commit after a long editing session.
+- When doing a multi-step refactor, keep a short checklist in the review doc
+  (what moved, what shims exist, what call sites were updated).
+- Add one lightweight end-to-end “smoke” test that loads a network and creates
+  the graph/controller entrypoints, so browser-only breakages are less likely.
+
 ## Open follow-ups (optional)
 
 - Add a smoke test that loads `data/networks/index.json` and the default
