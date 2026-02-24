@@ -145,7 +145,8 @@ Update `scripts/app/controller.ts` to:
 
 Acceptance:
 
-- Adding a connector kind does not require editing controller logic beyond “wiring the kind into the registry”.
+- Adding a connector kind does not require editing controller logic beyond
+  “wiring the kind into the registry”.
 
 ### PR5 — Responsive sizing + renderer dependency injection
 
@@ -170,7 +171,6 @@ If you want actual responsive behavior:
 
 ## Notes / guardrails
 
-- Keep REVIEW5 work “mechanical” where possible: shims for moved modules, refactors that preserve behavior.
 - Keep REVIEW5 work “mechanical” where possible: shims for moved modules,
   refactors that preserve behavior.
 - Keep string parsing/heuristics at the boundary. For graph code, normalize once
