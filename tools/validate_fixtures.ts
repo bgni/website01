@@ -1,8 +1,19 @@
 import { join } from "@std/path";
+import { parseDeviceTypeIndex } from "../scripts/domain/deviceTypes.ts";
+import { FixtureValidationError } from "../scripts/domain/errors.ts";
+import {
+  parseConnectionsFixture,
+  parseDevicesFixture,
+} from "../scripts/domain/fixtures.ts";
+import {
+  normalizeLegacyInterfaceIds,
+  validateTopology,
+} from "../scripts/domain/topology.ts";
 
 const root = Deno.cwd();
 const networksIndexPath = join(root, "data", "networks", "index.json");
 const connectionTypesPath = join(root, "data", "connectionTypes.json");
+const deviceTypesIndexPath = join(root, "data", "netbox-device-types.json");
 
 const readJson = async (path: string) => {
   const text = await Deno.readTextFile(path);
@@ -97,6 +108,22 @@ const knownConnectionTypes = new Set(Object.keys(connectionTypes));
 const index = await readJson(networksIndexPath);
 const networks = asArray<{ id: string; name?: string }>(index?.networks);
 
+// Strict topology validation (deviceTypeSlug + interfaceId) using the same
+// domain validation helpers as the app.
+let deviceTypes: ReturnType<typeof parseDeviceTypeIndex> = {};
+try {
+  const deviceTypesRaw = await readJsonOptional(deviceTypesIndexPath);
+  if (deviceTypesRaw) {
+    deviceTypes = parseDeviceTypeIndex(deviceTypesRaw, deviceTypesIndexPath);
+  }
+} catch (err) {
+  errors.push(
+    `${deviceTypesIndexPath}: failed to parse device types index (${
+      err instanceof Error ? err.message : String(err)
+    })`,
+  );
+}
+
 if (!networks.length) {
   console.error(`No networks found in ${networksIndexPath}`);
   Deno.exit(1);
@@ -119,6 +146,34 @@ for (const net of networks) {
 
   const devicesRaw = await readJson(devicesPath);
   const connectionsRaw = await readJson(connectionsPath);
+
+  try {
+    const devicesParsed = parseDevicesFixture(devicesRaw, devicesPath);
+    const connectionsParsed = parseConnectionsFixture(
+      connectionsRaw,
+      connectionsPath,
+    );
+    const connectionsNormalized = normalizeLegacyInterfaceIds({
+      devices: devicesParsed,
+      connections: connectionsParsed,
+      deviceTypes,
+      devicesCtx: devicesPath,
+      connectionsCtx: connectionsPath,
+    });
+    validateTopology({
+      devices: devicesParsed,
+      connections: connectionsNormalized,
+      deviceTypes,
+      devicesCtx: devicesPath,
+      connectionsCtx: connectionsPath,
+    });
+  } catch (err) {
+    if (err instanceof FixtureValidationError) {
+      errors.push(`${networkId}: ${err.message}`);
+    } else {
+      throw err;
+    }
+  }
 
   const devices = asArray<Device>(devicesRaw);
   const connections = asArray<Connection>(connectionsRaw);
