@@ -13,22 +13,51 @@ traffic styling.
 - Do not merge changes that break: `deno task ci`.
 - Direction: tighten TypeScript (reduce `any`/untyped `Record`, add explicit
   boundary types).
+- Direction: keep boundaries explicit (DI for DOM + IO) and refactors mechanical
+  (shims, minimal behavior change, CI stays green).
 
 ## Repo map (what is where)
 
 - Dev server: `main.ts` (Deno.serve + static assets + TS transpile cache for
   local DX).
 - Browser entry: `index.html` → `scripts/main.ts` (UI + state + wiring).
-- Data loading: `scripts/dataLoader.ts`
-- Graph render: `scripts/graph.ts`
+- App wiring/orchestration: `scripts/app/bootstrap.ts`, `scripts/app/controller.ts`
+- Domain (typed boundaries + fixture parsing): `scripts/domain/*`
+  - Load network: `scripts/domain/loadNetwork.ts`
+  - Errors + runtime guards: `scripts/domain/errors.ts`
+  - Core types: `scripts/domain/types.ts`
+- Data loading shim (legacy import path): `scripts/dataLoader.ts`
+- Graph API: `scripts/graph/graph.ts`
+- Graph rendering: `scripts/graph/renderer.ts`
+- Graph shim (legacy import path): `scripts/graph.ts`
 - Graph algorithms: `scripts/graphLogic.ts`
 - Layouts: `scripts/layouts/*` (force + tiered/layered)
-- Traffic inputs: `scripts/trafficConnector.ts`
+- Traffic connectors + registry: `scripts/traffic/*`
+- Traffic shim (legacy import path): `scripts/trafficConnector.ts`
 - Traffic visualization strategies: `scripts/trafficFlowVisualization/*`
+- D3 access (browser global wrapper): `scripts/lib/d3.ts`
 - Static build: `tools/build_pages.ts` → outputs `dist/`
 - Data fixtures: `data/networks/**`
 - CI: `.github/workflows/ci.yml`
 - Pages deploy: `.github/workflows/static.yml`
+
+## Recent lessons (REVIEW5 direction)
+
+- Prefer mechanical refactors over rewrites:
+  - Move code in small steps, keep behavior stable.
+  - Add shims to preserve import paths, then update call sites gradually.
+- Make dependencies explicit:
+  - No DOM querying in “logic” layers. Resolve DOM once in bootstrap, then inject.
+  - Inject IO boundaries into controllers (loaders/fetch), with sensible defaults.
+- Centralize global/browser dependencies:
+  - D3 is loaded as a browser global; use `getD3()` from `scripts/lib/d3.ts`.
+  - Avoid “implicit global” usage (`d3.*` without an explicit import).
+- Responsive sizing:
+  - Use `ResizeObserver` in the controller layer and call `graph.resize(...)`.
+  - Renderer must not assume a hard-coded `#graph` selector.
+- Keep commit history reviewable:
+  - Split commits by subsystem (domain / traffic / graph / docs).
+  - Prefer “shim first” commits (no behavior changes) where possible.
 
 ## Default workflow loop (do this every change)
 
@@ -114,9 +143,17 @@ traffic styling.
 
 ### “Small safe refactor” pattern
 
-- Move shared types to `scripts/types.ts`.
+- Move shared types to `scripts/domain/types.ts` (or the closest domain module).
 - Move shared algorithms to `scripts/lib/*` (no DOM).
 - Then reduce duplication and simplify callsites.
+
+### “Explicit boundary” pattern
+
+- Bootstrap resolves concrete environment details (DOM elements, URLs, storage).
+- Controller coordinates behavior and lifecycle (observers, teardown), but should
+  not reach out to the DOM by selector.
+- Domain modules parse + validate fixtures into typed objects.
+- Graph modules render into an injected SVG and expose a small API.
 
 ## Common anti-patterns (avoid)
 
