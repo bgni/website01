@@ -1,13 +1,48 @@
 {
   "tickSeconds": 1,
   "flows": [
-    { "id": "cust-a-inet", "fromDeviceId": "cust-a", "toDeviceId": "transit-1", "rateMbps": 320 },
-    { "id": "cust-b-inet", "fromDeviceId": "cust-b", "toDeviceId": "transit-1", "rateMbps": 260 },
-    { "id": "cust-c-inet", "fromDeviceId": "cust-c", "toDeviceId": "transit-1", "rateMbps": 240 },
-    { "id": "cust-d-inet", "fromDeviceId": "cust-d", "toDeviceId": "transit-2", "rateMbps": 280 },
-    { "id": "cust-e-inet", "fromDeviceId": "cust-e", "toDeviceId": "transit-2", "rateMbps": 220 },
-    { "id": "cust-f-inet", "fromDeviceId": "cust-f", "toDeviceId": "transit-2", "rateMbps": 210 },
-    { "id": "cust-a-to-d", "fromDeviceId": "cust-a", "toDeviceId": "cust-d", "rateMbps": 120 }
+    {
+      "id": "cust-a-inet",
+      "fromDeviceId": "cust-a",
+      "toDeviceId": "transit-1",
+      "rateMbps": 320
+    },
+    {
+      "id": "cust-b-inet",
+      "fromDeviceId": "cust-b",
+      "toDeviceId": "transit-1",
+      "rateMbps": 260
+    },
+    {
+      "id": "cust-c-inet",
+      "fromDeviceId": "cust-c",
+      "toDeviceId": "transit-1",
+      "rateMbps": 240
+    },
+    {
+      "id": "cust-d-inet",
+      "fromDeviceId": "cust-d",
+      "toDeviceId": "transit-2",
+      "rateMbps": 280
+    },
+    {
+      "id": "cust-e-inet",
+      "fromDeviceId": "cust-e",
+      "toDeviceId": "transit-2",
+      "rateMbps": 220
+    },
+    {
+      "id": "cust-f-inet",
+      "fromDeviceId": "cust-f",
+      "toDeviceId": "transit-2",
+      "rateMbps": 210
+    },
+    {
+      "id": "cust-a-to-d",
+      "fromDeviceId": "cust-a",
+      "toDeviceId": "cust-d",
+      "rateMbps": 120
+    }
   ],
   "events": [
     { "t": 35, "flowId": "cust-a-to-d", "rateMbps": 400 },

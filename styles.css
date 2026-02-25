@@ -97,6 +97,14 @@ button:disabled {
   border: 1px solid var(--border);
 }
 
+/* Keep SVG node labels readable over traffic lines without extra DOM. */
+.label-layer text {
+  paint-order: stroke fill;
+  stroke: #0b1220;
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
 .graph-overlay {
   position: absolute;
   z-index: 10;
@@ -118,6 +126,10 @@ button:disabled {
 }
 
 .graph-overlay.is-hidden {
+  display: none;
+}
+
+.is-hidden {
   display: none;
 }
 
@@ -151,28 +163,6 @@ button:disabled {
   border: 1px solid var(--border);
   border-radius: 12px;
   backdrop-filter: blur(6px);
-}
-.legend .traffic-pill {
-  padding: 4px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  font-size: 12px;
-}
-.legend .traffic-pill.low {
-  background: rgba(51, 65, 85, 0.35);
-  color: var(--traffic-low);
-}
-.legend .traffic-pill.mid {
-  background: rgba(100, 116, 139, 0.22);
-  color: var(--traffic-mid);
-}
-.legend .traffic-pill.high {
-  background: rgba(203, 213, 225, 0.14);
-  color: var(--traffic-high);
-}
-.legend .traffic-pill.down {
-  background: rgba(248, 113, 113, 0.2);
-  color: #f87171;
 }
 .legend span {
   display: inline-flex;

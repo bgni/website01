@@ -1,55 +1,228 @@
 {
   "tickSeconds": 1,
   "initial": [
-    { "connectionId": "conn-campus-inet-fw", "status": "up", "rateMbps": 800, "utilization": 0.4 },
-    { "connectionId": "conn-campus-fw-core1", "status": "up", "rateMbps": 650, "utilization": 0.33 },
-    { "connectionId": "conn-campus-fw-core2", "status": "up", "rateMbps": 620, "utilization": 0.31 },
-    { "connectionId": "conn-campus-core1-core2", "status": "up", "rateMbps": 1500, "utilization": 0.15 },
+    {
+      "connectionId": "conn-campus-inet-fw",
+      "status": "up",
+      "rateMbps": 800,
+      "utilization": 0.4
+    },
+    {
+      "connectionId": "conn-campus-fw-core1",
+      "status": "up",
+      "rateMbps": 650,
+      "utilization": 0.33
+    },
+    {
+      "connectionId": "conn-campus-fw-core2",
+      "status": "up",
+      "rateMbps": 620,
+      "utilization": 0.31
+    },
+    {
+      "connectionId": "conn-campus-core1-core2",
+      "status": "up",
+      "rateMbps": 1500,
+      "utilization": 0.15
+    },
 
-    { "connectionId": "conn-core1-a-agg1", "status": "up", "rateMbps": 420, "utilization": 0.04 },
-    { "connectionId": "conn-core2-a-agg2", "status": "up", "rateMbps": 430, "utilization": 0.04 },
-    { "connectionId": "conn-a-agg1-agg2", "status": "up", "rateMbps": 700, "utilization": 0.07 },
+    {
+      "connectionId": "conn-core1-a-agg1",
+      "status": "up",
+      "rateMbps": 420,
+      "utilization": 0.04
+    },
+    {
+      "connectionId": "conn-core2-a-agg2",
+      "status": "up",
+      "rateMbps": 430,
+      "utilization": 0.04
+    },
+    {
+      "connectionId": "conn-a-agg1-agg2",
+      "status": "up",
+      "rateMbps": 700,
+      "utilization": 0.07
+    },
 
-    { "connectionId": "conn-core1-b-agg1", "status": "up", "rateMbps": 680, "utilization": 0.07 },
-    { "connectionId": "conn-core2-b-agg2", "status": "up", "rateMbps": 720, "utilization": 0.07 },
-    { "connectionId": "conn-b-agg1-agg2", "status": "up", "rateMbps": 900, "utilization": 0.09 },
+    {
+      "connectionId": "conn-core1-b-agg1",
+      "status": "up",
+      "rateMbps": 680,
+      "utilization": 0.07
+    },
+    {
+      "connectionId": "conn-core2-b-agg2",
+      "status": "up",
+      "rateMbps": 720,
+      "utilization": 0.07
+    },
+    {
+      "connectionId": "conn-b-agg1-agg2",
+      "status": "up",
+      "rateMbps": 900,
+      "utilization": 0.09
+    },
 
-    { "connectionId": "conn-core1-c-agg1", "status": "up", "rateMbps": 300, "utilization": 0.03 },
-    { "connectionId": "conn-core2-c-agg2", "status": "up", "rateMbps": 310, "utilization": 0.03 },
-    { "connectionId": "conn-c-agg1-agg2", "status": "up", "rateMbps": 650, "utilization": 0.07 }
+    {
+      "connectionId": "conn-core1-c-agg1",
+      "status": "up",
+      "rateMbps": 300,
+      "utilization": 0.03
+    },
+    {
+      "connectionId": "conn-core2-c-agg2",
+      "status": "up",
+      "rateMbps": 310,
+      "utilization": 0.03
+    },
+    {
+      "connectionId": "conn-c-agg1-agg2",
+      "status": "up",
+      "rateMbps": 650,
+      "utilization": 0.07
+    }
   ],
   "links": {
-    "conn-campus-inet-fw": { "capacityMbps": 2000, "rateMbps": { "min": 120, "max": 1800, "delta": 130 }, "utilization": { "min": 0, "max": 0.98, "delta": 0.1 } },
-    "conn-campus-fw-core1": { "capacityMbps": 2000, "rateMbps": { "min": 80, "max": 1600, "delta": 120 }, "utilization": { "min": 0, "max": 0.98, "delta": 0.09 } },
-    "conn-campus-fw-core2": { "capacityMbps": 2000, "rateMbps": { "min": 80, "max": 1600, "delta": 120 }, "utilization": { "min": 0, "max": 0.98, "delta": 0.09 } },
-    "conn-campus-core1-core2": { "capacityMbps": 10000, "rateMbps": { "min": 200, "max": 8500, "delta": 520 }, "utilization": { "min": 0, "max": 0.98, "delta": 0.09 } },
+    "conn-campus-inet-fw": {
+      "capacityMbps": 2000,
+      "rateMbps": { "min": 120, "max": 1800, "delta": 130 },
+      "utilization": { "min": 0, "max": 0.98, "delta": 0.1 }
+    },
+    "conn-campus-fw-core1": {
+      "capacityMbps": 2000,
+      "rateMbps": { "min": 80, "max": 1600, "delta": 120 },
+      "utilization": { "min": 0, "max": 0.98, "delta": 0.09 }
+    },
+    "conn-campus-fw-core2": {
+      "capacityMbps": 2000,
+      "rateMbps": { "min": 80, "max": 1600, "delta": 120 },
+      "utilization": { "min": 0, "max": 0.98, "delta": 0.09 }
+    },
+    "conn-campus-core1-core2": {
+      "capacityMbps": 10000,
+      "rateMbps": { "min": 200, "max": 8500, "delta": 520 },
+      "utilization": { "min": 0, "max": 0.98, "delta": 0.09 }
+    },
 
-    "conn-core1-a-agg1": { "capacityMbps": 10000, "rateMbps": { "min": 30, "max": 4200, "delta": 260 }, "utilization": { "min": 0, "max": 0.95, "delta": 0.08 } },
-    "conn-core2-a-agg2": { "capacityMbps": 10000, "rateMbps": { "min": 30, "max": 4200, "delta": 260 }, "utilization": { "min": 0, "max": 0.95, "delta": 0.08 } },
-    "conn-a-agg1-agg2": { "capacityMbps": 10000, "rateMbps": { "min": 30, "max": 5200, "delta": 320 }, "utilization": { "min": 0, "max": 0.95, "delta": 0.08 } },
-    "conn-a-agg1-acc1": { "capacityMbps": 1000, "rateMbps": { "min": 1, "max": 850, "delta": 70 }, "utilization": { "min": 0, "max": 0.9, "delta": 0.07 } },
-    "conn-a-agg2-acc2": { "capacityMbps": 1000, "rateMbps": { "min": 1, "max": 850, "delta": 70 }, "utilization": { "min": 0, "max": 0.9, "delta": 0.07 } },
-    "conn-a-acc1-ap1": { "capacityMbps": 1000, "rateMbps": { "min": 1, "max": 650, "delta": 80 }, "utilization": { "min": 0, "max": 0.9, "delta": 0.12 } },
-    "conn-a-acc2-ap2": { "capacityMbps": 1000, "rateMbps": { "min": 1, "max": 650, "delta": 80 }, "utilization": { "min": 0, "max": 0.9, "delta": 0.12 } },
+    "conn-core1-a-agg1": {
+      "capacityMbps": 10000,
+      "rateMbps": { "min": 30, "max": 4200, "delta": 260 },
+      "utilization": { "min": 0, "max": 0.95, "delta": 0.08 }
+    },
+    "conn-core2-a-agg2": {
+      "capacityMbps": 10000,
+      "rateMbps": { "min": 30, "max": 4200, "delta": 260 },
+      "utilization": { "min": 0, "max": 0.95, "delta": 0.08 }
+    },
+    "conn-a-agg1-agg2": {
+      "capacityMbps": 10000,
+      "rateMbps": { "min": 30, "max": 5200, "delta": 320 },
+      "utilization": { "min": 0, "max": 0.95, "delta": 0.08 }
+    },
+    "conn-a-agg1-acc1": {
+      "capacityMbps": 1000,
+      "rateMbps": { "min": 1, "max": 850, "delta": 70 },
+      "utilization": { "min": 0, "max": 0.9, "delta": 0.07 }
+    },
+    "conn-a-agg2-acc2": {
+      "capacityMbps": 1000,
+      "rateMbps": { "min": 1, "max": 850, "delta": 70 },
+      "utilization": { "min": 0, "max": 0.9, "delta": 0.07 }
+    },
+    "conn-a-acc1-ap1": {
+      "capacityMbps": 1000,
+      "rateMbps": { "min": 1, "max": 650, "delta": 80 },
+      "utilization": { "min": 0, "max": 0.9, "delta": 0.12 }
+    },
+    "conn-a-acc2-ap2": {
+      "capacityMbps": 1000,
+      "rateMbps": { "min": 1, "max": 650, "delta": 80 },
+      "utilization": { "min": 0, "max": 0.9, "delta": 0.12 }
+    },
 
-    "conn-core1-b-agg1": { "capacityMbps": 10000, "rateMbps": { "min": 40, "max": 5200, "delta": 320 }, "utilization": { "min": 0, "max": 0.98, "delta": 0.12 } },
-    "conn-core2-b-agg2": { "capacityMbps": 10000, "rateMbps": { "min": 40, "max": 5200, "delta": 320 }, "utilization": { "min": 0, "max": 0.98, "delta": 0.12 } },
-    "conn-b-agg1-agg2": { "capacityMbps": 10000, "rateMbps": { "min": 40, "max": 6500, "delta": 380 }, "utilization": { "min": 0, "max": 0.99, "delta": 0.12 } },
-    "conn-b-agg1-acc1": { "capacityMbps": 1000, "rateMbps": { "min": 1, "max": 900, "delta": 80 }, "utilization": { "min": 0, "max": 0.9, "delta": 0.07 } },
-    "conn-b-agg2-acc2": { "capacityMbps": 1000, "rateMbps": { "min": 1, "max": 900, "delta": 80 }, "utilization": { "min": 0, "max": 0.9, "delta": 0.07 } },
-    "conn-b-acc1-ap1": { "capacityMbps": 1000, "rateMbps": { "min": 1, "max": 650, "delta": 80 }, "utilization": { "min": 0, "max": 0.9, "delta": 0.12 } },
-    "conn-b-acc2-ap2": { "capacityMbps": 1000, "rateMbps": { "min": 1, "max": 650, "delta": 80 }, "utilization": { "min": 0, "max": 0.9, "delta": 0.12 } },
+    "conn-core1-b-agg1": {
+      "capacityMbps": 10000,
+      "rateMbps": { "min": 40, "max": 5200, "delta": 320 },
+      "utilization": { "min": 0, "max": 0.98, "delta": 0.12 }
+    },
+    "conn-core2-b-agg2": {
+      "capacityMbps": 10000,
+      "rateMbps": { "min": 40, "max": 5200, "delta": 320 },
+      "utilization": { "min": 0, "max": 0.98, "delta": 0.12 }
+    },
+    "conn-b-agg1-agg2": {
+      "capacityMbps": 10000,
+      "rateMbps": { "min": 40, "max": 6500, "delta": 380 },
+      "utilization": { "min": 0, "max": 0.99, "delta": 0.12 }
+    },
+    "conn-b-agg1-acc1": {
+      "capacityMbps": 1000,
+      "rateMbps": { "min": 1, "max": 900, "delta": 80 },
+      "utilization": { "min": 0, "max": 0.9, "delta": 0.07 }
+    },
+    "conn-b-agg2-acc2": {
+      "capacityMbps": 1000,
+      "rateMbps": { "min": 1, "max": 900, "delta": 80 },
+      "utilization": { "min": 0, "max": 0.9, "delta": 0.07 }
+    },
+    "conn-b-acc1-ap1": {
+      "capacityMbps": 1000,
+      "rateMbps": { "min": 1, "max": 650, "delta": 80 },
+      "utilization": { "min": 0, "max": 0.9, "delta": 0.12 }
+    },
+    "conn-b-acc2-ap2": {
+      "capacityMbps": 1000,
+      "rateMbps": { "min": 1, "max": 650, "delta": 80 },
+      "utilization": { "min": 0, "max": 0.9, "delta": 0.12 }
+    },
 
-    "conn-core1-c-agg1": { "capacityMbps": 10000, "rateMbps": { "min": 20, "max": 3800, "delta": 240 }, "utilization": { "min": 0, "max": 0.95, "delta": 0.08 } },
-    "conn-core2-c-agg2": { "capacityMbps": 10000, "rateMbps": { "min": 20, "max": 3800, "delta": 240 }, "utilization": { "min": 0, "max": 0.95, "delta": 0.08 } },
-    "conn-c-agg1-agg2": { "capacityMbps": 10000, "rateMbps": { "min": 20, "max": 4800, "delta": 300 }, "utilization": { "min": 0, "max": 0.95, "delta": 0.08 } },
-    "conn-c-agg1-acc1": { "capacityMbps": 1000, "rateMbps": { "min": 1, "max": 800, "delta": 70 }, "utilization": { "min": 0, "max": 0.9, "delta": 0.07 } },
-    "conn-c-agg2-acc2": { "capacityMbps": 1000, "rateMbps": { "min": 1, "max": 800, "delta": 70 }, "utilization": { "min": 0, "max": 0.9, "delta": 0.07 } },
-    "conn-c-acc1-ap1": { "capacityMbps": 1000, "rateMbps": { "min": 1, "max": 600, "delta": 80 }, "utilization": { "min": 0, "max": 0.9, "delta": 0.12 } },
-    "conn-c-acc2-ap2": { "capacityMbps": 1000, "rateMbps": { "min": 1, "max": 600, "delta": 80 }, "utilization": { "min": 0, "max": 0.9, "delta": 0.12 } },
+    "conn-core1-c-agg1": {
+      "capacityMbps": 10000,
+      "rateMbps": { "min": 20, "max": 3800, "delta": 240 },
+      "utilization": { "min": 0, "max": 0.95, "delta": 0.08 }
+    },
+    "conn-core2-c-agg2": {
+      "capacityMbps": 10000,
+      "rateMbps": { "min": 20, "max": 3800, "delta": 240 },
+      "utilization": { "min": 0, "max": 0.95, "delta": 0.08 }
+    },
+    "conn-c-agg1-agg2": {
+      "capacityMbps": 10000,
+      "rateMbps": { "min": 20, "max": 4800, "delta": 300 },
+      "utilization": { "min": 0, "max": 0.95, "delta": 0.08 }
+    },
+    "conn-c-agg1-acc1": {
+      "capacityMbps": 1000,
+      "rateMbps": { "min": 1, "max": 800, "delta": 70 },
+      "utilization": { "min": 0, "max": 0.9, "delta": 0.07 }
+    },
+    "conn-c-agg2-acc2": {
+      "capacityMbps": 1000,
+      "rateMbps": { "min": 1, "max": 800, "delta": 70 },
+      "utilization": { "min": 0, "max": 0.9, "delta": 0.07 }
+    },
+    "conn-c-acc1-ap1": {
+      "capacityMbps": 1000,
+      "rateMbps": { "min": 1, "max": 600, "delta": 80 },
+      "utilization": { "min": 0, "max": 0.9, "delta": 0.12 }
+    },
+    "conn-c-acc2-ap2": {
+      "capacityMbps": 1000,
+      "rateMbps": { "min": 1, "max": 600, "delta": 80 },
+      "utilization": { "min": 0, "max": 0.9, "delta": 0.12 }
+    },
 
-    "conn-core1-dns": { "capacityMbps": 1000, "rateMbps": { "min": 0, "max": 250, "delta": 35 }, "utilization": { "min": 0, "max": 0.9, "delta": 0.06 } },
-    "conn-core2-idp": { "capacityMbps": 1000, "rateMbps": { "min": 0, "max": 250, "delta": 35 }, "utilization": { "min": 0, "max": 0.9, "delta": 0.06 } }
+    "conn-core1-dns": {
+      "capacityMbps": 1000,
+      "rateMbps": { "min": 0, "max": 250, "delta": 35 },
+      "utilization": { "min": 0, "max": 0.9, "delta": 0.06 }
+    },
+    "conn-core2-idp": {
+      "capacityMbps": 1000,
+      "rateMbps": { "min": 0, "max": 250, "delta": 35 },
+      "utilization": { "min": 0, "max": 0.9, "delta": 0.06 }
+    }
   },
   "events": [
     { "t": 12, "connectionId": "conn-core2-b-agg2", "status": "down" },

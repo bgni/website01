@@ -17,11 +17,15 @@
           <div class="graph-overlay top-left">
             <div class="overlay-row">
               <select id="networkSelect" aria-label="Select network"></select>
+              <select id="trafficSourceSelect" aria-label="Traffic source">
+              </select>
               <select id="trafficVizSelect" aria-label="Traffic visualization">
               </select>
               <select id="layoutSelect" aria-label="Layout">
                 <option value="force">Force</option>
                 <option value="tiered">Layered</option>
+                <option value="tiered-xmin">Layered (cross-min)</option>
+                <option value="dot">DOT (Sugiyama)</option>
               </select>
             </div>
 
@@ -84,10 +88,10 @@
                   class="dot"
                   style="background: #c084fc"
                 ></span>Other</span>
-              <span class="traffic-pill low">Low util</span>
-              <span class="traffic-pill mid">Med util</span>
-              <span class="traffic-pill high">High util</span>
-              <span class="traffic-pill down">Link down</span>
+              <span><span
+                  class="dot"
+                  style="background: #f87171"
+                ></span>Link down</span>
             </div>
           </div>
 

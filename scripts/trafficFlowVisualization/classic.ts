@@ -5,6 +5,7 @@ import type {
   TrafficViz,
   TrafficVizHelpers,
 } from "./types.ts";
+import { GRAPH_COLORS, TRAFFIC_STYLE } from "../config.ts";
 
 export function createClassicTrafficVisualization(
   { trafficColor, trafficWidthRate }: TrafficVizHelpers = {},
@@ -16,17 +17,21 @@ export function createClassicTrafficVisualization(
         return trafficColor?.(traffic.status, traffic.utilization) ||
           defaultStroke;
       }
-      return highlighted ? "#e2e8f0" : defaultStroke;
+      return highlighted ? GRAPH_COLORS.highlight : defaultStroke;
     },
     getLinkWidth({ traffic, highlighted, defaultWidth }: LinkWidthArgs) {
       const base = traffic
         ? (trafficWidthRate?.(traffic.rateMbps) ?? defaultWidth)
         : defaultWidth;
-      return highlighted ? Math.max(base, 3) : base;
+      return highlighted
+        ? Math.max(base, TRAFFIC_STYLE.highlightMinWidth)
+        : base;
     },
     getLinkDasharray({ traffic }: LinkDasharrayArgs) {
-      if (traffic?.status === "down") return "6 4";
-      return "0";
+      if (traffic?.status === TRAFFIC_STYLE.downStatus) {
+        return TRAFFIC_STYLE.dash.down;
+      }
+      return TRAFFIC_STYLE.dash.none;
     },
     start() {
       return () => {};

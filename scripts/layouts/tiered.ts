@@ -1,11 +1,14 @@
+import { GRAPH_DEFAULTS } from "../config.ts";
+
 type NodeRef = string | { id: string };
 
 export type TieredLayoutNode = {
   id: string;
   name?: string;
-  role?: string;
-  site?: string;
-  room_id?: string;
+  // Domain boundary can attach these hints to avoid parsing in the layout layer.
+  layoutTierIndexHint?: number;
+  layoutSiteRank?: number;
+  layoutStableKey?: number;
   x?: number;
   y?: number;
   fx?: number | null;
@@ -27,8 +30,8 @@ type SimulationLike = { stop: () => void };
 const clamp = (v: number, min: number, max: number) =>
   Math.max(min, Math.min(max, v));
 
-const normalizeRole = (role: unknown) =>
-  String(role || "").trim().toLowerCase();
+const average = (xs: number[]) =>
+  xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : NaN;
 
 const degreeFor = (links: TieredLayoutLink[]): Map<string, number> => {
   const deg = new Map<string, number>();
@@ -41,45 +44,6 @@ const degreeFor = (links: TieredLayoutLink[]): Map<string, number> => {
   return deg;
 };
 
-const roleToTier = (role: unknown) => {
-  const r = normalizeRole(role);
-
-  if (r === "internet" || r === "isp") return "internet";
-  if (r.includes("firewall")) return "edge";
-  if (r.includes("router") || r.includes("wan") || r.includes("edge")) {
-    return "edge";
-  }
-
-  if (r === "core") return "core";
-  if (
-    r.includes("distribution") || r.includes("dist") || r.includes("agg") ||
-    r.includes("aggregation")
-  ) return "agg";
-  if (r.includes("access")) return "access";
-
-  if (
-    r.includes("server") || r.includes("service") || r.includes("dns") ||
-    r.includes("idp")
-  ) return "service";
-  if (
-    r.includes("load balancer") || r === "lb" || r.includes("load-balancer")
-  ) return "service";
-
-  if (r.includes("access point") || r === "ap" || r.includes("wifi")) {
-    return "endpoint";
-  }
-  if (
-    r.includes("endpoint") || r.includes("client") ||
-    r.includes("workstation") || r.includes("printer")
-  ) return "endpoint";
-  if (r.includes("iot")) return "endpoint";
-
-  // A generic "switch" needs inference.
-  if (r.includes("switch")) return "switch";
-
-  return "unknown";
-};
-
 const TIER_ORDER = [
   "internet",
   "edge",
@@ -90,10 +54,9 @@ const TIER_ORDER = [
   "endpoint",
   "unknown",
 ];
-const tierIndexFor = (tier: string) => {
-  const idx = TIER_ORDER.indexOf(tier);
-  return idx >= 0 ? idx : (TIER_ORDER.length - 1);
-};
+
+const TIER_UNKNOWN_INDEX = TIER_ORDER.length - 1;
+const TIER_SWITCH_SENTINEL = -1;
 
 const getNodeId = (
   nodeOrId: NodeRef | null | undefined,
@@ -101,41 +64,24 @@ const getNodeId = (
   | string
   | undefined => (typeof nodeOrId === "string" ? nodeOrId : nodeOrId?.id);
 
-const inferSiteKey = (name: unknown) => {
-  const raw = String(name || "").trim();
-  if (!raw) return "";
-  const lower = raw.toLowerCase();
-
-  if (lower.startsWith("hq ")) return "hq";
-  if (lower === "hq") return "hq";
-
-  const branch = lower.match(/^branch\s*[-_]?\s*(\d+)\b/);
-  if (branch?.[1]) return `branch-${branch[1]}`;
-
-  if (lower.startsWith("campus ")) return "campus";
-  if (lower === "campus") return "campus";
-
-  const bldg = lower.match(/^bldg\s*[-_]?\s*([a-z0-9]+)\b/);
-  if (bldg?.[1]) return `bldg-${bldg[1]}`;
-
-  return "";
-};
-
-const siteKeyForNode = (node: TieredLayoutNode | undefined) => {
-  const explicit = String(node?.site || "").trim();
-  if (explicit) return explicit.toLowerCase();
-
-  const room = String(node?.room_id || "").trim();
-  if (room) return room.toLowerCase();
-
-  return inferSiteKey(node?.name);
-};
-
 const estimateLabelWidth = (node: TieredLayoutNode) => {
   const text = String(node?.name || node?.id || "");
   // Font size is 11px; 6.1px/char is a decent heuristic.
   const px = text.length * 6.1;
   return clamp(px, 48, 190);
+};
+
+const getLabelSafeBounds = (
+  node: TieredLayoutNode,
+  left: number,
+  right: number,
+) => {
+  const half = estimateLabelWidth(node) / 2 + 8;
+  const min = left + half;
+  const max = right - half;
+  if (max >= min) return { min, max };
+  const center = (left + right) / 2;
+  return { min: center, max: center };
 };
 
 const buildNeighbors = (links: TieredLayoutLink[]) => {
@@ -156,6 +102,187 @@ const buildNeighbors = (links: TieredLayoutLink[]) => {
   return neighbors;
 };
 
+const buildEdgesByAdjacentTier = (
+  links: TieredLayoutLink[],
+  tierById: Map<string, number>,
+) => {
+  const edges = new Map<string, Array<[string, string]>>();
+  links.forEach((l) => {
+    const a = getNodeId(l.source);
+    const b = getNodeId(l.target);
+    if (!a || !b) return;
+    const ta = tierById.get(a);
+    const tb = tierById.get(b);
+    if (typeof ta !== "number" || typeof tb !== "number") return;
+    if (Math.abs(ta - tb) !== 1) return;
+
+    const fromTier = Math.min(ta, tb);
+    const key = `${fromTier}|${fromTier + 1}`;
+    const arr = edges.get(key);
+    const pair: [string, string] = ta < tb ? [a, b] : [b, a];
+    if (arr) arr.push(pair);
+    else edges.set(key, [pair]);
+  });
+  return edges;
+};
+
+const countAdjacentCrossings = (
+  upper: string[],
+  lower: string[],
+  pairs: Array<[string, string]>,
+) => {
+  const upPos = new Map<string, number>(upper.map((id, i) => [id, i]));
+  const loPos = new Map<string, number>(lower.map((id, i) => [id, i]));
+  const projected: Array<[number, number]> = [];
+
+  pairs.forEach(([u, v]) => {
+    const pu = upPos.get(u);
+    const pv = loPos.get(v);
+    if (typeof pu === "number" && typeof pv === "number") {
+      projected.push([pu, pv]);
+    }
+  });
+
+  let crossings = 0;
+  for (let i = 0; i < projected.length; i += 1) {
+    const [u1, v1] = projected[i];
+    for (let j = i + 1; j < projected.length; j += 1) {
+      const [u2, v2] = projected[j];
+      if ((u1 - u2) * (v1 - v2) < 0) crossings += 1;
+    }
+  }
+  return crossings;
+};
+
+const crossMinOrderByTier = (
+  {
+    byTier,
+    links,
+    initialRank,
+  }: {
+    byTier: Map<number, TieredLayoutNode[]>;
+    links: TieredLayoutLink[];
+    initialRank: Map<string, number>;
+  },
+) => {
+  const tierKeys = [...byTier.keys()].sort((a, b) => a - b);
+  const orderByTier = new Map<number, string[]>();
+
+  tierKeys.forEach((tier) => {
+    const ids = [...(byTier.get(tier) || [])]
+      .sort((a, b) =>
+        (initialRank.get(a.id) ?? 0) - (initialRank.get(b.id) ?? 0)
+      )
+      .map((n) => n.id);
+    orderByTier.set(tier, ids);
+  });
+
+  const tierById = new Map<string, number>();
+  tierKeys.forEach((tier) => {
+    (orderByTier.get(tier) || []).forEach((id) => tierById.set(id, tier));
+  });
+  const neighbors = buildNeighbors(links);
+  const edgePairs = buildEdgesByAdjacentTier(links, tierById);
+
+  const posMap = (tier: number) =>
+    new Map<string, number>(
+      (orderByTier.get(tier) || []).map((id, i) => [id, i]),
+    );
+
+  const barycenter = (
+    id: string,
+    refPos: Map<string, number>,
+  ): number | null => {
+    const nbs = neighbors.get(id);
+    if (!nbs?.size) return null;
+    const vals = [...nbs]
+      .map((n) => refPos.get(n))
+      .filter((v): v is number => typeof v === "number");
+    if (!vals.length) return null;
+    return average(vals);
+  };
+
+  const sortTierByRef = (tier: number, refTier: number) => {
+    const ids = [...(orderByTier.get(tier) || [])];
+    const refPos = posMap(refTier);
+    const selfPos = posMap(tier);
+    ids.sort((a, b) => {
+      const ba = barycenter(a, refPos);
+      const bb = barycenter(b, refPos);
+      if (ba == null && bb == null) {
+        return (selfPos.get(a) ?? 0) - (selfPos.get(b) ?? 0);
+      }
+      if (ba == null) return 1;
+      if (bb == null) return -1;
+      if (ba !== bb) return ba - bb;
+      return (selfPos.get(a) ?? 0) - (selfPos.get(b) ?? 0);
+    });
+    orderByTier.set(tier, ids);
+  };
+
+  const tryLocalSwaps = (tier: number) => {
+    const ids = [...(orderByTier.get(tier) || [])];
+    if (ids.length < 2) return;
+
+    const upper = orderByTier.get(tier - 1);
+    const lower = orderByTier.get(tier + 1);
+    const upPairs = upper ? edgePairs.get(`${tier - 1}|${tier}`) || [] : [];
+    const downPairs = lower ? edgePairs.get(`${tier}|${tier + 1}`) || [] : [];
+
+    const score = (arr: string[]) => {
+      let s = 0;
+      if (upper) s += countAdjacentCrossings(upper, arr, upPairs);
+      if (lower) s += countAdjacentCrossings(arr, lower, downPairs);
+      return s;
+    };
+
+    let improved = true;
+    while (improved) {
+      improved = false;
+      for (let i = 0; i < ids.length - 1; i += 1) {
+        const base = score(ids);
+        const swapped = [...ids];
+        [swapped[i], swapped[i + 1]] = [swapped[i + 1], swapped[i]];
+        const next = score(swapped);
+        if (next < base) {
+          ids.splice(0, ids.length, ...swapped);
+          improved = true;
+        }
+      }
+    }
+
+    orderByTier.set(tier, ids);
+  };
+
+  const maxPasses = 6;
+  for (let pass = 0; pass < maxPasses; pass += 1) {
+    // Top-down sweep.
+    for (let i = 1; i < tierKeys.length; i += 1) {
+      sortTierByRef(tierKeys[i], tierKeys[i - 1]);
+      tryLocalSwaps(tierKeys[i]);
+    }
+    // Bottom-up sweep.
+    for (let i = tierKeys.length - 2; i >= 0; i -= 1) {
+      sortTierByRef(tierKeys[i], tierKeys[i + 1]);
+      tryLocalSwaps(tierKeys[i]);
+    }
+  }
+
+  const maxWidth = Math.max(
+    1,
+    ...[...orderByTier.values()].map((arr) => arr.length),
+  );
+  const rankById = new Map<string, number>();
+  orderByTier.forEach((arr) => {
+    const denom = Math.max(1, arr.length - 1);
+    const span = Math.max(1, maxWidth - 1);
+    arr.forEach((id, i) => {
+      rankById.set(id, (i / denom) * span);
+    });
+  });
+  return rankById;
+};
+
 const pickRoots = ({
   nodes,
   deg,
@@ -164,7 +291,9 @@ const pickRoots = ({
   deg: Map<string, number>;
 }) => {
   const byId = new Map<string, TieredLayoutNode>(nodes.map((n) => [n.id, n]));
-  const internet = nodes.filter((n) => roleToTier(n.role) === "internet");
+  const internet = nodes.filter((n) =>
+    (n.layoutTierIndexHint ?? TIER_UNKNOWN_INDEX) === 0
+  );
   if (internet.length) return internet.map((n) => n.id);
 
   // Fall back: highest degree (often core/edge).
@@ -215,31 +344,37 @@ const buildTree = ({
   const nodeById = new Map<string, TieredLayoutNode>(
     nodes.map((n) => [n.id, n]),
   );
-  const siteKeyCache = new Map<string, string>();
-  const siteKeyFor = (id: string) => {
-    if (siteKeyCache.has(id)) return siteKeyCache.get(id);
-    const n = nodeById.get(id);
-    const key = siteKeyForNode(n);
-    siteKeyCache.set(id, key);
-    return key;
-  };
 
   const sortNeighbors = (ids: Set<string>) => {
     return [...ids].sort((a: string, b: string) => {
       const na = nodeById.get(a);
       const nb = nodeById.get(b);
-      const ta = tierIndexFor(roleToTier(na?.role));
-      const tb = tierIndexFor(roleToTier(nb?.role));
+      const ta = typeof na?.layoutTierIndexHint === "number"
+        ? na.layoutTierIndexHint
+        : TIER_UNKNOWN_INDEX;
+      const tb = typeof nb?.layoutTierIndexHint === "number"
+        ? nb.layoutTierIndexHint
+        : TIER_UNKNOWN_INDEX;
       if (ta !== tb) return ta - tb;
 
-      const sa = siteKeyFor(a);
-      const sb = siteKeyFor(b);
-      if (sa !== sb) return String(sa).localeCompare(String(sb));
+      const sa = typeof na?.layoutSiteRank === "number" ? na.layoutSiteRank : 0;
+      const sb = typeof nb?.layoutSiteRank === "number" ? nb.layoutSiteRank : 0;
+      if (sa !== sb) return sa - sb;
 
       const da = deg.get(a) || 0;
       const db = deg.get(b) || 0;
       if (db !== da) return db - da;
-      return String(na?.name || a).localeCompare(String(nb?.name || b));
+
+      const ka = typeof na?.layoutStableKey === "number"
+        ? na.layoutStableKey
+        : 0;
+      const kb = typeof nb?.layoutStableKey === "number"
+        ? nb.layoutStableKey
+        : 0;
+      if (ka !== kb) return ka - kb;
+
+      // Final deterministic fallback without additional parsing.
+      return a < b ? -1 : (a > b ? 1 : 0);
     });
   };
 
@@ -327,6 +462,7 @@ export function applyTieredLayout(
     links,
     width,
     height,
+    crossMinimize = false,
   }: {
     simulation: SimulationLike;
     d3: unknown;
@@ -334,6 +470,7 @@ export function applyTieredLayout(
     links: TieredLayoutLink[];
     width: number;
     height: number;
+    crossMinimize?: boolean;
   },
 ) {
   const paddingTop = 56; // leave room for overlay controls
@@ -346,6 +483,14 @@ export function applyTieredLayout(
   const usableH = Math.max(220, height - paddingTop - paddingBottom);
   const bandH = usableH / TIER_ORDER.length;
 
+  const fullSpan = Math.max(220, width - paddingX * 2);
+  const span = Math.min(
+    fullSpan,
+    GRAPH_DEFAULTS.layout.tieredMaxHorizontalSpan,
+  );
+  const left = (width - span) / 2;
+  const right = left + span;
+
   const { parent, children, roots, deg } = buildTree({ nodes, links });
   const treeX = assignTreeX({ roots, children });
 
@@ -353,46 +498,75 @@ export function applyTieredLayout(
 
   // Tier assignment (role-driven, with deterministic inference for generic switches/unknowns).
   nodes.forEach((n) => {
-    const base = roleToTier(n.role);
-    let tier = base;
+    const baseIndex = typeof n.layoutTierIndexHint === "number"
+      ? n.layoutTierIndexHint
+      : TIER_UNKNOWN_INDEX;
 
-    if (tier === "switch") {
+    let tierIndex = baseIndex;
+
+    if (tierIndex === TIER_SWITCH_SENTINEL) {
       const d = deg.get(n.id) || 0;
-      if (d >= 6) tier = "core";
-      else if (d >= 4) tier = "agg";
-      else tier = "access";
+      if (d >= 6) tierIndex = 2;
+      else if (d >= 4) tierIndex = 3;
+      else tierIndex = 4;
     }
 
-    if (tier === "unknown") {
+    if (tierIndex === TIER_UNKNOWN_INDEX) {
       const p = parent.get(n.id);
       if (p) {
         const pn = nodeById.get(p);
-        const pt = pn?.__tier || roleToTier(pn?.role);
-        const pi = tierIndexFor(pt);
-        tier = TIER_ORDER[Math.min(pi + 1, TIER_ORDER.length - 1)] || "unknown";
+        const pi =
+          typeof pn?.__tierIndex === "number" && Number.isFinite(pn.__tierIndex)
+            ? pn.__tierIndex
+            : (typeof pn?.layoutTierIndexHint === "number" &&
+                Number.isFinite(pn.layoutTierIndexHint)
+              ? pn.layoutTierIndexHint
+              : TIER_UNKNOWN_INDEX);
+        tierIndex = Math.min(pi + 1, TIER_UNKNOWN_INDEX);
       } else {
         const d = deg.get(n.id) || 0;
-        if (d <= 1) tier = "endpoint";
+        if (d <= 1) tierIndex = 6;
       }
     }
 
-    n.__tier = tier;
-    n.__tierIndex = tierIndexFor(tier);
+    const clamped = Math.max(0, Math.min(TIER_UNKNOWN_INDEX, tierIndex));
+    n.__tierIndex = clamped;
+    n.__tier = TIER_ORDER[clamped] || "unknown";
   });
 
+  const byTier = new Map<number, TieredLayoutNode[]>();
+  nodes.forEach((n: TieredLayoutNode) => {
+    const idx = typeof n.__tierIndex === "number" &&
+        Number.isFinite(n.__tierIndex)
+      ? n.__tierIndex
+      : TIER_ORDER.length - 1;
+    const bucket = byTier.get(idx);
+    if (bucket) bucket.push(n);
+    else byTier.set(idx, [n]);
+  });
+
+  const initialRank = new Map<string, number>();
+  nodes.forEach((n) => {
+    initialRank.set(n.id, treeX.get(n.id) ?? 0);
+  });
+
+  const rankById = crossMinimize
+    ? crossMinOrderByTier({ byTier, links, initialRank })
+    : initialRank;
+
   const xVals = nodes
-    .map((n) => treeX.get(n.id))
+    .map((n) => rankById.get(n.id))
     .filter((v): v is number => typeof v === "number" && Number.isFinite(v));
   const minX = xVals.length ? Math.min(...xVals) : 0;
   const maxX = xVals.length ? Math.max(...xVals) : 1;
   const spanX = Math.max(1e-6, maxX - minX);
 
   const xTarget = (n: TieredLayoutNode) => {
-    const raw = treeX.get(n.id);
+    const raw = rankById.get(n.id);
     const t = typeof raw === "number" && Number.isFinite(raw)
       ? (raw - minX) / spanX
       : 0.5;
-    return paddingX + t * (width - paddingX * 2);
+    return left + t * span;
   };
   const yTarget = (n: TieredLayoutNode) => {
     const idx =
@@ -409,20 +583,7 @@ export function applyTieredLayout(
   });
 
   // Resolve overlaps deterministically per tier.
-  const left = paddingX;
-  const right = width - paddingX;
   const minGap = 30; // circle-safe spacing; labels handled by per-node widths below
-
-  const byTier = new Map<number, TieredLayoutNode[]>();
-  nodes.forEach((n: TieredLayoutNode) => {
-    const idx = typeof n.__tierIndex === "number" &&
-        Number.isFinite(n.__tierIndex)
-      ? n.__tierIndex
-      : TIER_ORDER.length - 1;
-    const bucket = byTier.get(idx);
-    if (bucket) bucket.push(n);
-    else byTier.set(idx, [n]);
-  });
 
   for (const tierNodes of byTier.values()) {
     tierNodes.sort((a, b) =>
@@ -430,7 +591,15 @@ export function applyTieredLayout(
       String(a.id).localeCompare(String(b.id))
     );
     const count = tierNodes.length;
-    if (count <= 1) continue;
+
+    if (count <= 1) {
+      const only = tierNodes[0];
+      if (only) {
+        const { min, max } = getLabelSafeBounds(only, left, right);
+        only.__tx = clamp(only.__tx ?? (left + right) / 2, min, max);
+      }
+      continue;
+    }
 
     const available = Math.max(1, right - left);
     const maxGap = available / Math.max(1, count - 1);
@@ -448,11 +617,12 @@ export function applyTieredLayout(
     let prevX = -Infinity;
     let prevW = 0;
     tierNodes.forEach((n, idx) => {
-      const desired = clamp(n.__tx ?? left, left, right);
+      const { min, max } = getLabelSafeBounds(n, left, right);
+      const desired = clamp(n.__tx ?? min, min, max);
       const w = estimateLabelWidth(n);
       const gap = idx === 0 ? 0 : Math.max(minGap, ((prevW + w) / 2) + 18);
       const placed = Math.max(desired, prevX + gap);
-      n.__tx = clamp(placed, left, right);
+      n.__tx = clamp(placed, min, max);
       prevX = n.__tx;
       prevW = w;
     });
@@ -461,12 +631,13 @@ export function applyTieredLayout(
     let nextW = 0;
     for (let i = tierNodes.length - 1; i >= 0; i -= 1) {
       const n = tierNodes[i];
+      const { min, max } = getLabelSafeBounds(n, left, right);
       const w = estimateLabelWidth(n);
       const gap = i === tierNodes.length - 1
         ? 0
         : Math.max(minGap, ((nextW + w) / 2) + 18);
       const placed = Math.min(n.__tx ?? right, nextX - gap);
-      n.__tx = clamp(placed, left, right);
+      n.__tx = clamp(placed, min, max);
       nextX = n.__tx;
       nextW = w;
     }
@@ -482,14 +653,36 @@ export function applyTieredLayout(
     ) {
       tierNodes.forEach((n, i) => {
         const t = count === 1 ? 0.5 : (i / (count - 1));
-        n.__tx = left + t * available;
+        const { min, max } = getLabelSafeBounds(n, left, right);
+        n.__tx = clamp(left + t * available, min, max);
+      });
+    }
+  }
+
+  // Recenter occupied node span inside the available lane to avoid biasing
+  // layouts to one side after crossing-min and overlap passes.
+  const txVals = nodes
+    .map((n) => n.__tx)
+    .filter((v): v is number => typeof v === "number" && Number.isFinite(v));
+  if (txVals.length) {
+    const occupiedMin = Math.min(...txVals);
+    const occupiedMax = Math.max(...txVals);
+    const occupiedCenter = (occupiedMin + occupiedMax) / 2;
+    const laneCenter = (left + right) / 2;
+    const shift = laneCenter - occupiedCenter;
+
+    if (Math.abs(shift) > 0.5) {
+      nodes.forEach((n) => {
+        const { min, max } = getLabelSafeBounds(n, left, right);
+        n.__tx = clamp((n.__tx ?? laneCenter) + shift, min, max);
       });
     }
   }
 
   // Apply final positions and lock nodes.
   nodes.forEach((n) => {
-    const x = clamp(n.__tx ?? left, left, right);
+    const { min, max } = getLabelSafeBounds(n, left, right);
+    const x = clamp(n.__tx ?? (left + right) / 2, min, max);
     const y = clamp(n.__ty ?? paddingTop, paddingTop, height - paddingBottom);
     n.x = x;
     n.y = y;

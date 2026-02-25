@@ -1,44 +1,188 @@
 {
   "tickSeconds": 1,
   "initial": [
-    { "connectionId": "conn-transit1-pop1", "status": "up", "rateMbps": 1800, "utilization": 0.18 },
-    { "connectionId": "conn-transit2-pop5", "status": "up", "rateMbps": 1600, "utilization": 0.16 },
+    {
+      "connectionId": "conn-transit1-pop1",
+      "status": "up",
+      "rateMbps": 1800,
+      "utilization": 0.18
+    },
+    {
+      "connectionId": "conn-transit2-pop5",
+      "status": "up",
+      "rateMbps": 1600,
+      "utilization": 0.16
+    },
 
-    { "connectionId": "conn-ring-1-2", "status": "up", "rateMbps": 1200, "utilization": 0.12 },
-    { "connectionId": "conn-ring-2-3", "status": "up", "rateMbps": 1400, "utilization": 0.14 },
-    { "connectionId": "conn-ring-3-4", "status": "up", "rateMbps": 1500, "utilization": 0.15 },
-    { "connectionId": "conn-ring-4-5", "status": "up", "rateMbps": 1700, "utilization": 0.17 },
-    { "connectionId": "conn-ring-5-6", "status": "up", "rateMbps": 1100, "utilization": 0.11 },
-    { "connectionId": "conn-ring-6-7", "status": "up", "rateMbps": 900, "utilization": 0.09 },
-    { "connectionId": "conn-ring-7-8", "status": "up", "rateMbps": 1000, "utilization": 0.1 },
-    { "connectionId": "conn-ring-8-1", "status": "up", "rateMbps": 1300, "utilization": 0.13 },
+    {
+      "connectionId": "conn-ring-1-2",
+      "status": "up",
+      "rateMbps": 1200,
+      "utilization": 0.12
+    },
+    {
+      "connectionId": "conn-ring-2-3",
+      "status": "up",
+      "rateMbps": 1400,
+      "utilization": 0.14
+    },
+    {
+      "connectionId": "conn-ring-3-4",
+      "status": "up",
+      "rateMbps": 1500,
+      "utilization": 0.15
+    },
+    {
+      "connectionId": "conn-ring-4-5",
+      "status": "up",
+      "rateMbps": 1700,
+      "utilization": 0.17
+    },
+    {
+      "connectionId": "conn-ring-5-6",
+      "status": "up",
+      "rateMbps": 1100,
+      "utilization": 0.11
+    },
+    {
+      "connectionId": "conn-ring-6-7",
+      "status": "up",
+      "rateMbps": 900,
+      "utilization": 0.09
+    },
+    {
+      "connectionId": "conn-ring-7-8",
+      "status": "up",
+      "rateMbps": 1000,
+      "utilization": 0.1
+    },
+    {
+      "connectionId": "conn-ring-8-1",
+      "status": "up",
+      "rateMbps": 1300,
+      "utilization": 0.13
+    },
 
-    { "connectionId": "conn-cust-a-pop2", "status": "up", "rateMbps": 120, "utilization": 0.12 },
-    { "connectionId": "conn-cust-b-pop3", "status": "up", "rateMbps": 90, "utilization": 0.09 },
-    { "connectionId": "conn-cust-c-pop4", "status": "up", "rateMbps": 140, "utilization": 0.14 },
-    { "connectionId": "conn-cust-d-pop6", "status": "up", "rateMbps": 110, "utilization": 0.11 },
-    { "connectionId": "conn-cust-e-pop7", "status": "up", "rateMbps": 85, "utilization": 0.09 },
-    { "connectionId": "conn-cust-f-pop8", "status": "up", "rateMbps": 100, "utilization": 0.1 }
+    {
+      "connectionId": "conn-cust-a-pop2",
+      "status": "up",
+      "rateMbps": 120,
+      "utilization": 0.12
+    },
+    {
+      "connectionId": "conn-cust-b-pop3",
+      "status": "up",
+      "rateMbps": 90,
+      "utilization": 0.09
+    },
+    {
+      "connectionId": "conn-cust-c-pop4",
+      "status": "up",
+      "rateMbps": 140,
+      "utilization": 0.14
+    },
+    {
+      "connectionId": "conn-cust-d-pop6",
+      "status": "up",
+      "rateMbps": 110,
+      "utilization": 0.11
+    },
+    {
+      "connectionId": "conn-cust-e-pop7",
+      "status": "up",
+      "rateMbps": 85,
+      "utilization": 0.09
+    },
+    {
+      "connectionId": "conn-cust-f-pop8",
+      "status": "up",
+      "rateMbps": 100,
+      "utilization": 0.1
+    }
   ],
   "links": {
-    "conn-transit1-pop1": { "capacityMbps": 10000, "rateMbps": { "min": 200, "max": 9500, "delta": 520 }, "utilization": { "min": 0, "max": 0.98, "delta": 0.08 } },
-    "conn-transit2-pop5": { "capacityMbps": 10000, "rateMbps": { "min": 200, "max": 9500, "delta": 520 }, "utilization": { "min": 0, "max": 0.98, "delta": 0.08 } },
+    "conn-transit1-pop1": {
+      "capacityMbps": 10000,
+      "rateMbps": { "min": 200, "max": 9500, "delta": 520 },
+      "utilization": { "min": 0, "max": 0.98, "delta": 0.08 }
+    },
+    "conn-transit2-pop5": {
+      "capacityMbps": 10000,
+      "rateMbps": { "min": 200, "max": 9500, "delta": 520 },
+      "utilization": { "min": 0, "max": 0.98, "delta": 0.08 }
+    },
 
-    "conn-ring-1-2": { "capacityMbps": 10000, "rateMbps": { "min": 150, "max": 8500, "delta": 520 }, "utilization": { "min": 0, "max": 0.99, "delta": 0.12 } },
-    "conn-ring-2-3": { "capacityMbps": 10000, "rateMbps": { "min": 150, "max": 8500, "delta": 520 }, "utilization": { "min": 0, "max": 0.99, "delta": 0.12 } },
-    "conn-ring-3-4": { "capacityMbps": 10000, "rateMbps": { "min": 150, "max": 8500, "delta": 520 }, "utilization": { "min": 0, "max": 0.99, "delta": 0.12 } },
-    "conn-ring-4-5": { "capacityMbps": 10000, "rateMbps": { "min": 150, "max": 8500, "delta": 520 }, "utilization": { "min": 0, "max": 0.99, "delta": 0.12 } },
-    "conn-ring-5-6": { "capacityMbps": 10000, "rateMbps": { "min": 150, "max": 8500, "delta": 520 }, "utilization": { "min": 0, "max": 0.99, "delta": 0.12 } },
-    "conn-ring-6-7": { "capacityMbps": 10000, "rateMbps": { "min": 150, "max": 8500, "delta": 520 }, "utilization": { "min": 0, "max": 0.99, "delta": 0.12 } },
-    "conn-ring-7-8": { "capacityMbps": 10000, "rateMbps": { "min": 150, "max": 8500, "delta": 520 }, "utilization": { "min": 0, "max": 0.99, "delta": 0.12 } },
-    "conn-ring-8-1": { "capacityMbps": 10000, "rateMbps": { "min": 150, "max": 8500, "delta": 520 }, "utilization": { "min": 0, "max": 0.99, "delta": 0.12 } },
+    "conn-ring-1-2": {
+      "capacityMbps": 10000,
+      "rateMbps": { "min": 150, "max": 8500, "delta": 520 },
+      "utilization": { "min": 0, "max": 0.99, "delta": 0.12 }
+    },
+    "conn-ring-2-3": {
+      "capacityMbps": 10000,
+      "rateMbps": { "min": 150, "max": 8500, "delta": 520 },
+      "utilization": { "min": 0, "max": 0.99, "delta": 0.12 }
+    },
+    "conn-ring-3-4": {
+      "capacityMbps": 10000,
+      "rateMbps": { "min": 150, "max": 8500, "delta": 520 },
+      "utilization": { "min": 0, "max": 0.99, "delta": 0.12 }
+    },
+    "conn-ring-4-5": {
+      "capacityMbps": 10000,
+      "rateMbps": { "min": 150, "max": 8500, "delta": 520 },
+      "utilization": { "min": 0, "max": 0.99, "delta": 0.12 }
+    },
+    "conn-ring-5-6": {
+      "capacityMbps": 10000,
+      "rateMbps": { "min": 150, "max": 8500, "delta": 520 },
+      "utilization": { "min": 0, "max": 0.99, "delta": 0.12 }
+    },
+    "conn-ring-6-7": {
+      "capacityMbps": 10000,
+      "rateMbps": { "min": 150, "max": 8500, "delta": 520 },
+      "utilization": { "min": 0, "max": 0.99, "delta": 0.12 }
+    },
+    "conn-ring-7-8": {
+      "capacityMbps": 10000,
+      "rateMbps": { "min": 150, "max": 8500, "delta": 520 },
+      "utilization": { "min": 0, "max": 0.99, "delta": 0.12 }
+    },
+    "conn-ring-8-1": {
+      "capacityMbps": 10000,
+      "rateMbps": { "min": 150, "max": 8500, "delta": 520 },
+      "utilization": { "min": 0, "max": 0.99, "delta": 0.12 }
+    },
 
-    "conn-cust-a-pop2": { "capacityMbps": 1000, "rateMbps": { "min": 5, "max": 850, "delta": 70 }, "utilization": { "min": 0, "max": 0.95, "delta": 0.1 } },
-    "conn-cust-b-pop3": { "capacityMbps": 1000, "rateMbps": { "min": 5, "max": 850, "delta": 70 }, "utilization": { "min": 0, "max": 0.95, "delta": 0.1 } },
-    "conn-cust-c-pop4": { "capacityMbps": 1000, "rateMbps": { "min": 5, "max": 850, "delta": 70 }, "utilization": { "min": 0, "max": 0.95, "delta": 0.1 } },
-    "conn-cust-d-pop6": { "capacityMbps": 1000, "rateMbps": { "min": 5, "max": 850, "delta": 70 }, "utilization": { "min": 0, "max": 0.95, "delta": 0.1 } },
-    "conn-cust-e-pop7": { "capacityMbps": 1000, "rateMbps": { "min": 5, "max": 850, "delta": 70 }, "utilization": { "min": 0, "max": 0.95, "delta": 0.1 } },
-    "conn-cust-f-pop8": { "capacityMbps": 1000, "rateMbps": { "min": 5, "max": 850, "delta": 70 }, "utilization": { "min": 0, "max": 0.95, "delta": 0.1 } }
+    "conn-cust-a-pop2": {
+      "capacityMbps": 1000,
+      "rateMbps": { "min": 5, "max": 850, "delta": 70 },
+      "utilization": { "min": 0, "max": 0.95, "delta": 0.1 }
+    },
+    "conn-cust-b-pop3": {
+      "capacityMbps": 1000,
+      "rateMbps": { "min": 5, "max": 850, "delta": 70 },
+      "utilization": { "min": 0, "max": 0.95, "delta": 0.1 }
+    },
+    "conn-cust-c-pop4": {
+      "capacityMbps": 1000,
+      "rateMbps": { "min": 5, "max": 850, "delta": 70 },
+      "utilization": { "min": 0, "max": 0.95, "delta": 0.1 }
+    },
+    "conn-cust-d-pop6": {
+      "capacityMbps": 1000,
+      "rateMbps": { "min": 5, "max": 850, "delta": 70 },
+      "utilization": { "min": 0, "max": 0.95, "delta": 0.1 }
+    },
+    "conn-cust-e-pop7": {
+      "capacityMbps": 1000,
+      "rateMbps": { "min": 5, "max": 850, "delta": 70 },
+      "utilization": { "min": 0, "max": 0.95, "delta": 0.1 }
+    },
+    "conn-cust-f-pop8": {
+      "capacityMbps": 1000,
+      "rateMbps": { "min": 5, "max": 850, "delta": 70 },
+      "utilization": { "min": 0, "max": 0.95, "delta": 0.1 }
+    }
   },
   "events": [
     { "t": 14, "connectionId": "conn-ring-4-5", "status": "down" },

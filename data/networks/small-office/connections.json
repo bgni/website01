@@ -3,7 +3,7 @@
     "id": "conn-isp-edge",
     "description": "WAN handoff",
     "connectionType": "wan-500m",
-    "from": { "deviceId": "isp-1", "portId": "p1" },
+    "from": { "deviceId": "isp-1" },
     "to": { "deviceId": "edge-1", "portId": "p1" }
   },
   {
@@ -32,7 +32,7 @@
     "description": "NAS uplink",
     "connectionType": "eth-1g",
     "from": { "deviceId": "core-sw-1", "portId": "p3" },
-    "to": { "deviceId": "nas-1", "portId": "p1" }
+    "to": { "deviceId": "nas-1" }
   },
   {
     "id": "conn-access-ap1",
@@ -53,20 +53,20 @@
     "description": "Wired client",
     "connectionType": "eth-1g",
     "from": { "deviceId": "acc-sw-1", "portId": "p4" },
-    "to": { "deviceId": "pc-1", "portId": "p1" }
+    "to": { "deviceId": "pc-1" }
   },
   {
     "id": "conn-access-printer",
     "description": "Printer",
     "connectionType": "eth-100m",
     "from": { "deviceId": "acc-sw-1", "portId": "p5" },
-    "to": { "deviceId": "printer-1", "portId": "p1" }
+    "to": { "deviceId": "printer-1" }
   },
   {
     "id": "conn-access-iot",
     "description": "IoT gateway uplink",
     "connectionType": "eth-100m",
     "from": { "deviceId": "acc-sw-1", "portId": "p6" },
-    "to": { "deviceId": "iot-gw-1", "portId": "p1" }
+    "to": { "deviceId": "iot-gw-1" }
   }
 ]
