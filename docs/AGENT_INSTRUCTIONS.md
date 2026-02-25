@@ -4,6 +4,11 @@ This repo is a Deno + TypeScript static site (GitHub Pages) that visualizes
 network topologies with D3: search, multi-select, shortest-path highlights, and
 traffic styling.
 
+Documentation index: `docs/README.md`. Agent docs hub: `docs/agent/README.md`.
+
+For advanced architecture and delivery heuristics distilled from recent work,
+see `docs/ideas/advanced-agent-lessons.md`.
+
 ## Non-negotiables (hard constraints)
 
 - Target OS: Linux (CI runs ubuntu-latest).

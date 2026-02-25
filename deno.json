@@ -2,6 +2,8 @@
   "tasks": {
     "dev": "deno run --no-lock --allow-net --allow-read --allow-env --watch main.ts",
     "fmt": "deno fmt --check --ignore=vendor --ignore=docs/rendered --ignore=data",
+    "docs:fmt": "deno fmt README.md docs/**/*.md",
+    "docs:check": "deno fmt --check README.md docs/**/*.md",
     "lint": "deno lint --ignore=vendor --ignore=docs/rendered",
     "check": "deno check --no-lock main.ts deviceCatalog_test.ts scripts/**/*.ts tools/**/*.ts",
     "test": "deno test --no-lock --allow-read",

@@ -4,6 +4,11 @@ This playbook is written for an AI coding agent (or a human using an agent)
 working in this repo. It focuses on safe defaults, validation loops, and
 repo-specific gotchas.
 
+Documentation index: `docs/README.md`. Agent docs hub: `docs/agent/README.md`.
+
+For architecture-level decision heuristics and anti-regression guidance, see
+`docs/ideas/advanced-agent-lessons.md`.
+
 ## Non-negotiables
 
 - **Target OS:** Linux only.
@@ -65,7 +70,8 @@ These are “don’t regress” rules.
   sanitization story.
 - Any time you add a new external script (CDN): pin it and consider SRI.
 
-See `docs/security.md` for build-time notes (YAML parsing).
+See `docs/data/netbox-catalog-loading.md` for build/runtime NetBox catalog
+loading notes.
 
 ## TypeScript rules (strict direction)
 

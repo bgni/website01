@@ -1,8 +1,14 @@
-# Target users & problems
+# User Personas & Problems
+
+Last reviewed: 2026-02-25
 
 **Primary user:** Network operations engineers/analysts in small-to-medium
 environments (1–50 network devices, up to a few hundred endpoints) who balance
 uptime, troubleshooting, and change validation without a full NMS stack.
+
+**Secondary user:** Network architects/implementation engineers who need to
+sketch, iterate, and communicate proposed topology changes before
+implementation.
 
 ## Daily needs
 
@@ -13,6 +19,7 @@ uptime, troubleshooting, and change validation without a full NMS stack.
   causes.
 - Validate changes: confirm traffic shifts after maintenance or failover tests.
 - Communicate state: export/share views for tickets, handoffs, or postmortems.
+- Prototype topology changes quickly with low-friction add/connect/edit flows.
 
 ## Common pain points
 
@@ -31,6 +38,8 @@ uptime, troubleshooting, and change validation without a full NMS stack.
   full table.
 - **Traffic-aware styling** (rate-proportional widths, distinct down-state) for
   quick glances.
+- **Create/Edit builder mode** for fast topology sketching with smart defaults,
+  local autosave, and JSON import/export.
 - **Modular data sources** (JSON now, APIs next) to evolve toward live telemetry
   without reworking UI.
 
@@ -44,3 +53,16 @@ uptime, troubleshooting, and change validation without a full NMS stack.
   speed RCA.
 - Improve mobile layout: responsive graph height, collapsible drawer, and large
   tap targets for search/dropdown.
+- Keep builder interactions predictable: add near focus, preserve viewport,
+  preserve local layout continuity, and keep undo/redo discoverable.
+
+## Persona freshness triggers
+
+Update this document when any of the following changes materially:
+
+- Primary user workflows (especially create/edit and incident triage paths).
+- Product emphasis (for example, from observability-first to builder-first).
+- Scale assumptions (device counts, endpoint density, deployment context).
+- Core success metrics (time-to-triage, time-to-build topology, handoff speed).
+
+Review target: once per milestone or whenever UX priorities are re-ordered.

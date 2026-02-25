@@ -9,6 +9,19 @@ export type SimNode = NetworkDevice & {
   fy?: number | null;
 };
 
+const isContainerNode = (node: SimNode): boolean =>
+  Boolean(node.isContainer === true);
+
+const getContainerWidth = (node: SimNode): number => {
+  const width = Number(node.width);
+  return Number.isFinite(width) && width > 80 ? width : 260;
+};
+
+const getContainerHeight = (node: SimNode): number => {
+  const height = Number(node.height);
+  return Number.isFinite(height) && height > 60 ? height : 170;
+};
+
 type ResolvedLinkEnd = { id: string; x: number; y: number };
 
 export type SimLink = {
@@ -18,6 +31,8 @@ export type SimLink = {
 } & Record<string, unknown>;
 
 export type Guide = { y: number };
+
+export type ZoomTransformSnapshot = { x: number; y: number; k: number };
 
 const getLinkEndId = (end: string | ResolvedLinkEnd): string =>
   typeof end === "string" ? end : end.id;
@@ -79,6 +94,8 @@ export function createGraphRenderer(
     connections,
     getNodeFill,
     onNodeSelect,
+    onCanvasDeselect,
+    onSelectionReplaced,
     width: initialWidth = GRAPH_DEFAULTS.width,
     height: initialHeight = GRAPH_DEFAULTS.height,
   }: {
@@ -87,6 +104,8 @@ export function createGraphRenderer(
     connections: Connection[];
     getNodeFill: (d: SimNode) => string;
     onNodeSelect: (id: string) => void;
+    onCanvasDeselect?: () => void;
+    onSelectionReplaced?: (ids: string[]) => void;
     width?: number;
     height?: number;
   },
@@ -118,14 +137,197 @@ export function createGraphRenderer(
   );
   svgSel.call(zoom);
 
+  const isInteractiveTarget = (target: Element) =>
+    Boolean(
+      target.closest(".node-layer circle") ||
+        target.closest(".label-layer text") ||
+        target.closest(".link-layer line") ||
+        target.closest(".viz-layer *"),
+    );
+
+  let suppressCanvasClickUntil = 0;
+  const getGraphPoint = (event: MouseEvent) => {
+    const node = svgSel.node();
+    const [sx, sy] = d3.pointer(event, node);
+    const t = node ? d3.zoomTransform(node) : d3.zoomIdentity;
+    return {
+      x: t.invertX(sx),
+      y: t.invertY(sy),
+    };
+  };
+
+  svgSel.on("click", (event: Event) => {
+    if (Date.now() < suppressCanvasClickUntil) return;
+
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+
+    if (isInteractiveTarget(target)) return;
+
+    onCanvasDeselect?.();
+  });
+
+  const getViewportTransform = (): ZoomTransformSnapshot => {
+    const node = svgSel.node();
+    const current = node ? d3.zoomTransform(node) : d3.zoomIdentity;
+    return {
+      x: Number(current.x) || 0,
+      y: Number(current.y) || 0,
+      k: Number(current.k) || 1,
+    };
+  };
+
+  const setViewportTransform = (snapshot: ZoomTransformSnapshot | null) => {
+    if (!snapshot) return;
+    const node = svgSel.node();
+    if (!node) return;
+
+    const k = Number.isFinite(snapshot.k) && snapshot.k > 0 ? snapshot.k : 1;
+    const x = Number.isFinite(snapshot.x) ? snapshot.x : 0;
+    const y = Number.isFinite(snapshot.y) ? snapshot.y : 0;
+    const t = d3.zoomIdentity.translate(x, y).scale(k);
+    svgSel.call(zoom.transform, t);
+  };
+
+  const getViewportCenter = () => {
+    const node = svgSel.node();
+    const t = node ? d3.zoomTransform(node) : d3.zoomIdentity;
+    const cx = Number.isFinite(t.invertX(width / 2))
+      ? t.invertX(width / 2)
+      : width / 2;
+    const cy = Number.isFinite(t.invertY(height / 2))
+      ? t.invertY(height / 2)
+      : height / 2;
+    return { x: cx, y: cy };
+  };
+
+  const getNodePositions = () => {
+    const out = new Map<string, { x: number; y: number }>();
+    nodes.forEach((node) => {
+      const x = Number(node.x);
+      const y = Number(node.y);
+      if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+      out.set(node.id, { x, y });
+    });
+    return out;
+  };
+
   const guideLayer = container.append("g").attr("class", "guide-layer");
+  const containerLayer = container.append("g").attr("class", "container-layer");
   const linkLayer = container.append("g").attr("class", "link-layer");
   const vizLayer = container.append("g").attr("class", "viz-layer");
+  const marqueeLayer = container.append("g").attr("class", "marquee-layer");
   const haloLayer = container.append("g").attr("class", "halo-layer");
   const nodeLayer = container.append("g").attr("class", "node-layer");
   const labelLayer = container.append("g").attr("class", "label-layer");
 
+  const marqueeRect = marqueeLayer
+    .append("rect")
+    .attr("class", "marquee-rect")
+    .attr("display", "none")
+    .attr("pointer-events", "none");
+
+  let dragSelect:
+    | {
+      startX: number;
+      startY: number;
+      lastX: number;
+      lastY: number;
+      active: boolean;
+    }
+    | null = null;
+
+  const updateMarqueeRect = () => {
+    if (!dragSelect || !dragSelect.active) {
+      marqueeRect.attr("display", "none");
+      return;
+    }
+
+    const x = Math.min(dragSelect.startX, dragSelect.lastX);
+    const y = Math.min(dragSelect.startY, dragSelect.lastY);
+    const w = Math.abs(dragSelect.lastX - dragSelect.startX);
+    const h = Math.abs(dragSelect.lastY - dragSelect.startY);
+
+    marqueeRect
+      .attr("display", null)
+      .attr("x", x)
+      .attr("y", y)
+      .attr("width", w)
+      .attr("height", h);
+  };
+
+  const finalizeDragSelection = () => {
+    if (!dragSelect) return;
+
+    if (dragSelect.active) {
+      const minX = Math.min(dragSelect.startX, dragSelect.lastX);
+      const maxX = Math.max(dragSelect.startX, dragSelect.lastX);
+      const minY = Math.min(dragSelect.startY, dragSelect.lastY);
+      const maxY = Math.max(dragSelect.startY, dragSelect.lastY);
+
+      const ids = nodes
+        .filter((node) => {
+          const x = Number(node.x);
+          const y = Number(node.y);
+          if (!Number.isFinite(x) || !Number.isFinite(y)) return false;
+          return x >= minX && x <= maxX && y >= minY && y <= maxY;
+        })
+        .map((node) => node.id);
+
+      onSelectionReplaced?.(ids);
+      suppressCanvasClickUntil = Date.now() + 120;
+    }
+
+    dragSelect = null;
+    updateMarqueeRect();
+  };
+
+  svgSel.on("mousedown.marquee", (event: MouseEvent) => {
+    if (event.button !== 0) return;
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    if (isInteractiveTarget(target)) return;
+
+    const point = getGraphPoint(event);
+    dragSelect = {
+      startX: point.x,
+      startY: point.y,
+      lastX: point.x,
+      lastY: point.y,
+      active: false,
+    };
+    event.preventDefault();
+  });
+
+  svgSel.on("mousemove.marquee", (event: MouseEvent) => {
+    if (!dragSelect) return;
+    const point = getGraphPoint(event);
+    dragSelect.lastX = point.x;
+    dragSelect.lastY = point.y;
+
+    if (!dragSelect.active) {
+      const dx = dragSelect.lastX - dragSelect.startX;
+      const dy = dragSelect.lastY - dragSelect.startY;
+      dragSelect.active = Math.hypot(dx, dy) >= 8;
+    }
+
+    if (dragSelect.active) {
+      event.preventDefault();
+      updateMarqueeRect();
+    }
+  });
+
+  svgSel.on("mouseup.marquee", () => {
+    finalizeDragSelection();
+  });
+
+  svgSel.on("mouseleave.marquee", () => {
+    finalizeDragSelection();
+  });
+
   const nodes = devices.map((d: NetworkDevice) => ({ ...d })) as SimNode[];
+  const containerNodes = nodes.filter((node) => isContainerNode(node));
+  const deviceNodes = nodes.filter((node) => !isContainerNode(node));
   const links = connections.map((c: Connection) => ({
     ...c,
     source: c.from.deviceId,
@@ -153,9 +355,32 @@ export function createGraphRenderer(
     .attr("stroke-width", GRAPH_DEFAULTS.halo.strokeWidth.selected)
     .attr("opacity", 0);
 
+  const containerSelection = containerLayer
+    .selectAll("rect")
+    .data(containerNodes, (d: SimNode) => d.id)
+    .join("rect")
+    .attr("rx", 10)
+    .attr("ry", 10)
+    .attr("class", "graph-container")
+    .on("click", (_event: unknown, d: SimNode) => onNodeSelect(d.id))
+    .call(
+      d3.drag()
+        .on("drag", (event: { x: number; y: number }, d: SimNode) => {
+          d.x = event.x;
+          d.y = event.y;
+          d.fx = d.x;
+          d.fy = d.y;
+          renderPositions();
+        })
+        .on("end", (_event: unknown, d: SimNode) => {
+          d.fx = d.x;
+          d.fy = d.y;
+        }),
+    );
+
   let layoutKind = "force";
 
-  const simulation = d3.forceSimulation(nodes)
+  const simulation = d3.forceSimulation(deviceNodes)
     .force(
       "link",
       d3.forceLink(links).id((d: { id: string }) => d.id).distance(
@@ -172,7 +397,7 @@ export function createGraphRenderer(
 
   const nodeSelection = nodeLayer
     .selectAll("circle")
-    .data(nodes, (d: SimNode) => d.id)
+    .data(deviceNodes, (d: SimNode) => d.id)
     .join("circle")
     .attr("r", GRAPH_DEFAULTS.node.radius)
     .attr("fill", (d: SimNode) => getNodeFill(d))
@@ -219,7 +444,7 @@ export function createGraphRenderer(
 
   const labelSelection = labelLayer
     .selectAll("text")
-    .data(nodes, (d: SimNode) => d.id)
+    .data(deviceNodes, (d: SimNode) => d.id)
     .join("text")
     .attr("fill", GRAPH_COLORS.label)
     .attr("font-size", GRAPH_DEFAULTS.label.fontSize)
@@ -272,6 +497,15 @@ export function createGraphRenderer(
       .attr("y1", (d: SimLink) => linkPos(d).y1)
       .attr("x2", (d: SimLink) => linkPos(d).x2)
       .attr("y2", (d: SimLink) => linkPos(d).y2);
+
+    containerSelection
+      .attr("x", (d: SimNode) => (d.x ?? width / 2) - getContainerWidth(d) / 2)
+      .attr(
+        "y",
+        (d: SimNode) => (d.y ?? height / 2) - getContainerHeight(d) / 2,
+      )
+      .attr("width", (d: SimNode) => getContainerWidth(d))
+      .attr("height", (d: SimNode) => getContainerHeight(d));
 
     onTickHook?.();
     nodeSelection
@@ -384,6 +618,7 @@ export function createGraphRenderer(
 
   const destroy = () => {
     simulation.stop();
+    svgSel.on(".marquee", null);
     svgSel.on(".zoom", null);
     svgSel.selectAll("*").remove();
   };
@@ -397,6 +632,10 @@ export function createGraphRenderer(
     },
     nodes,
     links,
+    getNodePositions,
+    getViewportCenter,
+    getViewportTransform,
+    setViewportTransform,
     simulation,
     vizLayer,
     linkSelection,

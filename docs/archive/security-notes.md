@@ -1,4 +1,7 @@
-# Security notes
+# Security notes (Archived)
+
+This document is archived. For current NetBox build/runtime loading behavior,
+see `docs/data/netbox-catalog-loading.md`.
 
 ## Current posture
 

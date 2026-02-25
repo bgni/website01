@@ -105,6 +105,13 @@ button:disabled {
   stroke-linejoin: round;
 }
 
+.marquee-rect {
+  fill: rgba(34, 211, 238, 0.12);
+  stroke: rgba(34, 211, 238, 0.75);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+
 .graph-overlay {
   position: absolute;
   z-index: 10;
@@ -146,6 +153,17 @@ button:disabled {
   display: flex;
   gap: 8px;
   align-items: center;
+}
+.builder-row {
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.builder-row input[type="search"] {
+  min-width: 200px;
+  padding: 8px 10px;
+}
+.builder-row select {
+  min-width: 220px;
 }
 .legend {
   display: flex;
@@ -296,7 +314,17 @@ button:disabled {
 }
 
 /* Make control buttons subtle inside overlays */
-#prevPage, #nextPage, #clearSelection {
+#prevPage,
+#nextPage,
+#clearSelection,
+#createEdit,
+#addDevice,
+#undoCustom,
+#redoCustom,
+#connectSelected,
+#deleteConnection,
+#exportTopology,
+#importTopology {
   background: rgba(15, 23, 42, 0.78);
   color: var(--text);
   border: 1px solid var(--border);
@@ -305,10 +333,24 @@ button:disabled {
   box-shadow: none;
   transform: none;
 }
-#prevPage:hover, #nextPage:hover, #clearSelection:hover {
+#prevPage:hover,
+#nextPage:hover,
+#clearSelection:hover,
+#createEdit:hover,
+#addDevice:hover,
+#undoCustom:hover,
+#redoCustom:hover,
+#connectSelected:hover,
+#deleteConnection:hover,
+#exportTopology:hover,
+#importTopology:hover {
   box-shadow: none;
   transform: none;
   border-color: rgba(34, 211, 238, 0.35);
+}
+#createEdit.is-active {
+  border-color: rgba(34, 211, 238, 0.35);
+  color: var(--accent);
 }
 .badge {
   padding: 2px 8px;
@@ -395,6 +437,92 @@ button:disabled {
   border: 1px solid var(--border);
   font-size: 11px;
   display: inline-block;
+}
+.selected-card .selected-edit-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 6px;
+  margin-top: 6px;
+}
+.selected-card .selected-name-input {
+  min-width: 0;
+  width: 100%;
+  background: #0b1220;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+.selected-card .selected-type-select {
+  min-width: 0;
+  width: 100%;
+  background: #0b1220;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+.selected-card .selected-type-row {
+  grid-template-columns: 1fr auto;
+}
+.selected-card .selected-action {
+  background: rgba(15, 23, 42, 0.78);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: none;
+  transform: none;
+}
+.selected-card .selected-action:hover {
+  box-shadow: none;
+  transform: none;
+  border-color: rgba(34, 211, 238, 0.35);
+}
+.selected-card .selected-action.danger {
+  border-color: rgba(248, 113, 113, 0.45);
+  color: #fca5a5;
+}
+.selected-card .selected-properties-label {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.selected-card .selected-properties-input {
+  width: 100%;
+  min-height: 88px;
+  resize: vertical;
+  background: #0b1220;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+}
+.selected-card .selected-properties-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+.selected-card .selected-advanced {
+  margin-top: 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px;
+  background: rgba(11, 18, 32, 0.5);
+}
+.selected-card .selected-advanced-summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 12px;
+  user-select: none;
 }
 .selected-card .remove {
   position: absolute;

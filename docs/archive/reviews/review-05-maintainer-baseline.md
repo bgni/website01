@@ -129,7 +129,7 @@ Most tasks use `--no-lock`, which disables Deno’s lockfile usage. This makes
 ### 4) Security posture: reduce browser attack surface
 
 Current notes already acknowledge build-time YAML parsing risk in
-`docs/security.md`.
+`docs/archive/security-notes.md`.
 
 Additional browser-side recommendations:
 
@@ -186,7 +186,7 @@ Pick one and document it (see “AI agent playbook”).
 
 **Later (optional hardening)**
 
-- Replace build-time YAML parsing (already in `docs/security.md`).
+- Replace build-time YAML parsing (already in `docs/archive/security-notes.md`).
 - Add CSP/SRI for CDN dependencies, or vendor D3 locally.
 - Consider packaging generated assets (catalog JSON, rendered SVGs) as release
   artifacts.

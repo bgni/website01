@@ -18,6 +18,21 @@ export const reduce = (state: State, action: Action): State => {
     case "setStatusText": {
       return { ...state, statusText: action.text };
     }
+    case "setTopology": {
+      const selected = new Set(
+        Array.from(state.selected).filter((id) =>
+          action.devices.some((d) => d.id === id)
+        ),
+      );
+      const next: State = {
+        ...state,
+        devices: action.devices,
+        connections: action.connections,
+        selected,
+        page: 1,
+      };
+      return { ...next, page: getClampedPage(next) };
+    }
     case "networkLoaded": {
       const next: State = {
         ...state,

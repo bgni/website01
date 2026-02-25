@@ -1,6 +1,7 @@
 import { TRAFFIC_VIZ_OPTIONS } from "../trafficFlowVisualization/registry.ts";
 import { TRAFFIC_CONNECTOR_OPTIONS } from "../traffic/registry.ts";
 import { LAYOUTS } from "../layouts/registry.ts";
+import { CUSTOM_NETWORK_ID } from "./customTopology.ts";
 import { createController } from "./controller.ts";
 import { createStore, type State } from "./state.ts";
 import { createControls } from "../ui/controls.ts";
@@ -8,6 +9,13 @@ import { createSearchPanel } from "../ui/searchPanel.ts";
 import { createSelectedPanel } from "../ui/selectedPanel.ts";
 import type { SortDir, SortKey } from "../search.ts";
 import { loadData, loadJson } from "../dataLoader.ts";
+import {
+  DEVICE_KIND_ROUTER,
+  DEVICE_KIND_SERVER,
+  DEVICE_KIND_SWITCH,
+  DEVICE_KIND_UNKNOWN,
+  inferDeviceKindFromType,
+} from "../domain/deviceKind.ts";
 
 type PersistedUiSettingsV1 = {
   v: 1;
@@ -128,6 +136,15 @@ const mustGetById = <T extends Element>(doc: Document, id: string): T => {
   return el as unknown as T;
 };
 
+const isTypingTarget = (target: EventTarget | null): boolean => {
+  if (!(target instanceof Element)) return false;
+  if (target instanceof HTMLInputElement) return true;
+  if (target instanceof HTMLTextAreaElement) return true;
+  if (target instanceof HTMLSelectElement) return true;
+  if ((target as HTMLElement).isContentEditable) return true;
+  return Boolean(target.closest("input, textarea, select, [contenteditable]"));
+};
+
 export function bootstrap(doc: Document) {
   const storage = getLocalStorage(doc);
   const { settings: persistedSettings, hasNetworkId: hasPersistedNetworkId } =
@@ -162,6 +179,7 @@ export function bootstrap(doc: Document) {
     deps: {
       loadData,
       loadJson,
+      storage,
     },
   });
 
@@ -187,6 +205,7 @@ export function bootstrap(doc: Document) {
 
   const selectedDevicesEl = mustGetById<HTMLElement>(doc, "selectedDevices");
   const selectedOverlay = doc.getElementById("selectedOverlay");
+  let builderTypeSearchQuery = "";
 
   const controls = createControls({
     statusEl,
@@ -194,15 +213,62 @@ export function bootstrap(doc: Document) {
     trafficSourceSelect,
     trafficVizSelect,
     layoutSelect,
+    createEditBtn: mustGetById<HTMLButtonElement>(doc, "createEdit"),
+    addDeviceTypeSearchInput: mustGetById<HTMLInputElement>(
+      doc,
+      "addDeviceTypeSearch",
+    ),
+    addDeviceTypeSelect: mustGetById<HTMLSelectElement>(doc, "addDeviceType"),
+    addDeviceBtn: mustGetById<HTMLButtonElement>(doc, "addDevice"),
+    undoBtn: mustGetById<HTMLButtonElement>(doc, "undoCustom"),
+    redoBtn: mustGetById<HTMLButtonElement>(doc, "redoCustom"),
+    connectBtn: mustGetById<HTMLButtonElement>(doc, "connectSelected"),
+    deleteConnectionBtn: mustGetById<HTMLButtonElement>(
+      doc,
+      "deleteConnection",
+    ),
+    exportBtn: mustGetById<HTMLButtonElement>(doc, "exportTopology"),
+    importBtn: mustGetById<HTMLButtonElement>(doc, "importTopology"),
+    importInput: mustGetById<HTMLInputElement>(doc, "importTopologyInput"),
     clearSelectionBtn: mustGetById<HTMLButtonElement>(doc, "clearSelection"),
     onNetworkSelected: (id) => controller.loadNetwork(id),
     onTrafficSourceChanged: (kind) => controller.setTrafficSourceKind(kind),
     onLayoutChanged: (kind) => controller.setLayoutKind(kind),
     onTrafficVizChanged: (kind) => controller.setTrafficVizKind(kind),
+    onEnterBuilderMode: () => controller.enterBuilderMode(),
+    onBuilderTypeSearchChanged: (query) => {
+      builderTypeSearchQuery = query.trim();
+      renderAll();
+    },
+    onAddDevice: (slug) => controller.addCustomDevice(slug),
+    onUndo: () => controller.undoLastCustomEdit(),
+    onRedo: () => controller.redoLastCustomEdit(),
+    onConnectSelected: () => controller.connectSelectedDevices(),
+    onDeleteSelectedConnection: () => controller.deleteSelectedConnection(),
+    onExportTopology: () => {
+      const blob = new Blob([controller.exportTopologyJson()], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const anchor = doc.createElement("a");
+      anchor.href = url;
+      anchor.download = "topology.json";
+      doc.body.appendChild(anchor);
+      anchor.click();
+      doc.body.removeChild(anchor);
+      URL.revokeObjectURL(url);
+    },
+    onImportTopology: async (text) => {
+      await controller.importCustomTopologyJson(text);
+    },
     onClearSelection: () => controller.clearSelection(),
   });
   controls.setTrafficVizOptions(TRAFFIC_VIZ_OPTIONS);
   controls.setTrafficSourceOptions(TRAFFIC_CONNECTOR_OPTIONS);
+  controls.setNetworkOptions([{
+    id: CUSTOM_NETWORK_ID,
+    name: "Custom (local)",
+  }]);
 
   const searchPanel = createSearchPanel({
     searchInput,
@@ -221,10 +287,120 @@ export function bootstrap(doc: Document) {
     selectedDevicesEl,
     selectedOverlay,
     dispatch: store.dispatch,
+    onRenameDevice: (deviceId, name) =>
+      controller.renameCustomDevice(deviceId, name),
+    onChangeDeviceType: (deviceId, slug) =>
+      controller.changeCustomDeviceType(deviceId, slug),
+    onUpdateDeviceProperties: (deviceId, propertiesJson) =>
+      controller.updateCustomDeviceProperties(deviceId, propertiesJson),
+    onDeleteDevice: (deviceId) => controller.deleteCustomDevice(deviceId),
   });
 
   const renderAll = () => {
     const state = store.getState();
+
+    const allDeviceTypeSlugs = Object.keys(state.deviceTypes).sort((a, b) => {
+      const left = state.deviceTypes[a];
+      const right = state.deviceTypes[b];
+      const leftLabel = `${left?.brand ?? ""} ${left?.model ?? a}`.trim();
+      const rightLabel = `${right?.brand ?? ""} ${right?.model ?? b}`.trim();
+      return leftLabel.localeCompare(rightLabel);
+    });
+    const stats = controller.getBuilderDeviceStats();
+    const recentSet = new Set(
+      stats.recentDeviceTypeSlugs.filter((slug) => state.deviceTypes[slug]),
+    );
+    const kindOrder = [
+      DEVICE_KIND_SWITCH,
+      DEVICE_KIND_ROUTER,
+      DEVICE_KIND_SERVER,
+      DEVICE_KIND_UNKNOWN,
+    ] as const;
+    const kindLabelById = new Map<number, string>([
+      [DEVICE_KIND_SWITCH, "Switches"],
+      [DEVICE_KIND_ROUTER, "Routers"],
+      [DEVICE_KIND_SERVER, "Servers"],
+      [DEVICE_KIND_UNKNOWN, "Other"],
+    ]);
+    const rankByFrequentSlug = new Map(
+      stats.frequentDeviceTypeSlugs.map((slug, index) => [slug, index]),
+    );
+    const labelBySlug = new Map(
+      allDeviceTypeSlugs.map((slug) => [
+        slug,
+        `${state.deviceTypes[slug].brand} ${state.deviceTypes[slug].model}`,
+      ]),
+    );
+
+    const normalizedQuery = builderTypeSearchQuery.toLowerCase();
+
+    const compareSlugs = (left: string, right: string) => {
+      const leftRank = rankByFrequentSlug.get(left) ?? Number.POSITIVE_INFINITY;
+      const rightRank = rankByFrequentSlug.get(right) ??
+        Number.POSITIVE_INFINITY;
+      if (leftRank !== rightRank) return leftRank - rightRank;
+      return (labelBySlug.get(left) ?? left).localeCompare(
+        labelBySlug.get(right) ?? right,
+      );
+    };
+
+    const kindBySlug = new Map<string, number>(
+      allDeviceTypeSlugs.map((slug) => {
+        const deviceType = state.deviceTypes[slug];
+        const typeText = `${slug} ${deviceType.model}`;
+        return [slug, inferDeviceKindFromType(typeText)] as const;
+      }),
+    );
+
+    const popularByKind = new Map<number, string[]>();
+    kindOrder.forEach((kind) => {
+      const slugs = allDeviceTypeSlugs
+        .filter((slug) => kindBySlug.get(slug) === kind && !recentSet.has(slug))
+        .sort(compareSlugs)
+        .slice(0, 10);
+      popularByKind.set(kind, slugs);
+    });
+
+    const popularSet = new Set<string>(
+      Array.from(popularByKind.values()).flat(),
+    );
+
+    const searchMatches = normalizedQuery
+      ? allDeviceTypeSlugs
+        .filter((slug) => !recentSet.has(slug) && !popularSet.has(slug))
+        .filter((slug) => {
+          const dt = state.deviceTypes[slug];
+          const haystack = `${slug} ${dt.brand} ${dt.model}`.toLowerCase();
+          return haystack.includes(normalizedQuery);
+        })
+        .sort(compareSlugs)
+      : [];
+
+    controls.setBuilderDeviceTypeOptions([
+      ...Array.from(recentSet).map((slug) => ({
+        slug,
+        label: labelBySlug.get(slug) ?? slug,
+        groupId: "recent",
+        groupLabel: "Recent",
+      })),
+      ...kindOrder.flatMap((kind) =>
+        (popularByKind.get(kind) ?? []).map((slug) => ({
+          slug,
+          label: labelBySlug.get(slug) ?? slug,
+          groupId: `popular-${kind}`,
+          groupLabel: `Popular ${kindLabelById.get(kind) ?? "Other"} (Top 10)`,
+        }))
+      ),
+      ...searchMatches.map((slug) => ({
+        slug,
+        label: labelBySlug.get(slug) ?? slug,
+        groupId: "search",
+        groupLabel: "Search results",
+      })),
+    ]);
+    controls.setBuilderUndoEnabled(controller.canUndoCustomEdit());
+    controls.setBuilderRedoEnabled(controller.canRedoCustomEdit());
+
     controls.render(state);
     searchPanel.render(state);
     selectedPanel.render(state);
@@ -234,6 +410,37 @@ export function bootstrap(doc: Document) {
   renderAll();
   store.subscribe(() => renderAll());
   store.subscribe((state) => persistUiSettings(storage, state));
+
+  doc.addEventListener("keydown", (event: KeyboardEvent) => {
+    if (isTypingTarget(event.target)) return;
+
+    const key = event.key.toLowerCase();
+    const hasAccel = event.metaKey || event.ctrlKey;
+    const isCustomMode = store.getState().networkId === CUSTOM_NETWORK_ID;
+
+    if (!hasAccel || event.altKey || !isCustomMode) return;
+
+    const isUndoShortcut = key === "z" && !event.shiftKey;
+    const isRedoShortcut = key === "z" && event.shiftKey;
+    const isRedoAliasShortcut = key === "y" && !event.shiftKey;
+
+    if (isUndoShortcut) {
+      event.preventDefault();
+      controller.undoLastCustomEdit();
+      return;
+    }
+
+    if (isRedoShortcut) {
+      event.preventDefault();
+      controller.redoLastCustomEdit();
+      return;
+    }
+
+    if (isRedoAliasShortcut) {
+      event.preventDefault();
+      controller.redoLastCustomEdit();
+    }
+  });
 
   return {
     start: async () => {
@@ -256,7 +463,10 @@ export function bootstrap(doc: Document) {
         const defaultId = typeof index?.defaultId === "string"
           ? index.defaultId
           : undefined;
-        controls.setNetworkOptions(networks);
+        controls.setNetworkOptions([
+          ...networks,
+          { id: CUSTOM_NETWORK_ID, name: "Custom (local)" },
+        ]);
 
         if (
           desiredNetworkId &&

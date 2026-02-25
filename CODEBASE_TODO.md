@@ -3,8 +3,9 @@
 This file tracks how closely the current repo matches the restructuring guidance
 in:
 
-- `docs/CODEBASE_REVIEW2.md` (the concrete 3‑PR plan)
-- `docs/CODEBASE_REVIEW3.md` (a more ambitious “target tree” + boundary rules)
+- `docs/archive/reviews/review-01-structure-plan.md` (the concrete 3‑PR plan)
+- `docs/archive/reviews/review-02-target-architecture-tree.md` (a more ambitious
+  “target tree” + boundary rules)
 
 The goal is to keep the repo’s mental model obvious:
 

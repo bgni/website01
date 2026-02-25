@@ -10,6 +10,11 @@ export type Action =
   | { type: "setNetworkId"; networkId: string }
   | { type: "setStatusText"; text: string }
   | {
+    type: "setTopology";
+    devices: NetworkDevice[];
+    connections: Connection[];
+  }
+  | {
     type: "networkLoaded";
     devices: NetworkDevice[];
     connections: Connection[];

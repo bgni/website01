@@ -29,6 +29,33 @@
               </select>
             </div>
 
+            <div class="overlay-row builder-row">
+              <button id="createEdit" type="button">Create/Edit</button>
+              <input
+                id="addDeviceTypeSearch"
+                type="search"
+                placeholder="Search device types…"
+                aria-label="Search device types"
+              />
+              <select id="addDeviceType" aria-label="Device type for quick add">
+              </select>
+              <button id="addDevice" type="button">Add device</button>
+              <button id="undoCustom" type="button">Undo</button>
+              <button id="redoCustom" type="button">Redo</button>
+              <button id="connectSelected" type="button">Connect</button>
+              <button id="deleteConnection" type="button">
+                Delete connection
+              </button>
+              <button id="exportTopology" type="button">Export JSON</button>
+              <button id="importTopology" type="button">Import JSON</button>
+              <input
+                id="importTopologyInput"
+                type="file"
+                accept="application/json,.json"
+                class="is-hidden"
+              />
+            </div>
+
             <div class="search-shell" id="searchShell">
               <div class="search-input-row">
                 <div class="search-input-wrap">

@@ -9,6 +9,7 @@ catalog/
 # Coverage artifacts
 coverage/
 coverage.lcov
+cov_profile/
 
 # Static build output
 dist/

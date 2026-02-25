@@ -6,6 +6,7 @@ import type {
 } from "../domain/types.ts";
 import { applyLayoutToGraph } from "./layoutAdapter.ts";
 import { createGraphRenderer, type Guide } from "./renderer.ts";
+import type { ZoomTransformSnapshot } from "./renderer.ts";
 import { createTrafficAdapter } from "./trafficAdapter.ts";
 import { buildRendererUpdateArgs } from "./viewModel.ts";
 import { getD3 } from "../lib/d3.ts";
@@ -22,12 +23,16 @@ export function createGraph(
     connections,
     adjacency,
     onNodeSelect,
+    onCanvasDeselect,
+    onSelectionReplaced,
   }: {
     svg: string | SVGSVGElement;
     devices: NetworkDevice[];
     connections: Connection[];
     adjacency: Adjacency;
     onNodeSelect: (id: string) => void;
+    onCanvasDeselect?: () => void;
+    onSelectionReplaced?: (ids: string[]) => void;
   },
 ): {
   update: (
@@ -42,6 +47,10 @@ export function createGraph(
   setTrafficVisualization: (kind: string) => void;
   setLayout: (kind: string) => void;
   resize: (size: { width: number; height: number }) => void;
+  getNodePositions: () => Map<string, { x: number; y: number }>;
+  getViewportCenter: () => { x: number; y: number };
+  getViewportTransform: () => ZoomTransformSnapshot;
+  setViewportTransform: (snapshot: ZoomTransformSnapshot | null) => void;
 } {
   const d3 = getD3();
   const trafficById: Record<string, TrafficUpdate> = {};
@@ -53,6 +62,8 @@ export function createGraph(
     connections,
     getNodeFill: (d) => typeColor(d.deviceKind),
     onNodeSelect,
+    onCanvasDeselect,
+    onSelectionReplaced,
   });
 
   const trafficAdapter = createTrafficAdapter({
@@ -170,5 +181,10 @@ export function createGraph(
     setTrafficVisualization,
     setLayout,
     resize,
+    getNodePositions: () => renderer.getNodePositions(),
+    getViewportCenter: () => renderer.getViewportCenter(),
+    getViewportTransform: () => renderer.getViewportTransform(),
+    setViewportTransform: (snapshot: ZoomTransformSnapshot | null) =>
+      renderer.setViewportTransform(snapshot),
   };
 }

@@ -1,4 +1,5 @@
 type LayoutNode = { fx?: number | null; fy?: number | null };
+type PositionedLayoutNode = LayoutNode & { x?: number; y?: number };
 
 type ForceLinkLike = {
   distance?: (value: number) => unknown;
@@ -35,13 +36,25 @@ export function applyForceLayout(
     height: number;
   },
 ) {
+  const layoutNodes =
+    (Array.isArray(nodes) ? nodes : []) as PositionedLayoutNode[];
+
   // Tiered layout locks nodes via fx/fy; unlock when returning to force.
-  if (Array.isArray(nodes)) {
-    nodes.forEach((n) => {
+  if (layoutNodes.length) {
+    layoutNodes.forEach((n) => {
       n.fx = null;
       n.fy = null;
     });
   }
+
+  const positionedCount = layoutNodes.reduce((count, node) => {
+    const hasX = Number.isFinite(Number(node.x));
+    const hasY = Number.isFinite(Number(node.y));
+    return hasX && hasY ? count + 1 : count;
+  }, 0);
+  const hasMostlyPositionedNodes = layoutNodes.length > 0 &&
+    positionedCount / layoutNodes.length >= 0.6;
+  const initialAlpha = hasMostlyPositionedNodes ? 0.2 : 0.85;
 
   simulation
     .force("x", null)
@@ -56,7 +69,7 @@ export function applyForceLayout(
   simulation
     .force("charge", d3.forceManyBody().strength(-260))
     .force("collide", d3.forceCollide(26))
-    .alpha(0.85)
+    .alpha(initialAlpha)
     .restart();
 
   return { guides: [] };

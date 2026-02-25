@@ -31,9 +31,21 @@ highlighting, and traffic-aware link styling.
 
 ## Docs
 
-- Maintainers: [docs/codebase-review.md](docs/codebase-review.md)
+- Docs index (start here): [docs/README.md](docs/README.md)
+- Agent docs hub: [docs/agent/README.md](docs/agent/README.md)
+- Maintainers (historical review):
+  [docs/archive/reviews/review-05-maintainer-baseline.md](docs/archive/reviews/review-05-maintainer-baseline.md)
 - AI agents: [docs/ai-agent-playbook.md](docs/ai-agent-playbook.md)
+- Architecture lessons:
+  [docs/ideas/advanced-agent-lessons.md](docs/ideas/advanced-agent-lessons.md)
+- Restructuring plan:
+  [docs/ideas/restructuring-plan.md](docs/ideas/restructuring-plan.md)
+- NetBox data loading (Deno):
+  [docs/data/netbox-catalog-loading.md](docs/data/netbox-catalog-loading.md)
 - Product/user context: [docs/persona.md](docs/persona.md)
+- Scenario reference (campus):
+  [docs/scenarios/campus-network.md](docs/scenarios/campus-network.md)
 - Design sketches: [docs/ideas/design_ideas.md](docs/ideas/design_ideas.md)
-- Security notes: [docs/security.md](docs/security.md)
+- Security notes (archived):
+  [docs/archive/security-notes.md](docs/archive/security-notes.md)
 - Development retrospective: [docs/retrospective.md](docs/retrospective.md)
