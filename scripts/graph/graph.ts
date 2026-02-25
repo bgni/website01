@@ -143,6 +143,9 @@ export function createGraph(
 
   const setTrafficVisualization = (kind: string) => {
     trafficAdapter.setKind(kind, mount());
+    // Ensure freshly mounted viz layers (e.g., flow-dashes overlay) are
+    // positioned even when the simulation is static (tiered layout).
+    renderer.renderPositions();
     // Force a style pass so viz overlays appear immediately.
     update(lastUpdateArgs);
   };

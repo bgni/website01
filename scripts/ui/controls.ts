@@ -14,9 +14,6 @@ export function createControls(
     trafficVizSelect,
     layoutSelect,
     clearSelectionBtn,
-    trafficLegendUtil,
-    trafficLegendFlowNote,
-    trafficLegendUtilWidthNote,
     onNetworkSelected,
     onLayoutChanged,
     onTrafficVizChanged,
@@ -27,9 +24,6 @@ export function createControls(
     trafficVizSelect: HTMLSelectElement;
     layoutSelect: HTMLSelectElement;
     clearSelectionBtn: HTMLButtonElement;
-    trafficLegendUtil?: HTMLElement;
-    trafficLegendFlowNote?: HTMLElement;
-    trafficLegendUtilWidthNote?: HTMLElement;
     onNetworkSelected: (networkId: string) => void;
     onLayoutChanged: (kind: string) => void;
     onTrafficVizChanged: (kind: string) => void;
@@ -37,12 +31,6 @@ export function createControls(
   },
 ) {
   let hasWired = false;
-
-  const setHidden = (el: HTMLElement | undefined, hidden: boolean) => {
-    if (!el) return;
-    el.classList.toggle("is-hidden", hidden);
-    el.setAttribute("aria-hidden", hidden ? "true" : "false");
-  };
 
   const setTrafficVizOptions = (options: TrafficVizOption[]) => {
     clearChildren(trafficVizSelect);
@@ -105,14 +93,6 @@ export function createControls(
     if (layoutSelect.value !== state.layoutKind) {
       layoutSelect.value = state.layoutKind;
     }
-
-    // Keep legend semantics aligned with the active visualization.
-    // - util-width: width encodes utilization, so the color-based util pills don't apply.
-    // - flow-dashes: not every connection has traffic; dashes only show where data exists.
-    const kind = state.trafficVizKind;
-    setHidden(trafficLegendUtil, kind === "util-width");
-    setHidden(trafficLegendFlowNote, kind !== "flow-dashes");
-    setHidden(trafficLegendUtilWidthNote, kind !== "util-width");
   };
 
   return {

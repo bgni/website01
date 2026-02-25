@@ -162,15 +162,6 @@ export function bootstrap(doc: Document) {
     "trafficVizSelect",
   );
   const layoutSelect = mustGetById<HTMLSelectElement>(doc, "layoutSelect");
-  const trafficLegendUtil = mustGetById<HTMLElement>(doc, "trafficLegendUtil");
-  const trafficLegendFlowNote = mustGetById<HTMLElement>(
-    doc,
-    "trafficLegendFlowNote",
-  );
-  const trafficLegendUtilWidthNote = mustGetById<HTMLElement>(
-    doc,
-    "trafficLegendUtilWidthNote",
-  );
 
   const searchInput = mustGetById<HTMLInputElement>(doc, "searchInput");
   const searchShell = mustGetById<HTMLElement>(doc, "searchShell");
@@ -189,9 +180,6 @@ export function bootstrap(doc: Document) {
     trafficVizSelect,
     layoutSelect,
     clearSelectionBtn: mustGetById<HTMLButtonElement>(doc, "clearSelection"),
-    trafficLegendUtil,
-    trafficLegendFlowNote,
-    trafficLegendUtilWidthNote,
     onNetworkSelected: (id) => controller.loadNetwork(id),
     onLayoutChanged: (kind) => controller.setLayoutKind(kind),
     onTrafficVizChanged: (kind) => controller.setTrafficVizKind(kind),
