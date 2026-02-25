@@ -68,6 +68,19 @@ const estimateLabelWidth = (node: TieredLayoutNode) => {
   return clamp(px, 48, 190);
 };
 
+const getLabelSafeBounds = (
+  node: TieredLayoutNode,
+  left: number,
+  right: number,
+) => {
+  const half = estimateLabelWidth(node) / 2 + 8;
+  const min = left + half;
+  const max = right - half;
+  if (max >= min) return { min, max };
+  const center = (left + right) / 2;
+  return { min: center, max: center };
+};
+
 const buildNeighbors = (links: TieredLayoutLink[]) => {
   const neighbors = new Map<string, Set<string>>();
   const ensure = (id: string): Set<string> => {
@@ -383,7 +396,15 @@ export function applyTieredLayout(
       String(a.id).localeCompare(String(b.id))
     );
     const count = tierNodes.length;
-    if (count <= 1) continue;
+
+    if (count <= 1) {
+      const only = tierNodes[0];
+      if (only) {
+        const { min, max } = getLabelSafeBounds(only, left, right);
+        only.__tx = clamp(only.__tx ?? (left + right) / 2, min, max);
+      }
+      continue;
+    }
 
     const available = Math.max(1, right - left);
     const maxGap = available / Math.max(1, count - 1);
@@ -401,11 +422,12 @@ export function applyTieredLayout(
     let prevX = -Infinity;
     let prevW = 0;
     tierNodes.forEach((n, idx) => {
-      const desired = clamp(n.__tx ?? left, left, right);
+      const { min, max } = getLabelSafeBounds(n, left, right);
+      const desired = clamp(n.__tx ?? min, min, max);
       const w = estimateLabelWidth(n);
       const gap = idx === 0 ? 0 : Math.max(minGap, ((prevW + w) / 2) + 18);
       const placed = Math.max(desired, prevX + gap);
-      n.__tx = clamp(placed, left, right);
+      n.__tx = clamp(placed, min, max);
       prevX = n.__tx;
       prevW = w;
     });
@@ -414,12 +436,13 @@ export function applyTieredLayout(
     let nextW = 0;
     for (let i = tierNodes.length - 1; i >= 0; i -= 1) {
       const n = tierNodes[i];
+      const { min, max } = getLabelSafeBounds(n, left, right);
       const w = estimateLabelWidth(n);
       const gap = i === tierNodes.length - 1
         ? 0
         : Math.max(minGap, ((nextW + w) / 2) + 18);
       const placed = Math.min(n.__tx ?? right, nextX - gap);
-      n.__tx = clamp(placed, left, right);
+      n.__tx = clamp(placed, min, max);
       nextX = n.__tx;
       nextW = w;
     }
@@ -435,14 +458,16 @@ export function applyTieredLayout(
     ) {
       tierNodes.forEach((n, i) => {
         const t = count === 1 ? 0.5 : (i / (count - 1));
-        n.__tx = left + t * available;
+        const { min, max } = getLabelSafeBounds(n, left, right);
+        n.__tx = clamp(left + t * available, min, max);
       });
     }
   }
 
   // Apply final positions and lock nodes.
   nodes.forEach((n) => {
-    const x = clamp(n.__tx ?? left, left, right);
+    const { min, max } = getLabelSafeBounds(n, left, right);
+    const x = clamp(n.__tx ?? (left + right) / 2, min, max);
     const y = clamp(n.__ty ?? paddingTop, paddingTop, height - paddingBottom);
     n.x = x;
     n.y = y;

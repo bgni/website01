@@ -297,21 +297,9 @@ export function createGraphRenderer(
       .attr("cx", (d: SimNode) => d.x)
       .attr("cy", (d: SimNode) => d.y);
 
-    const edgeThreshold = GRAPH_DEFAULTS.label.edgeThreshold;
-    const edgeOffset = GRAPH_DEFAULTS.label.edgeOffset;
     labelSelection
-      .attr("text-anchor", (d: SimNode) => {
-        const x = d.x ?? 0;
-        if (x <= edgeThreshold) return "start";
-        if (x >= width - edgeThreshold) return "end";
-        return "middle";
-      })
-      .attr("x", (d: SimNode) => {
-        const x = d.x ?? 0;
-        if (x <= edgeThreshold) return x + edgeOffset;
-        if (x >= width - edgeThreshold) return x - edgeOffset;
-        return x;
-      })
+      .attr("text-anchor", "middle")
+      .attr("x", (d: SimNode) => d.x)
       .attr("y", (d: SimNode) => (d.y ?? 0) + GRAPH_DEFAULTS.label.yOffset);
   };
 

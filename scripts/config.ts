@@ -54,8 +54,6 @@ export const GRAPH_DEFAULTS = {
     fontSize: 11,
     dy: 0,
     yOffset: 24,
-    edgeThreshold: 92,
-    edgeOffset: 16,
   },
 
   guides: {
