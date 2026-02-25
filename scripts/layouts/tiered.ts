@@ -30,6 +30,9 @@ type SimulationLike = { stop: () => void };
 const clamp = (v: number, min: number, max: number) =>
   Math.max(min, Math.min(max, v));
 
+const average = (xs: number[]) =>
+  xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : NaN;
+
 const degreeFor = (links: TieredLayoutLink[]): Map<string, number> => {
   const deg = new Map<string, number>();
   links.forEach((l: TieredLayoutLink) => {
@@ -97,6 +100,187 @@ const buildNeighbors = (links: TieredLayoutLink[]) => {
   });
 
   return neighbors;
+};
+
+const buildEdgesByAdjacentTier = (
+  links: TieredLayoutLink[],
+  tierById: Map<string, number>,
+) => {
+  const edges = new Map<string, Array<[string, string]>>();
+  links.forEach((l) => {
+    const a = getNodeId(l.source);
+    const b = getNodeId(l.target);
+    if (!a || !b) return;
+    const ta = tierById.get(a);
+    const tb = tierById.get(b);
+    if (typeof ta !== "number" || typeof tb !== "number") return;
+    if (Math.abs(ta - tb) !== 1) return;
+
+    const fromTier = Math.min(ta, tb);
+    const key = `${fromTier}|${fromTier + 1}`;
+    const arr = edges.get(key);
+    const pair: [string, string] = ta < tb ? [a, b] : [b, a];
+    if (arr) arr.push(pair);
+    else edges.set(key, [pair]);
+  });
+  return edges;
+};
+
+const countAdjacentCrossings = (
+  upper: string[],
+  lower: string[],
+  pairs: Array<[string, string]>,
+) => {
+  const upPos = new Map<string, number>(upper.map((id, i) => [id, i]));
+  const loPos = new Map<string, number>(lower.map((id, i) => [id, i]));
+  const projected: Array<[number, number]> = [];
+
+  pairs.forEach(([u, v]) => {
+    const pu = upPos.get(u);
+    const pv = loPos.get(v);
+    if (typeof pu === "number" && typeof pv === "number") {
+      projected.push([pu, pv]);
+    }
+  });
+
+  let crossings = 0;
+  for (let i = 0; i < projected.length; i += 1) {
+    const [u1, v1] = projected[i];
+    for (let j = i + 1; j < projected.length; j += 1) {
+      const [u2, v2] = projected[j];
+      if ((u1 - u2) * (v1 - v2) < 0) crossings += 1;
+    }
+  }
+  return crossings;
+};
+
+const crossMinOrderByTier = (
+  {
+    byTier,
+    links,
+    initialRank,
+  }: {
+    byTier: Map<number, TieredLayoutNode[]>;
+    links: TieredLayoutLink[];
+    initialRank: Map<string, number>;
+  },
+) => {
+  const tierKeys = [...byTier.keys()].sort((a, b) => a - b);
+  const orderByTier = new Map<number, string[]>();
+
+  tierKeys.forEach((tier) => {
+    const ids = [...(byTier.get(tier) || [])]
+      .sort((a, b) =>
+        (initialRank.get(a.id) ?? 0) - (initialRank.get(b.id) ?? 0)
+      )
+      .map((n) => n.id);
+    orderByTier.set(tier, ids);
+  });
+
+  const tierById = new Map<string, number>();
+  tierKeys.forEach((tier) => {
+    (orderByTier.get(tier) || []).forEach((id) => tierById.set(id, tier));
+  });
+  const neighbors = buildNeighbors(links);
+  const edgePairs = buildEdgesByAdjacentTier(links, tierById);
+
+  const posMap = (tier: number) =>
+    new Map<string, number>(
+      (orderByTier.get(tier) || []).map((id, i) => [id, i]),
+    );
+
+  const barycenter = (
+    id: string,
+    refPos: Map<string, number>,
+  ): number | null => {
+    const nbs = neighbors.get(id);
+    if (!nbs?.size) return null;
+    const vals = [...nbs]
+      .map((n) => refPos.get(n))
+      .filter((v): v is number => typeof v === "number");
+    if (!vals.length) return null;
+    return average(vals);
+  };
+
+  const sortTierByRef = (tier: number, refTier: number) => {
+    const ids = [...(orderByTier.get(tier) || [])];
+    const refPos = posMap(refTier);
+    const selfPos = posMap(tier);
+    ids.sort((a, b) => {
+      const ba = barycenter(a, refPos);
+      const bb = barycenter(b, refPos);
+      if (ba == null && bb == null) {
+        return (selfPos.get(a) ?? 0) - (selfPos.get(b) ?? 0);
+      }
+      if (ba == null) return 1;
+      if (bb == null) return -1;
+      if (ba !== bb) return ba - bb;
+      return (selfPos.get(a) ?? 0) - (selfPos.get(b) ?? 0);
+    });
+    orderByTier.set(tier, ids);
+  };
+
+  const tryLocalSwaps = (tier: number) => {
+    const ids = [...(orderByTier.get(tier) || [])];
+    if (ids.length < 2) return;
+
+    const upper = orderByTier.get(tier - 1);
+    const lower = orderByTier.get(tier + 1);
+    const upPairs = upper ? edgePairs.get(`${tier - 1}|${tier}`) || [] : [];
+    const downPairs = lower ? edgePairs.get(`${tier}|${tier + 1}`) || [] : [];
+
+    const score = (arr: string[]) => {
+      let s = 0;
+      if (upper) s += countAdjacentCrossings(upper, arr, upPairs);
+      if (lower) s += countAdjacentCrossings(arr, lower, downPairs);
+      return s;
+    };
+
+    let improved = true;
+    while (improved) {
+      improved = false;
+      for (let i = 0; i < ids.length - 1; i += 1) {
+        const base = score(ids);
+        const swapped = [...ids];
+        [swapped[i], swapped[i + 1]] = [swapped[i + 1], swapped[i]];
+        const next = score(swapped);
+        if (next < base) {
+          ids.splice(0, ids.length, ...swapped);
+          improved = true;
+        }
+      }
+    }
+
+    orderByTier.set(tier, ids);
+  };
+
+  const maxPasses = 6;
+  for (let pass = 0; pass < maxPasses; pass += 1) {
+    // Top-down sweep.
+    for (let i = 1; i < tierKeys.length; i += 1) {
+      sortTierByRef(tierKeys[i], tierKeys[i - 1]);
+      tryLocalSwaps(tierKeys[i]);
+    }
+    // Bottom-up sweep.
+    for (let i = tierKeys.length - 2; i >= 0; i -= 1) {
+      sortTierByRef(tierKeys[i], tierKeys[i + 1]);
+      tryLocalSwaps(tierKeys[i]);
+    }
+  }
+
+  const maxWidth = Math.max(
+    1,
+    ...[...orderByTier.values()].map((arr) => arr.length),
+  );
+  const rankById = new Map<string, number>();
+  orderByTier.forEach((arr) => {
+    const denom = Math.max(1, arr.length - 1);
+    const span = Math.max(1, maxWidth - 1);
+    arr.forEach((id, i) => {
+      rankById.set(id, (i / denom) * span);
+    });
+  });
+  return rankById;
 };
 
 const pickRoots = ({
@@ -278,6 +462,7 @@ export function applyTieredLayout(
     links,
     width,
     height,
+    crossMinimize = false,
   }: {
     simulation: SimulationLike;
     d3: unknown;
@@ -285,6 +470,7 @@ export function applyTieredLayout(
     links: TieredLayoutLink[];
     width: number;
     height: number;
+    crossMinimize?: boolean;
   },
 ) {
   const paddingTop = 56; // leave room for overlay controls
@@ -348,15 +534,35 @@ export function applyTieredLayout(
     n.__tier = TIER_ORDER[clamped] || "unknown";
   });
 
+  const byTier = new Map<number, TieredLayoutNode[]>();
+  nodes.forEach((n: TieredLayoutNode) => {
+    const idx = typeof n.__tierIndex === "number" &&
+        Number.isFinite(n.__tierIndex)
+      ? n.__tierIndex
+      : TIER_ORDER.length - 1;
+    const bucket = byTier.get(idx);
+    if (bucket) bucket.push(n);
+    else byTier.set(idx, [n]);
+  });
+
+  const initialRank = new Map<string, number>();
+  nodes.forEach((n) => {
+    initialRank.set(n.id, treeX.get(n.id) ?? 0);
+  });
+
+  const rankById = crossMinimize
+    ? crossMinOrderByTier({ byTier, links, initialRank })
+    : initialRank;
+
   const xVals = nodes
-    .map((n) => treeX.get(n.id))
+    .map((n) => rankById.get(n.id))
     .filter((v): v is number => typeof v === "number" && Number.isFinite(v));
   const minX = xVals.length ? Math.min(...xVals) : 0;
   const maxX = xVals.length ? Math.max(...xVals) : 1;
   const spanX = Math.max(1e-6, maxX - minX);
 
   const xTarget = (n: TieredLayoutNode) => {
-    const raw = treeX.get(n.id);
+    const raw = rankById.get(n.id);
     const t = typeof raw === "number" && Number.isFinite(raw)
       ? (raw - minX) / spanX
       : 0.5;
@@ -378,17 +584,6 @@ export function applyTieredLayout(
 
   // Resolve overlaps deterministically per tier.
   const minGap = 30; // circle-safe spacing; labels handled by per-node widths below
-
-  const byTier = new Map<number, TieredLayoutNode[]>();
-  nodes.forEach((n: TieredLayoutNode) => {
-    const idx = typeof n.__tierIndex === "number" &&
-        Number.isFinite(n.__tierIndex)
-      ? n.__tierIndex
-      : TIER_ORDER.length - 1;
-    const bucket = byTier.get(idx);
-    if (bucket) bucket.push(n);
-    else byTier.set(idx, [n]);
-  });
 
   for (const tierNodes of byTier.values()) {
     tierNodes.sort((a, b) =>
