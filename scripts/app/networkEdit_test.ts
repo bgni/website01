@@ -3,6 +3,10 @@ import {
   createAddedDevice,
   createConnectionUsingFirstPorts,
 } from "./networkEdit.ts";
+import {
+  DEVICE_KIND_ROUTER,
+  DEVICE_KIND_SWITCH,
+} from "../domain/deviceKind.ts";
 import type { Connection, DeviceType, NetworkDevice } from "../domain/types.ts";
 
 Deno.test("createAddedDevice creates slug id and increments duplicates", () => {
@@ -10,7 +14,7 @@ Deno.test("createAddedDevice creates slug id and increments duplicates", () => {
     id: "edge-router",
     name: "Edge Router",
     type: "router",
-    deviceKind: "router",
+    deviceKind: DEVICE_KIND_ROUTER,
   }];
   const device = createAddedDevice({
     name: "Edge Router",
@@ -18,7 +22,7 @@ Deno.test("createAddedDevice creates slug id and increments duplicates", () => {
     devices,
   });
   assertEquals(device.id, "edge-router-2");
-  assertEquals(device.deviceKind, "router");
+  assertEquals(device.deviceKind, DEVICE_KIND_ROUTER);
 });
 
 Deno.test("createConnectionUsingFirstPorts chooses first free known ports", () => {
@@ -27,14 +31,14 @@ Deno.test("createConnectionUsingFirstPorts chooses first free known ports", () =
       id: "sw-1",
       name: "Switch",
       type: "switch",
-      deviceKind: "switch",
+      deviceKind: DEVICE_KIND_SWITCH,
       deviceTypeSlug: "acme/sw",
     },
     {
       id: "sw-2",
       name: "Switch 2",
       type: "switch",
-      deviceKind: "switch",
+      deviceKind: DEVICE_KIND_SWITCH,
       deviceTypeSlug: "acme/sw",
     },
   ];
