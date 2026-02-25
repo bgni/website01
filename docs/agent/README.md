@@ -1,57 +1,182 @@
+Here is a **clean, tightened v2 replacement** for `docs/agent/README.md`.
+
+It keeps your structure but strengthens architectural convergence and removes
+ambiguity about refactor intent.
+
+You can replace the file entirely.
+
+---
+
 # Agent Docs Hub
 
-This is the fastest path for coding agents to get aligned before making changes.
+This is the fastest path for coding agents to align with repo intent before
+making changes.
 
-## Read Order (Agent)
+This repo prioritizes:
 
-1. `docs/AGENT_INSTRUCTIONS.md` (hard constraints + boundaries)
-2. `docs/ideas/advanced-agent-lessons.md` (architecture heuristics)
-3. `docs/ideas/restructuring-plan.md` (current execution roadmap)
-4. `docs/persona.md` (user value and UX intent)
-5. `docs/data/netbox-catalog-loading.md` (if device-type enrichment is touched)
-6. `docs/scenarios/*` (only if change touches specific network shapes)
+- Behavior stability
+- Architectural convergence
+- Deterministic rendering
+- Strict TypeScript boundaries
+- CI-green incremental delivery
 
-## What Docs Should Exist (Minimum Set)
+---
 
-For this repo, these docs are the high-value minimum for safe autonomous work:
+# Read Order (Agent)
 
-- **Operating constraints** (`AGENT_INSTRUCTIONS.md`)
-  - Environment, quality gates, non-negotiables.
-- **Execution workflow** (`ai-agent-playbook.md`)
-  - Default validation loop and change discipline.
-- **Architecture intent** (`ideas/advanced-agent-lessons.md`)
-  - Boundary ownership and anti-patterns.
-- **Active migration plan** (`ideas/restructuring-plan.md`)
-  - Workstreams and sequencing.
-- **User intent** (`persona.md`)
-  - Who we are optimizing for and why.
-- **Data pipeline references** (`data/netbox-catalog-loading.md`)
-  - Build-time vs runtime loading model and tooling assumptions.
-- **Scenario references** (`scenarios/*.md`)
-  - Domain examples and topology mental models.
-- **Historical rationale** (`archive/reviews/review-*.md`)
-  - Decision chronology and legacy context.
+1. `docs/AGENT_INSTRUCTIONS.md` Hard constraints, architecture boundaries,
+   refactor contract.
 
-If a new doc does not clearly fit one of these categories, prefer updating an
-existing doc instead of adding another file.
+2. `docs/ideas/restructuring-plan.md` Active execution roadmap and consolidation
+   targets.
 
-## Freshness Protocol
+3. `docs/ideas/advanced-agent-lessons.md` Architecture heuristics and
+   anti-pattern guidance.
 
-When a change materially affects UX, architecture, or workflows:
+4. `docs/persona.md` User value and UX intent.
 
-- Update at least one of:
-  - `ideas/advanced-agent-lessons.md`
-  - `ideas/restructuring-plan.md`
-  - `persona.md`
-- Add a “Last reviewed” date only when content meaning changes.
-- Keep historical reviews archived; do not treat them as current direction.
+5. `docs/data/netbox-catalog-loading.md` Only if touching device-type enrichment
+   or catalog loading.
 
-## Decision Priority (Conflict Resolution)
+6. `docs/scenarios/*` Only if touching specific network shapes or topology
+   semantics.
 
-When docs conflict, prefer this order:
+---
+
+# How to Think Before Coding
+
+Before making changes, determine:
+
+- Which boundary is being modified?
+
+  - Domain
+  - Application service
+  - Controller (orchestration)
+  - Infrastructure (graph/layout/traffic)
+  - Build system
+- Is there duplication that should be consolidated?
+- Is a service already present that should own this behavior?
+- Is this a behavior change or a mechanical refactor?
+
+If logic exists in two places, consolidation is preferred over caution.
+
+Extraction without adoption is incomplete work.
+
+---
+
+# Required Doc Categories (Minimum Viable Set)
+
+These categories define the documentation contract for safe autonomous work:
+
+### 1. Operating Constraints
+
+`AGENT_INSTRUCTIONS.md` Environment, CI gates, determinism, refactor policy.
+
+### 2. Execution Workflow
+
+`ai-agent-playbook.md` Validation loop, change discipline, typing direction.
+
+### 3. Architecture Intent
+
+`ideas/advanced-agent-lessons.md` Layer ownership, anti-patterns, consolidation
+philosophy.
+
+### 4. Active Migration Plan
+
+`ideas/restructuring-plan.md` Current workstreams and sequencing. If this
+exists, it should be followed before inventing new structure.
+
+### 5. User Intent
+
+`persona.md` Who the tool is for and what problems it solves.
+
+### 6. Data Pipeline References
+
+`data/netbox-catalog-loading.md` Build-time vs runtime loading model.
+
+### 7. Scenario References
+
+`scenarios/*.md` Topology mental models and domain examples.
+
+### 8. Historical Context
+
+`archive/reviews/review-*.md` Past decisions and rationale. Not current
+direction.
+
+If a new document does not clearly fit one of these categories, update an
+existing document instead.
+
+Documentation sprawl reduces agent reliability.
+
+---
+
+# Freshness Protocol
+
+When a change materially affects:
+
+- Architecture boundaries
+- UX behavior
+- Layout semantics
+- Data model assumptions
+- Build pipeline behavior
+
+Then update at least one of:
+
+- `ideas/restructuring-plan.md`
+- `ideas/advanced-agent-lessons.md`
+- `persona.md`
+
+Do not update archived reviews to reflect new direction.
+
+Only add “Last reviewed” dates when meaning changes.
+
+---
+
+# Decision Priority (Conflict Resolution)
+
+When documentation conflicts, follow this precedence:
 
 1. `AGENT_INSTRUCTIONS.md`
 2. `ideas/restructuring-plan.md`
 3. `ideas/advanced-agent-lessons.md`
 4. `ai-agent-playbook.md`
 5. archived reviews
+
+If a conflict cannot be resolved via this ordering:
+
+- Prefer behavior stability.
+- Prefer stricter typing.
+- Prefer clearer boundaries.
+- Avoid introducing new patterns unless explicitly directed.
+
+---
+
+# Architectural Convergence Rule
+
+If:
+
+- A service exists, and
+- The controller duplicates its behavior,
+
+Then:
+
+- Route calls through the service.
+- Delete the duplicate path.
+- Keep behavior identical.
+- Ensure CI passes.
+
+This rule takes precedence over “smallest diff” conservatism.
+
+---
+
+# Anti-Stagnation Reminder
+
+The repo favors:
+
+- Mechanical refactors over rewrites.
+- Adoption + deletion over extraction-only.
+- Clear ownership over layered ambiguity.
+
+Timidity causes architectural drift. Rewrites cause instability.
+
+Convergence via disciplined refactor is the intended path.

@@ -2,7 +2,11 @@ import { assertEquals } from "@std/assert";
 import {
   choosePortPair,
   computeNewDevicePosition,
+  getFreeLinkablePorts,
+  getUsedInterfaceIds,
+  isContainerDevice,
   pruneConnectionsForDeviceType,
+  stripManagedDeviceFields,
 } from "./customBuilderUtils.ts";
 import {
   DEVICE_KIND_ROUTER,
@@ -38,6 +42,17 @@ Deno.test("customBuilderUtils: choosePortPair falls back to first available port
     fromInterfaceId: "a1",
     toInterfaceId: "b1",
   });
+});
+
+Deno.test("customBuilderUtils: choosePortPair returns null when either side has no ports", () => {
+  assertEquals(
+    choosePortPair([], [{ id: "b1", interfaceType: "eth-1g" }]),
+    null,
+  );
+  assertEquals(
+    choosePortPair([{ id: "a1", interfaceType: "eth-1g" }], []),
+    null,
+  );
 });
 
 Deno.test("customBuilderUtils: pruneConnectionsForDeviceType removes invalid interfaces", () => {
@@ -103,4 +118,159 @@ Deno.test("customBuilderUtils: computeNewDevicePosition uses selected anchor fir
   });
 
   assertEquals(position, { x: 195, y: 100 });
+});
+
+Deno.test("customBuilderUtils: computeNewDevicePosition uses viewport center fallback", () => {
+  const position = computeNewDevicePosition({
+    selectedAnchor: null,
+    selectedAnchorPosition: null,
+    viewportCenter: { x: 400, y: 300 },
+    totalDevices: 6,
+  });
+
+  assertEquals(position, { x: 372, y: 300 });
+});
+
+Deno.test("customBuilderUtils: computeNewDevicePosition returns null with no anchors", () => {
+  const position = computeNewDevicePosition({
+    selectedAnchor: null,
+    selectedAnchorPosition: null,
+    viewportCenter: null,
+    totalDevices: 0,
+  });
+
+  assertEquals(position, null);
+});
+
+Deno.test("customBuilderUtils: getUsedInterfaceIds includes both ends", () => {
+  const used = getUsedInterfaceIds([
+    {
+      id: "c1",
+      from: { deviceId: "d1", interfaceId: "p1" },
+      to: { deviceId: "d2", interfaceId: "p2" },
+    },
+    {
+      id: "c2",
+      from: { deviceId: "d3", interfaceId: "p3" },
+      to: { deviceId: "d1", interfaceId: "p4" },
+    },
+  ], "d1");
+
+  assertEquals(Array.from(used).sort(), ["p1", "p4"]);
+});
+
+Deno.test("customBuilderUtils: getFreeLinkablePorts filters mgmt and used ports", () => {
+  const device: NetworkDevice = {
+    id: "d1",
+    name: "Switch",
+    type: "switch",
+    deviceKind: DEVICE_KIND_SWITCH,
+    deviceTypeSlug: "switch/core",
+  };
+
+  const deviceTypes: Record<string, DeviceType> = {
+    "switch/core": {
+      id: "switch/core",
+      slug: "switch/core",
+      brand: "Acme",
+      model: "Core 48",
+      ports: [
+        { id: "p1", interfaceType: "eth-1g" },
+        { id: "p2", interfaceType: "unsupported" },
+        { id: "p3", interfaceType: "eth-1g", mgmtOnly: true },
+      ],
+    },
+  };
+
+  const free = getFreeLinkablePorts(
+    device,
+    [{
+      id: "c1",
+      from: { deviceId: "d1", interfaceId: "p1" },
+      to: { deviceId: "d2", interfaceId: "p9" },
+    }],
+    deviceTypes,
+  );
+
+  assertEquals(free, []);
+});
+
+Deno.test("customBuilderUtils: getFreeLinkablePorts returns empty without slug or type", () => {
+  const noSlug: NetworkDevice = {
+    id: "d1",
+    name: "Unknown",
+    type: "other",
+    deviceKind: DEVICE_KIND_SWITCH,
+  };
+
+  const withMissingType: NetworkDevice = {
+    ...noSlug,
+    deviceTypeSlug: "missing/type",
+  };
+
+  assertEquals(getFreeLinkablePorts(noSlug, [], {}), []);
+  assertEquals(getFreeLinkablePorts(withMissingType, [], {}), []);
+});
+
+Deno.test("customBuilderUtils: stripManagedDeviceFields keeps only editable keys", () => {
+  const stripped = stripManagedDeviceFields({
+    id: "d1",
+    name: "Device 1",
+    type: "switch",
+    deviceKind: "switch",
+    ports: [1],
+    note: "kept",
+    rack: "A1",
+  });
+
+  assertEquals(stripped, {
+    note: "kept",
+    rack: "A1",
+  });
+});
+
+Deno.test("customBuilderUtils: pruneConnectionsForDeviceType keeps original set when type missing", () => {
+  const connections: Connection[] = [{
+    id: "c1",
+    from: { deviceId: "d1", interfaceId: "p1" },
+    to: { deviceId: "d2", interfaceId: "p1" },
+  }];
+
+  const result = pruneConnectionsForDeviceType({
+    device: {
+      id: "d1",
+      name: "Device 1",
+      type: "switch",
+      deviceKind: DEVICE_KIND_SWITCH,
+    },
+    nextDeviceTypeSlug: "missing/type",
+    connections,
+    deviceTypes: {},
+  });
+
+  assertEquals(result.removedCount, 0);
+  assertEquals(result.nextConnections, connections);
+});
+
+Deno.test("customBuilderUtils: isContainerDevice checks explicit flag", () => {
+  assertEquals(
+    isContainerDevice({
+      id: "c1",
+      name: "Container",
+      type: "container",
+      deviceKind: DEVICE_KIND_SWITCH,
+      isContainer: true,
+    }),
+    true,
+  );
+
+  assertEquals(
+    isContainerDevice({
+      id: "d1",
+      name: "Device",
+      type: "switch",
+      deviceKind: DEVICE_KIND_SWITCH,
+    }),
+    false,
+  );
 });

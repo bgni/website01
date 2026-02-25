@@ -1,176 +1,371 @@
-# AI Agent Playbook (Repo-specific)
+# AI Agent Playbook (Repo-specific, v2)
 
 This playbook is written for an AI coding agent (or a human using an agent)
-working in this repo. It focuses on safe defaults, validation loops, and
-repo-specific gotchas.
+working in this repo.
+
+It optimizes for:
+
+- Behavior stability
+- Architectural convergence (less duplication, clearer boundaries)
+- CI-green incrementalism
+- Strict TypeScript direction
 
 Documentation index: `docs/README.md`. Agent docs hub: `docs/agent/README.md`.
+Architecture heuristics: `docs/ideas/advanced-agent-lessons.md`.
 
-For architecture-level decision heuristics and anti-regression guidance, see
-`docs/ideas/advanced-agent-lessons.md`.
+---
 
-## Non-negotiables
+# Non-negotiables
 
 - **Target OS:** Linux only.
 - **Runtime/tooling:** Deno (CI pins `v2.6.10`).
 - **Quality gates:** do not merge changes that break `deno task ci`.
-- **TypeScript direction:** keep moving toward strict typing; avoid adding new
-  `any` unless there is a clear, documented reason.
-- **GitHub Pages:** must host a working app (static output).
+- **TypeScript direction:** reduce implicit `any`; prefer explicit boundary
+  types + guards.
+- **GitHub Pages:** must host a working app as static output (`dist/`).
 
-## Quickstart loop (the default workflow)
+Never bypass CI. Never rely on the Deno dev server (`main.ts`) for production
+behavior.
 
-1. Understand the change:
-   - Find the entrypoint(s): `index.html`, `scripts/main.ts`, `main.ts`.
-   - Identify data dependencies under `data/`.
-2. Make the smallest possible code change.
-3. Run the tight validation loop locally:
+---
+
+# Core Architectural Intent
+
+The long-term direction of the repo is:
+
+- Clear boundaries between:
+
+  - Composition root
+  - Orchestration (controller)
+  - Application services
+  - Domain
+  - Infrastructure (graph/layout/traffic)
+- Deterministic rendering
+- Strict typing at module boundaries
+- No duplicated logic across layers
+
+If a service exists, the controller should delegate to it. If logic exists in
+two places, consolidation is preferred over caution.
+
+---
+
+# Refactor Policy (Critical)
+
+The previous bias toward “smallest change possible” can cause architectural
+stagnation. This repo allows large mechanical diffs when behavior is preserved.
+
+## SAFE changes (allowed even if large diff)
+
+The following are considered safe if behavior remains identical and CI passes:
+
+- Moving logic between modules.
+- Introducing thin ports/adapters over existing modules.
+- Routing controller logic through existing services.
+- Deleting duplicate legacy implementations after adoption.
+- Consolidating undo/history/builder logic into dedicated services.
+- Renaming or restructuring files to reduce architectural confusion.
+
+Adoption PRs (wire → delete old path) are encouraged.
+
+If a service already exists but the controller duplicates its behavior, the next
+PR should route through the service and delete the duplicate path.
+
+## RISKY changes (require explicit intent)
+
+These are not allowed unless explicitly requested:
+
+- Layout algorithm changes (tiering, determinism, force behavior).
+- Shortest path semantics changes.
+- UX behavior changes (selection semantics, search logic, keyboard behavior).
+- Fixture schema breaking changes.
+- Combining refactor + feature work in the same PR.
+
+Refactors must not change behavior.
+
+---
+
+# Default Workflow Loop
+
+Every change must follow this loop:
+
+1. Identify the boundary touched:
+
+   - fixtures (`data/**`)
+   - browser entry/wiring (`scripts/main.ts`, `bootstrap.ts`)
+   - orchestration (`controller.ts`)
+   - application services (`*Service.ts`)
+   - domain parsing/types (`scripts/domain/**`)
+   - graph/layout (`scripts/graph/**`, `scripts/layouts/**`)
+   - traffic (`scripts/traffic/**`)
+   - build (`tools/**`, workflows)
+
+2. Make the smallest change that:
+
+   - reduces duplication, or
+   - improves typing, or
+   - clarifies boundaries.
+
+3. Run:
+
    - `deno task fmt`
    - `deno task lint`
    - `deno task check`
    - `deno task test`
-4. If fixtures/layouts changed:
+
+4. If fixtures/layout changed:
+
    - `deno task validate`
-   - `deno task render:svgs`
+   - `deno task render:svgs` (review diffs)
 
-If any step fails, fix it before moving on.
+5. If wiring/build changed:
 
-## Project map (what to touch)
+   - `deno task build:pages`
+   - Serve `dist/` statically and verify `dist/index.html` works.
 
-### Browser app
+Do not proceed while any step fails.
 
-- Controller / state / DOM wiring: `scripts/main.ts`
-- Data loading: `scripts/dataLoader.ts`
-- Rendering: `scripts/graph.ts`
-- Graph computations: `scripts/graphLogic.ts`
-- Search helpers: `scripts/search.ts`
-- Traffic sources: `scripts/trafficConnector.ts`
-- Traffic styling: `scripts/trafficFlowVisualization/*`
+---
 
-### Server / dev workflow
+# Project Map (Mental Model)
 
-- Dev server: `main.ts` (Deno serve + static file handling)
-- Build scripts live in `scripts/`.
+## Composition Root
 
-### Data fixtures
+- `scripts/main.ts`
+- `scripts/app/bootstrap.ts`
 
-- Networks: `data/networks/<networkId>/devices.json`, `connections.json`, and
-  traffic fixtures.
-- Index: `data/networks/index.json`
+Resolves DOM, environment, and concrete implementations.
 
-## Safety and security rules (browser)
+## Orchestration
 
-These are “don’t regress” rules.
+- `scripts/app/controller.ts`
 
-- Prefer `textContent` over `innerHTML` for any string that originates from:
-  - user input (search box)
-  - fixtures (`data/**`)
-  - URL params
-- If you must use `innerHTML`, only do so with constant strings or with a
-  sanitization story.
-- Any time you add a new external script (CDN): pin it and consider SRI.
+Controller coordinates lifecycle and observers. Controller should not implement
+business logic.
 
-See `docs/data/netbox-catalog-loading.md` for build/runtime NetBox catalog
-loading notes.
+Target state: controller is thin.
 
-## TypeScript rules (strict direction)
+## Application Services
 
-### General
+- `scripts/app/*Service.ts`
 
-- Avoid implicit `any` parameters.
-- Prefer narrow types at module boundaries:
-  - `loadJson<T>(...)` rather than returning `any`
-  - explicit return types for exported functions
+Builder, history, traffic orchestration, etc.
 
-### Domain types
+Services contain use-case logic and must not query DOM by selector.
 
-This repo naturally revolves around a few core shapes:
+## Domain
 
-- `Device` (id, name, role/type, optional NetBox enrichment fields)
-- `Connection` (id + from/to ends)
-- `TrafficUpdate` (connectionId + status/throughput/utilization)
+- `scripts/domain/*`
 
-When adding new fields:
+Parsing, runtime guards, types, and errors.
 
-- Keep JSON fixtures backwards compatible where possible.
-- Centralize shared types instead of copy/pasting across many modules.
+JSON must be validated at boundaries before being trusted.
 
-### D3 typing
+## Infrastructure
 
-D3 is loaded via a CDN script tag, so a global `d3` exists at runtime.
+- `scripts/graph/**`
+- `scripts/layouts/**`
+- `scripts/traffic/**`
+- `scripts/trafficFlowVisualization/**`
 
-- Keep the “D3 global” typing shim small and explicit.
-- Prefer typed wrappers instead of spreading `any` widely.
+Graph rendering and layout must be deterministic.
 
-## Data fixtures: rules and validation
+---
 
-When editing or adding fixtures under `data/networks/**`:
+# Architectural Rules
 
-- Device IDs and connection IDs must be stable strings.
-- Connections must reference existing device IDs.
-- Traffic fixtures must reference existing connection IDs.
+## No Duplicate Logic
+
+If logic exists in both:
+
+- controller and service
+- graph and controller
+- two different modules
+
+The next PR should consolidate and delete the duplicate path.
+
+Extraction without adoption is incomplete work.
+
+---
+
+## Ports and Adapters (Preferred Pattern)
+
+When decoupling orchestration from infrastructure:
+
+- Introduce a minimal interface (port).
+- Wrap existing implementation in an adapter.
+- Route through the port.
+- Delete direct imports from controller.
+
+Do not over-engineer ports. Define only the methods needed today.
+
+---
+
+# TypeScript Rules (Strict Direction)
+
+## General
+
+- No new implicit `any`.
+- All exported functions must declare return types.
+- Avoid `as SomeType` unless preceded by runtime validation.
+- Prefer `Map<string, T>` / `Set<string>` over untyped collections.
+
+## JSON Loading
+
+Always:
+
+1. Load as `unknown`
+2. Validate via runtime guard
+3. Convert to typed domain object
+4. Throw typed error if invalid
+
+Never trust fixture shape implicitly.
+
+## Domain Types
+
+Core shapes:
+
+- `Device`
+- `Connection`
+- `TrafficUpdate`
+
+When adding fields:
+
+- Keep fixtures backwards compatible.
+- Centralize shared types in one place.
+- Do not duplicate type definitions across modules.
+
+---
+
+# Browser Safety Rules
+
+Never use `innerHTML` with:
+
+- Fixture strings (`data/**`)
+- User input (search)
+- URL params
+
+Use:
+
+- `textContent`
+- DOM creation APIs
+- Attribute setters
+
+CDN scripts must be pinned and ideally versioned with SRI.
+
+---
+
+# Determinism Requirements
+
+- Tiered/layered layout must be deterministic.
+- SVG outputs should be stable across runs.
+- If determinism changes, treat as risky and document.
+
+---
+
+# Data Fixture Rules
+
+When editing under `data/networks/**`:
+
+- Device IDs must be stable strings.
+- Connections must reference valid device IDs.
+- Traffic updates must reference valid connection IDs.
 
 Always run:
 
 - `deno task validate`
 
-If you changed the Layered/tiered layout behavior or device roles/sites:
+If layout-affecting fields changed:
 
-- `deno task render:svgs` and review diffs in `docs/rendered/`.
+- `deno task render:svgs`
+- Review `docs/rendered/` diffs.
 
-## GitHub Pages expectations
+---
+
+# GitHub Pages Rules
 
 Pages is static hosting.
 
-Agent rule:
+Production must:
 
-- Do not rely on `main.ts` (the Deno server) for production behavior.
-- Any production deployment must be output files that a static web server can
-  host.
+- Build to `dist/`
+- Contain transpiled browser JS
+- Not depend on `main.ts` server behavior
 
-If you are asked to “make Pages work”, your default approach should be:
+If Pages breaks, default solution:
 
-1. Build TypeScript browser modules to JavaScript into `dist/`.
-2. Copy required static assets into `dist/`.
-3. Update `.github/workflows/static.yml` to upload `dist/`.
+1. Build TS modules to JS in `dist/`
+2. Copy required assets
+3. Ensure workflow uploads `dist/`
 
-## PR hygiene (what to include / exclude)
+---
 
-- Keep PRs focused: 1 change theme per PR (typing cleanup _or_ Pages build _or_
-  fixture changes).
-- Avoid formatting or renaming unrelated files.
-- Generated outputs (`docs/rendered/**`) should be handled consistently:
-  - If the repo commits them, include the regenerated diffs.
-  - If the repo doesn’t commit them, don’t add them “incidentally”.
+# PR Hygiene
 
-## Debugging playbook
+- One theme per PR (refactor OR typing OR fixture OR build).
+- Avoid unrelated renames or formatting.
+- Large mechanical diffs are acceptable if behavior-preserving.
+- Do not mix refactor and feature change.
 
-### `deno task check` fails
+If consolidating duplicate logic:
 
-- Start at the first error and fix types at boundaries.
-- Common hotspots:
-  - `scripts/dataLoader.ts` (implicit any / unknown JSON)
-  - `scripts/graphLogic.ts` (untyped adjacency/path structures)
-  - `scripts/graph.ts` (D3 selections + link/node datum types)
+- Delete old path in same PR.
+- Ensure CI passes.
+- Smoke-test build output.
 
-### Browser loads but UI breaks
+---
 
-- Confirm `index.html` imports a JavaScript module when deployed.
-- Use DevTools console to check:
-  - network requests to `data/**`
-  - module load failures / MIME types
+# Debugging Playbook
 
-### Fixture changes cause weird layout
+## `deno task check` fails
 
-- Run `deno task validate`.
-- Regenerate SVGs and compare:
-  - `deno task render:svgs`
+Fix the first type error.
 
-## Definition of done (agent)
+Common hotspots:
 
-Before you stop:
+- `scripts/dataLoader.ts`
+- `scripts/graphLogic.ts`
+- D3 selection typing in `scripts/graph.ts`
+
+Do not silence errors with `any`.
+
+---
+
+## Browser loads but UI breaks
+
+Check:
+
+- `index.html` imports correct module
+- `dist/` contains transpiled JS
+- DevTools console for module load errors
+- Network requests to `data/**`
+
+If wiring changed, rebuild `dist/`.
+
+---
+
+## Layout behaves strangely
+
+- Run `deno task validate`
+- Regenerate SVGs
+- Inspect diffs
+- Verify deterministic ordering assumptions
+
+---
+
+# Definition of Done (Agent)
+
+Before stopping:
 
 - `deno task ci` passes.
-- Any changed fixtures pass `deno task validate`.
-- Pages deploy story is unchanged or improved.
-- The change is minimal and aligned with strict TS direction.
+- `deno task build:pages` produces a working `dist/`.
+- Fixture changes pass `deno task validate`.
+- Layout changes have reviewed SVG diffs.
+- No unsafe DOM patterns introduced.
+- Duplication has not increased.
+- Architectural direction improved or preserved.
+
+---
+
+This playbook prioritizes convergence over timidity.
+
+Behavior must remain stable. Architecture must steadily improve.

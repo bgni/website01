@@ -7,27 +7,15 @@ import { createGraph } from "../graph.ts";
 import {
   createTrafficConnector,
   parseTrafficConnectorSpec,
-  type TrafficConnectorKind,
 } from "../traffic/registry.ts";
-import type { StopTraffic } from "../traffic/types.ts";
-import type {
-  Connection,
-  DeviceType,
-  NetworkDevice,
-  TrafficUpdate,
-} from "../domain/types.ts";
+import type { Connection, DeviceType, NetworkDevice } from "../domain/types.ts";
 import { FixtureValidationError } from "../domain/errors.ts";
 import { parseTrafficUpdatesPayload } from "../domain/fixtures.ts";
 import { loadDeviceTypeIndex as defaultLoadDeviceTypeIndex } from "../domain/deviceTypes.ts";
-import { inferDeviceKindFromType } from "../domain/deviceKind.ts";
 import {
-  buildExportPayload,
   CUSTOM_NETWORK_ID,
-  getFrequentDeviceTypeSlugs,
   loadCustomTopology,
-  parseImportPayload,
   saveCustomTopology,
-  trackRecentDeviceType,
 } from "./customTopology.ts";
 import {
   type Dispatch,
@@ -35,14 +23,9 @@ import {
   type State,
   type Store,
 } from "./state.ts";
-import {
-  choosePortPair,
-  computeNewDevicePosition,
-  getFreeLinkablePorts,
-  isContainerDevice,
-  pruneConnectionsForDeviceType,
-  stripManagedDeviceFields,
-} from "./customBuilderUtils.ts";
+import { createBuilderService } from "./builderService.ts";
+import { createCustomHistoryService } from "./historyService.ts";
+import { createTrafficService } from "./trafficService.ts";
 
 type Adjacency = Record<
   string,
@@ -115,17 +98,7 @@ export type Controller = {
   dispatch: Dispatch;
 };
 
-type CustomUndoSnapshot = {
-  devices: NetworkDevice[];
-  connections: Connection[];
-  label: string;
-};
-
 type ZoomTransformSnapshot = { x: number; y: number; k: number };
-
-const isTrafficConnectorKind = (v: string): v is TrafficConnectorKind =>
-  v === "flow" || v === "generated" || v === "static" || v === "real" ||
-  v === "timeline";
 
 export function createController(
   {
@@ -147,24 +120,14 @@ export function createController(
   const doFetch = deps?.fetch ?? fetch;
   const storage = deps?.storage;
 
-  const loadJsonOptional = async (path: string): Promise<unknown | null> => {
-    const res = await doFetch(path);
-    if (res.status === 404) return null;
-    if (!res.ok) throw new Error(`Failed to load ${path}`);
-    return await res.json();
-  };
-
   let adjacency: Adjacency = {};
   let graph: ReturnType<typeof createGraph> | null = null;
-  let stopTraffic: StopTraffic = () => {};
-  const trafficByConn = new Map<string, TrafficUpdate>();
   let resizeObserver: ResizeObserver | null = null;
-  let currentTrafficPaths: { basePath: string; trafficPath: string } | null =
-    null;
-  let recentDeviceTypeSlugs: string[] = [];
-  let frequentDeviceTypeCounts: Record<string, number> = {};
-  let customUndoStack: CustomUndoSnapshot[] = [];
-  let customRedoStack: CustomUndoSnapshot[] = [];
+  const builderStats = {
+    recentDeviceTypeSlugs: [] as string[],
+    frequentDeviceTypeCounts: {} as Record<string, number>,
+  };
+  const customHistory = createCustomHistoryService();
 
   const getSvgSize = (svg: SVGSVGElement) => {
     const rect = svg.getBoundingClientRect();
@@ -201,8 +164,8 @@ export function createController(
     saveCustomTopology(storage, {
       devices,
       connections,
-      recentDeviceTypeSlugs,
-      frequentDeviceTypeCounts,
+      recentDeviceTypeSlugs: builderStats.recentDeviceTypeSlugs,
+      frequentDeviceTypeCounts: builderStats.frequentDeviceTypeCounts,
     });
   };
 
@@ -261,21 +224,15 @@ export function createController(
     const state = store.getState();
     if (state.networkId !== CUSTOM_NETWORK_ID) return;
 
-    customRedoStack = [];
-    customUndoStack.push({
+    customHistory.pushUndo({
       devices: cloneDevices(state.devices),
       connections: cloneConnections(state.connections),
       label,
     });
-
-    if (customUndoStack.length > 20) {
-      customUndoStack = customUndoStack.slice(customUndoStack.length - 20);
-    }
   };
 
   const clearCustomUndo = () => {
-    customUndoStack = [];
-    customRedoStack = [];
+    customHistory.clear();
   };
 
   const updateGraphFromState = (state: State) => {
@@ -288,67 +245,18 @@ export function createController(
     updateGraphFromState(state);
   });
 
-  const resetTrafficState = () => {
-    trafficByConn.clear();
-    dispatch({ type: "resetTraffic" });
-    graph?.resetTraffic?.();
-  };
-
-  const attachTraffic = (trafficUpdates: unknown) => {
-    let updates: TrafficUpdate[] = [];
-    try {
-      updates = parseTrafficUpdatesPayload(trafficUpdates);
-      dispatch({ type: "setStatusText", text: "" });
-    } catch (err) {
-      dispatch({
-        type: "setStatusText",
-        text: `Traffic payload invalid: ${formatStatusError(err)}`,
-      });
-      console.warn("Invalid traffic payload.", err);
-      return;
-    }
-    updates.forEach((t) => {
-      const prev = trafficByConn.get(t.connectionId) || {
-        connectionId: t.connectionId,
-      };
-      trafficByConn.set(t.connectionId, { ...prev, ...t });
-    });
-
-    const traffic = Array.from(trafficByConn.values());
-    dispatch({ type: "setTraffic", traffic });
-    if (graph) graph.updateTraffic(updates);
-
-    // Force re-style of links based on latest traffic.
-    updateGraphFromState(store.getState());
-  };
-
-  const startTrafficConnector = async (
-    {
-      basePath,
-      trafficPath,
-      sourceKind,
-    }: {
-      basePath: string;
-      trafficPath: string;
-      sourceKind: string;
-    },
-  ): Promise<StopTraffic> => {
-    // Optional connector config per network.
-    const connectorPath = `${basePath}/traffic.connector.json`;
-    const connector = await loadJsonOptional(connectorPath);
-
-    const parsed = parseTrafficConnectorSpec(connector);
-    const spec = sourceKind === "default"
-      ? parsed
-      : (isTrafficConnectorKind(sourceKind) ? { kind: sourceKind } : parsed);
-    const trafficConnector = await createTrafficConnector(spec, {
-      basePath,
-      trafficPath,
-      loadJson,
-    });
-
-    return trafficConnector.start(attachTraffic);
-  };
+  const trafficService = createTrafficService({
+    dispatch,
+    loadJson,
+    doFetch,
+    formatStatusError,
+    onGraphResetTraffic: () => graph?.resetTraffic?.(),
+    onGraphUpdateTraffic: (updates) => graph?.updateTraffic(updates),
+    onGraphRefreshFromState: () => updateGraphFromState(store.getState()),
+    createTrafficConnectorFn: createTrafficConnector,
+    parseTrafficConnectorSpecFn: parseTrafficConnectorSpec,
+    parseTrafficUpdatesPayloadFn: parseTrafficUpdatesPayload,
+  });
 
   const destroyGraph = () => {
     resizeObserver?.disconnect();
@@ -410,22 +318,40 @@ export function createController(
     persistCustomTopology(positionedDevices, connections);
   };
 
+  const builderService = createBuilderService({
+    getState: () => store.getState(),
+    dispatch,
+    customNetworkId: CUSTOM_NETWORK_ID,
+    builderStats,
+    nextUniqueId,
+    getNodePositions: () => graph?.getNodePositions() ?? new Map(),
+    getViewportCenter: () => graph?.getViewportCenter() ?? null,
+    refreshCustomGraph,
+    pushCustomUndoSnapshot,
+    clearCustomUndo,
+    ensureBuilderMode: async () => {
+      await loadNetwork(CUSTOM_NETWORK_ID);
+    },
+    formatStatusError,
+  });
+
   const loadNetwork = async (networkId: string) => {
     try {
       clearCustomUndo();
-      stopTraffic?.();
-      stopTraffic = () => {};
+      trafficService.teardown();
       destroyGraph();
 
       dispatch({ type: "setNetworkId", networkId });
-      resetTrafficState();
+      trafficService.resetTrafficState();
 
       if (networkId === CUSTOM_NETWORK_ID) {
-        currentTrafficPaths = null;
+        trafficService.setCurrentPaths(null);
         const deviceTypes = await ensureDeviceTypesLoaded();
         const customTopology = loadCustomTopology(storage, deviceTypes);
-        recentDeviceTypeSlugs = customTopology.recentDeviceTypeSlugs;
-        frequentDeviceTypeCounts = customTopology.frequentDeviceTypeCounts;
+        builderStats.recentDeviceTypeSlugs =
+          customTopology.recentDeviceTypeSlugs;
+        builderStats.frequentDeviceTypeCounts =
+          customTopology.frequentDeviceTypeCounts;
 
         dispatch({
           type: "networkLoaded",
@@ -441,7 +367,7 @@ export function createController(
 
       const basePath = getNetworkBasePath(networkId);
       const trafficPath = `${basePath}/traffic.json`;
-      currentTrafficPaths = { basePath, trafficPath };
+      trafficService.setCurrentPaths({ basePath, trafficPath });
 
       const {
         devices: devicesOut,
@@ -462,19 +388,14 @@ export function createController(
       });
       mountGraph(devicesOut, connectionsOut);
 
-      stopTraffic = await startTrafficConnector({
-        basePath,
-        trafficPath,
-        sourceKind: store.getState().trafficSourceKind,
-      });
-      dispatch({ type: "setStatusText", text: "" });
+      await trafficService.startForCurrentSource(
+        store.getState().trafficSourceKind,
+      );
     } catch (err) {
-      stopTraffic?.();
-      stopTraffic = () => {};
+      trafficService.teardown();
       destroyGraph();
-      currentTrafficPaths = null;
 
-      resetTrafficState();
+      trafficService.resetTrafficState();
       dispatch({
         type: "setStatusText",
         text: `Load failed: ${formatStatusError(err)}`,
@@ -488,617 +409,72 @@ export function createController(
   };
 
   const addCustomDevice = (deviceTypeSlug: string) => {
-    addCustomDeviceInternal(deviceTypeSlug, null);
+    builderService.addCustomDevice(deviceTypeSlug);
   };
 
   const addCustomDeviceAt = (
     deviceTypeSlug: string,
     position: { x: number; y: number },
   ) => {
-    addCustomDeviceInternal(deviceTypeSlug, position);
-  };
-
-  const addCustomDeviceInternal = (
-    deviceTypeSlug: string,
-    preferredPosition: { x: number; y: number } | null,
-  ) => {
-    const state = store.getState();
-    if (state.networkId !== CUSTOM_NETWORK_ID) {
-      dispatch({
-        type: "setStatusText",
-        text: "Open Create/Edit mode first.",
-      });
-      return;
-    }
-
-    const slug = deviceTypeSlug.trim();
-    if (!slug) {
-      dispatch({ type: "setStatusText", text: "Choose a device type first." });
-      return;
-    }
-
-    const deviceType = state.deviceTypes[slug];
-    if (!deviceType) {
-      dispatch({
-        type: "setStatusText",
-        text: `Unknown device type '${slug}'.`,
-      });
-      return;
-    }
-
-    const ids = new Set(state.devices.map((d) => d.id));
-    const deviceId = nextUniqueId("custom-device", ids);
-    const sameTypeCount = state.devices.filter((d) => d.deviceTypeSlug === slug)
-      .length;
-    const name = `${deviceType.model} ${sameTypeCount + 1}`;
-    const typeText = `${deviceType.slug} ${deviceType.model}`;
-
-    const selectedIds = Array.from(state.selected);
-    const selectedAnchor = selectedIds.length === 1
-      ? (state.devices.find((d) => d.id === selectedIds[0]) ?? null)
-      : null;
-    const graphSnapshot = getCustomGraphSnapshot();
-    const selectedAnchorPosition = selectedAnchor
-      ? (graphSnapshot.positions.get(selectedAnchor.id) ?? null)
-      : null;
-    const viewportCenter = graph ? graph.getViewportCenter() : null;
-    const computedPosition = computeNewDevicePosition({
-      selectedAnchor,
-      selectedAnchorPosition,
-      viewportCenter,
-      totalDevices: state.devices.length,
-    });
-    const newPosition = preferredPosition ?? computedPosition;
-
-    const device: NetworkDevice = {
-      id: deviceId,
-      name,
-      type: typeText,
-      deviceKind: inferDeviceKindFromType(typeText),
-      deviceTypeSlug: slug,
-      ...(newPosition ? { x: newPosition.x, y: newPosition.y } : {}),
-    };
-
-    const tracked = trackRecentDeviceType(
-      recentDeviceTypeSlugs,
-      frequentDeviceTypeCounts,
-      slug,
-    );
-    recentDeviceTypeSlugs = tracked.recentDeviceTypeSlugs;
-    frequentDeviceTypeCounts = tracked.frequentDeviceTypeCounts;
-
-    pushCustomUndoSnapshot("add device");
-    const nextDevices = [...state.devices, device];
-
-    let nextConnections = state.connections;
-    let statusText = `Added ${name}.`;
-
-    if (selectedAnchor && !isContainerDevice(selectedAnchor)) {
-      const fromPorts = getFreeLinkablePorts(
-        selectedAnchor,
-        state.connections,
-        state.deviceTypes,
-      );
-      const toPorts = getFreeLinkablePorts(
-        device,
-        state.connections,
-        state.deviceTypes,
-      );
-      const pair = choosePortPair(fromPorts, toPorts);
-
-      if (pair) {
-        const connectionIds = new Set(state.connections.map((c) => c.id));
-        const connectionId = nextUniqueId("custom-connection", connectionIds);
-        nextConnections = [
-          ...state.connections,
-          {
-            id: connectionId,
-            from: {
-              deviceId: selectedAnchor.id,
-              interfaceId: pair.fromInterfaceId,
-            },
-            to: {
-              deviceId: device.id,
-              interfaceId: pair.toInterfaceId,
-            },
-          },
-        ];
-        statusText =
-          `Added ${name} and connected ${selectedAnchor.name}:${pair.fromInterfaceId} → ${name}:${pair.toInterfaceId}.`;
-      } else {
-        statusText =
-          `Added ${name}. Could not auto-connect to ${selectedAnchor.name} (no compatible free ports).`;
-      }
-    }
-
-    refreshCustomGraph(nextDevices, nextConnections, {
-      selectedIds: [device.id],
-    });
-    dispatch({ type: "setStatusText", text: statusText });
+    builderService.addCustomDeviceAt(deviceTypeSlug, position);
   };
 
   const addCustomContainerAt = (position: { x: number; y: number }) => {
-    const state = store.getState();
-    if (state.networkId !== CUSTOM_NETWORK_ID) {
-      dispatch({
-        type: "setStatusText",
-        text: "Open Create/Edit mode first.",
-      });
-      return;
-    }
-
-    const ids = new Set(state.devices.map((d) => d.id));
-    const containerId = nextUniqueId("custom-container", ids);
-    const containerCount = state.devices.filter((d) => isContainerDevice(d))
-      .length;
-
-    const container: NetworkDevice = {
-      id: containerId,
-      name: `Group ${containerCount + 1}`,
-      type: "container group",
-      deviceKind: inferDeviceKindFromType("other"),
-      isContainer: true,
-      width: 260,
-      height: 170,
-      x: position.x,
-      y: position.y,
-    };
-
-    pushCustomUndoSnapshot("add container");
-    refreshCustomGraph([...state.devices, container], state.connections, {
-      selectedIds: [containerId],
-    });
-    dispatch({ type: "setStatusText", text: `Added ${container.name}.` });
+    builderService.addCustomContainerAt(position);
   };
 
   const assignDeviceToContainer = (
     deviceId: string,
     containerId: string | null,
   ) => {
-    const state = store.getState();
-    if (state.networkId !== CUSTOM_NETWORK_ID) {
-      dispatch({
-        type: "setStatusText",
-        text: "Open Create/Edit mode first.",
-      });
-      return;
-    }
-
-    const device = state.devices.find((d) => d.id === deviceId);
-    if (!device) {
-      dispatch({ type: "setStatusText", text: "Device not found." });
-      return;
-    }
-    if (isContainerDevice(device)) {
-      dispatch({
-        type: "setStatusText",
-        text: "Containers cannot be assigned to another container.",
-      });
-      return;
-    }
-
-    const nextContainerId = containerId?.trim() ? containerId.trim() : null;
-    if (nextContainerId) {
-      const container = state.devices.find((d) => d.id === nextContainerId);
-      if (!container || !isContainerDevice(container)) {
-        dispatch({
-          type: "setStatusText",
-          text: "Container not found.",
-        });
-        return;
-      }
-    }
-
-    if ((device.containerId as string | undefined) === nextContainerId) return;
-
-    pushCustomUndoSnapshot("assign to container");
-    const nextDevices = state.devices.map((entry) =>
-      entry.id === deviceId
-        ? {
-          ...entry,
-          ...(nextContainerId ? { containerId: nextContainerId } : {}),
-        }
-        : entry
-    ).map((entry) => {
-      if (entry.id !== deviceId || nextContainerId) return entry;
-      const copy = { ...entry };
-      delete copy.containerId;
-      return copy;
-    });
-
-    refreshCustomGraph(nextDevices, state.connections, {
-      selectedIds: [deviceId],
-    });
-    dispatch({
-      type: "setStatusText",
-      text: nextContainerId
-        ? `Assigned ${device.name} to container.`
-        : `Removed ${device.name} from container.`,
-    });
+    builderService.assignDeviceToContainer(deviceId, containerId);
   };
 
   const connectSelectedDevices = () => {
-    const state = store.getState();
-    if (state.networkId !== CUSTOM_NETWORK_ID) {
-      dispatch({
-        type: "setStatusText",
-        text: "Open Create/Edit mode first.",
-      });
-      return;
-    }
-
-    const selectedIds = Array.from(state.selected);
-    if (selectedIds.length !== 2) {
-      dispatch({
-        type: "setStatusText",
-        text: "Select exactly 2 devices to connect.",
-      });
-      return;
-    }
-
-    const fromDevice = state.devices.find((d) => d.id === selectedIds[0]);
-    const toDevice = state.devices.find((d) => d.id === selectedIds[1]);
-    if (!fromDevice || !toDevice) {
-      dispatch({
-        type: "setStatusText",
-        text: "Selected devices are no longer available.",
-      });
-      return;
-    }
-
-    const fromPorts = getFreeLinkablePorts(
-      fromDevice,
-      state.connections,
-      state.deviceTypes,
-    );
-    const toPorts = getFreeLinkablePorts(
-      toDevice,
-      state.connections,
-      state.deviceTypes,
-    );
-
-    const pair = choosePortPair(fromPorts, toPorts);
-    if (!pair) {
-      dispatch({
-        type: "setStatusText",
-        text: "No compatible free ports found on one or both devices.",
-      });
-      return;
-    }
-
-    const connectionIds = new Set(state.connections.map((c) => c.id));
-    const connectionId = nextUniqueId("custom-connection", connectionIds);
-
-    pushCustomUndoSnapshot("connect devices");
-    const nextConnections: Connection[] = [
-      ...state.connections,
-      {
-        id: connectionId,
-        from: {
-          deviceId: fromDevice.id,
-          interfaceId: pair.fromInterfaceId,
-        },
-        to: {
-          deviceId: toDevice.id,
-          interfaceId: pair.toInterfaceId,
-        },
-      },
-    ];
-
-    refreshCustomGraph(state.devices, nextConnections);
-    dispatch({
-      type: "setStatusText",
-      text:
-        `Connected ${fromDevice.name}:${pair.fromInterfaceId} → ${toDevice.name}:${pair.toInterfaceId}.`,
-    });
+    builderService.connectSelectedDevices();
   };
 
   const deleteSelectedConnection = () => {
-    const state = store.getState();
-    if (state.networkId !== CUSTOM_NETWORK_ID) {
-      dispatch({
-        type: "setStatusText",
-        text: "Open Create/Edit mode first.",
-      });
-      return;
-    }
-
-    const selectedIds = Array.from(state.selected);
-    if (selectedIds.length !== 2) {
-      dispatch({
-        type: "setStatusText",
-        text: "Select exactly 2 devices to delete a connection.",
-      });
-      return;
-    }
-
-    const [leftId, rightId] = selectedIds;
-    const toRemove = state.connections.filter((connection) =>
-      (connection.from.deviceId === leftId &&
-        connection.to.deviceId === rightId) ||
-      (connection.from.deviceId === rightId &&
-        connection.to.deviceId === leftId)
-    );
-
-    if (!toRemove.length) {
-      dispatch({
-        type: "setStatusText",
-        text: "No connection exists between selected devices.",
-      });
-      return;
-    }
-
-    pushCustomUndoSnapshot("delete connection");
-    const removeIds = new Set(toRemove.map((connection) => connection.id));
-    const nextConnections = state.connections.filter((connection) =>
-      !removeIds.has(connection.id)
-    );
-    refreshCustomGraph(state.devices, nextConnections);
-    dispatch({
-      type: "setStatusText",
-      text:
-        `Deleted ${toRemove.length} connection(s) between selected devices.`,
-    });
+    builderService.deleteSelectedConnection();
   };
 
   const renameCustomDevice = (deviceId: string, nextName: string) => {
-    const state = store.getState();
-    if (state.networkId !== CUSTOM_NETWORK_ID) {
-      dispatch({
-        type: "setStatusText",
-        text: "Open Create/Edit mode first.",
-      });
-      return;
-    }
-
-    const trimmed = nextName.trim();
-    if (!trimmed) {
-      dispatch({
-        type: "setStatusText",
-        text: "Device name cannot be empty.",
-      });
-      return;
-    }
-
-    const existing = state.devices.find((device) => device.id === deviceId);
-    if (!existing) {
-      dispatch({
-        type: "setStatusText",
-        text: "Device not found.",
-      });
-      return;
-    }
-
-    if (existing.name === trimmed) return;
-
-    pushCustomUndoSnapshot("rename device");
-    const nextDevices = state.devices.map((device) =>
-      device.id === deviceId ? { ...device, name: trimmed } : device
-    );
-    refreshCustomGraph(nextDevices, state.connections);
-    dispatch({ type: "setStatusText", text: `Renamed device to ${trimmed}.` });
+    builderService.renameCustomDevice(deviceId, nextName);
   };
 
   const changeCustomDeviceType = (
     deviceId: string,
     nextDeviceTypeSlug: string,
   ) => {
-    const state = store.getState();
-    if (state.networkId !== CUSTOM_NETWORK_ID) {
-      dispatch({
-        type: "setStatusText",
-        text: "Open Create/Edit mode first.",
-      });
-      return;
-    }
-
-    const slug = nextDeviceTypeSlug.trim();
-    if (!slug) {
-      dispatch({
-        type: "setStatusText",
-        text: "Choose a device type.",
-      });
-      return;
-    }
-
-    const nextDeviceType = state.deviceTypes[slug];
-    if (!nextDeviceType) {
-      dispatch({
-        type: "setStatusText",
-        text: `Unknown device type '${slug}'.`,
-      });
-      return;
-    }
-
-    const existing = state.devices.find((device) => device.id === deviceId);
-    if (!existing) {
-      dispatch({ type: "setStatusText", text: "Device not found." });
-      return;
-    }
-
-    if (existing.deviceTypeSlug === slug) return;
-
-    const nextTypeText = `${nextDeviceType.slug} ${nextDeviceType.model}`;
-    const nextDevices = state.devices.map((device) =>
-      device.id === deviceId
-        ? {
-          ...device,
-          deviceTypeSlug: slug,
-          type: nextTypeText,
-          deviceKind: inferDeviceKindFromType(nextTypeText),
-        }
-        : device
-    );
-
-    const { nextConnections, removedCount } = pruneConnectionsForDeviceType({
-      device: existing,
-      nextDeviceTypeSlug: slug,
-      connections: state.connections,
-      deviceTypes: state.deviceTypes,
-    });
-
-    pushCustomUndoSnapshot("change device type");
-    refreshCustomGraph(nextDevices, nextConnections, {
-      selectedIds: [deviceId],
-    });
-
-    const baseText =
-      `Updated ${existing.name} to ${nextDeviceType.brand} ${nextDeviceType.model}.`;
-    dispatch({
-      type: "setStatusText",
-      text: removedCount > 0
-        ? `${baseText} Removed ${removedCount} incompatible connection(s).`
-        : baseText,
-    });
+    builderService.changeCustomDeviceType(deviceId, nextDeviceTypeSlug);
   };
 
   const updateCustomDeviceProperties = (
     deviceId: string,
     propertiesJsonText: string,
   ) => {
-    const state = store.getState();
-    if (state.networkId !== CUSTOM_NETWORK_ID) {
-      dispatch({
-        type: "setStatusText",
-        text: "Open Create/Edit mode first.",
-      });
-      return;
-    }
-
-    const existing = state.devices.find((device) => device.id === deviceId);
-    if (!existing) {
-      dispatch({ type: "setStatusText", text: "Device not found." });
-      return;
-    }
-
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(propertiesJsonText);
-    } catch {
-      dispatch({
-        type: "setStatusText",
-        text: "Properties must be valid JSON object.",
-      });
-      return;
-    }
-
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-      dispatch({
-        type: "setStatusText",
-        text: "Properties must be a JSON object.",
-      });
-      return;
-    }
-
-    const sanitized = stripManagedDeviceFields(
-      parsed as Record<string, unknown>,
-    );
-
-    const nextDevices = state.devices.map((device) => {
-      if (device.id !== deviceId) return device;
-
-      const base: NetworkDevice = {
-        id: device.id,
-        name: device.name,
-        type: device.type,
-        deviceKind: device.deviceKind,
-        ...(device.deviceTypeSlug
-          ? { deviceTypeSlug: device.deviceTypeSlug }
-          : {}),
-        ...(Number.isFinite(Number(device.x)) ? { x: Number(device.x) } : {}),
-        ...(Number.isFinite(Number(device.y)) ? { y: Number(device.y) } : {}),
-      };
-
-      return {
-        ...base,
-        ...sanitized,
-      };
-    });
-
-    pushCustomUndoSnapshot("update device properties");
-    refreshCustomGraph(nextDevices, state.connections, {
-      selectedIds: [deviceId],
-    });
-    dispatch({
-      type: "setStatusText",
-      text: `Updated properties for ${existing.name}.`,
-    });
+    builderService.updateCustomDeviceProperties(deviceId, propertiesJsonText);
   };
 
   const deleteCustomDevice = (deviceId: string) => {
-    const state = store.getState();
-    if (state.networkId !== CUSTOM_NETWORK_ID) {
-      dispatch({
-        type: "setStatusText",
-        text: "Open Create/Edit mode first.",
-      });
-      return;
-    }
-
-    const device = state.devices.find((item) => item.id === deviceId);
-    if (!device) {
-      dispatch({ type: "setStatusText", text: "Device not found." });
-      return;
-    }
-
-    const nextDevices = state.devices.filter((item) => item.id !== deviceId);
-    const removedConnections = state.connections.filter((connection) =>
-      connection.from.deviceId === deviceId ||
-      connection.to.deviceId === deviceId
-    );
-    pushCustomUndoSnapshot("delete device");
-    const nextConnections = state.connections.filter((connection) =>
-      connection.from.deviceId !== deviceId &&
-      connection.to.deviceId !== deviceId
-    );
-
-    refreshCustomGraph(nextDevices, nextConnections);
-    dispatch({
-      type: "setStatusText",
-      text:
-        `Deleted ${device.name} and ${removedConnections.length} linked connection(s).`,
-    });
+    builderService.deleteCustomDevice(deviceId);
   };
 
-  const exportTopologyJson = () => {
-    const state = store.getState();
-    const payload = buildExportPayload(state.devices, state.connections);
-    return JSON.stringify(payload, null, 2);
-  };
+  const exportTopologyJson = () => builderService.exportTopologyJson();
 
   const importCustomTopologyJson = async (text: string) => {
-    if (store.getState().networkId !== CUSTOM_NETWORK_ID) {
-      await enterBuilderMode();
-    }
-
-    try {
-      const state = store.getState();
-      const parsed = parseImportPayload(text, state.deviceTypes);
-      clearCustomUndo();
-      refreshCustomGraph(parsed.devices, parsed.connections);
-      dispatch({ type: "setStatusText", text: "Imported custom topology." });
-    } catch (err) {
-      dispatch({
-        type: "setStatusText",
-        text: `Import failed: ${formatStatusError(err)}`,
-      });
-    }
+    await builderService.importCustomTopologyJson(text);
   };
 
-  const getBuilderDeviceStats = () => ({
-    recentDeviceTypeSlugs,
-    frequentDeviceTypeSlugs: getFrequentDeviceTypeSlugs(
-      frequentDeviceTypeCounts,
-    ),
-  });
+  const getBuilderDeviceStats = () => builderService.getBuilderDeviceStats();
 
   const canUndoCustomEdit = () =>
     store.getState().networkId === CUSTOM_NETWORK_ID &&
-    customUndoStack.length > 0;
+    customHistory.canUndo();
 
   const canRedoCustomEdit = () =>
     store.getState().networkId === CUSTOM_NETWORK_ID &&
-    customRedoStack.length > 0;
+    customHistory.canRedo();
 
   const undoLastCustomEdit = () => {
     const state = store.getState();
@@ -1110,13 +486,13 @@ export function createController(
       return;
     }
 
-    const previous = customUndoStack.pop();
+    const previous = customHistory.undo();
     if (!previous) {
       dispatch({ type: "setStatusText", text: "Nothing to undo." });
       return;
     }
 
-    customRedoStack.push({
+    customHistory.pushRedo({
       devices: cloneDevices(state.devices),
       connections: cloneConnections(state.connections),
       label: previous.label,
@@ -1139,13 +515,13 @@ export function createController(
       return;
     }
 
-    const next = customRedoStack.pop();
+    const next = customHistory.redo();
     if (!next) {
       dispatch({ type: "setStatusText", text: "Nothing to redo." });
       return;
     }
 
-    customUndoStack.push({
+    customHistory.pushUndoFromRedo({
       devices: cloneDevices(state.devices),
       connections: cloneConnections(state.connections),
       label: next.label,
@@ -1166,28 +542,7 @@ export function createController(
 
   const setTrafficSourceKind = async (kind: string) => {
     dispatch({ type: "setTrafficSourceKind", kind });
-    const paths = currentTrafficPaths;
-    if (!paths) return;
-
-    stopTraffic?.();
-    stopTraffic = () => {};
-    resetTrafficState();
-
-    try {
-      stopTraffic = await startTrafficConnector({
-        basePath: paths.basePath,
-        trafficPath: paths.trafficPath,
-        sourceKind: kind,
-      });
-      dispatch({ type: "setStatusText", text: "" });
-    } catch (err) {
-      stopTraffic = () => {};
-      dispatch({
-        type: "setStatusText",
-        text: `Traffic source failed: ${formatStatusError(err)}`,
-      });
-      console.error("Failed to start traffic source.", err);
-    }
+    await trafficService.restartCurrentSource(kind);
   };
 
   const setTrafficVizKind = (kind: string) => {
