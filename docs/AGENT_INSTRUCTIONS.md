@@ -89,6 +89,17 @@ see `docs/ideas/advanced-agent-lessons.md`.
    - `deno task validate`
    - `deno task render:svgs`
 
+### Formatting reliability hint (to avoid repeated `fmt --check` failures)
+
+- Right after editing, format changed files directly:
+  - `deno fmt <changed-files>`
+- Before finalizing, run:
+  - `deno task fmt`
+- For docs-only changes, also run:
+  - `deno task docs:check`
+- If `fmt --check` fails, prefer re-running `deno fmt` rather than manually
+  tweaking wraps/indentation.
+
 5. Sanity-check the production artifact:
    - `deno task build:pages`
    - open `dist/index.html` via a static server (or reuse `main.ts` but point at

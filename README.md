@@ -13,6 +13,12 @@ highlighting, and traffic-aware link styling.
 - `deno task test`
 - `deno task validate`
 
+## PR formatting checklist
+
+- Run `deno fmt <changed-files>` right after edits.
+- Before opening/finalizing PR, run `deno task fmt`.
+- For docs-only changes, run `deno task docs:check`.
+
 ## Render SVGs (for docs/verification)
 
 - `deno task render:svgs` (outputs to `docs/rendered/<layout>/`)

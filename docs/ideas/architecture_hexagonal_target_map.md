@@ -26,6 +26,7 @@ Rules:
 - No network I/O.
 - No store dispatch.
 - Pure transformations and validation.
+- Deterministic behavior for the same input (critical for layout/policy tests).
 
 Current examples:
 
@@ -49,6 +50,7 @@ Rules:
 - Coordinate use-cases.
 - Depend on ports/interfaces, not concrete adapters.
 - Return result objects/messages, avoid direct DOM interaction.
+- Be runnable in tests with fake ports and no browser APIs.
 
 Current status:
 
@@ -129,6 +131,15 @@ Application services call:
 
 App services call pure domain functions, passing explicit data and using
 returned results.
+
+## Testability Contract
+
+- Prefer testing behavior as data-in/data-out before testing browser rendering.
+- Layout modules should expose deterministic outputs/invariants that can be
+  asserted in unit tests.
+- Services should be validated with fake ports (no real DOM, no D3 dependency).
+- Keep browser tests as high-level integration confidence checks, not the
+  primary source of functional correctness.
 
 ---
 

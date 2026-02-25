@@ -99,6 +99,10 @@ If one PR attempts all four, split it.
 - Validate fixture consistency whenever topology semantics or catalogs change.
 - Treat renderer-level changes as interaction contracts (selection, viewport,
   callback semantics), not only visual output.
+- Prefer deterministic data-contract tests over screenshot-based assertions.
+- For layout work, define fixture-driven input/output expectations and
+  invariants (tier/group/order/position constraints) that run outside browser
+  APIs.
 
 ## 10) Anti-Patterns to Reject
 
@@ -123,9 +127,9 @@ refactors.
 
 ## 12) Immediate Recommended Sequence
 
-1. Extract `trafficService` from controller orchestration.
+1. Wire existing `builderService` into controller and remove duplication.
 2. Introduce `ports.ts` contracts and wire existing adapters.
-3. Extract `builderService` for command handlers.
-4. Add focused service tests with fake ports.
+3. Extract `trafficService` from controller orchestration.
+4. Add focused service + layout contract tests with fake ports/fixtures.
 
 This sequence maximizes decoupling while keeping current UX stable.
