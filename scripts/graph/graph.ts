@@ -95,8 +95,8 @@ export function createGraph(
 
     renderGuides((meta?.guides || []) as Guide[]);
 
-    // Layered modes are deterministic/static: no simulation ticks, so render once.
-    if (layoutKind === "tiered" || layoutKind === "tiered-xmin") {
+    // Non-force modes are deterministic/static: no simulation ticks, so render once.
+    if (layoutKind !== "force") {
       renderer.simulation.stop();
       renderer.renderPositions();
     }
