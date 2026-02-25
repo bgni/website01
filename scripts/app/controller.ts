@@ -10,9 +10,13 @@ import {
   type TrafficConnectorKind,
 } from "../traffic/registry.ts";
 import type { StopTraffic } from "../traffic/types.ts";
-import type { TrafficUpdate } from "../domain/types.ts";
+import type { DeviceType, TrafficUpdate } from "../domain/types.ts";
 import { FixtureValidationError } from "../domain/errors.ts";
 import { parseTrafficUpdatesPayload } from "../domain/fixtures.ts";
+import {
+  createAddedDevice,
+  createConnectionUsingFirstPorts,
+} from "./networkEdit.ts";
 import {
   type Dispatch,
   getFilteredDevices,
@@ -38,6 +42,7 @@ type ControllerDeps = {
   loadData?: LoadDataFn;
   loadJson?: LoadJsonFn;
   fetch?: typeof fetch;
+  storage?: Storage;
 };
 
 const getNetworkBasePath = (networkId: string) => {
@@ -48,6 +53,8 @@ const getNetworkBasePath = (networkId: string) => {
 export type Controller = {
   start: () => Promise<void>;
   loadNetwork: (networkId: string) => Promise<void>;
+  addDevice: (name: string, type?: string) => void;
+  connectDevices: (fromId: string, toId: string) => void;
   setTrafficSourceKind: (kind: string) => Promise<void>;
   setLayoutKind: (kind: string) => void;
   setTrafficVizKind: (kind: string) => void;
@@ -75,6 +82,8 @@ export function createController(
   const loadData = deps?.loadData ?? defaultLoadData;
   const loadJson = deps?.loadJson ?? defaultLoadJson;
   const doFetch = deps?.fetch ?? fetch;
+  const storage = deps?.storage;
+  const networkEditStoragePrefix = "website01.networkEdits.v1.";
 
   const loadJsonOptional = async (path: string): Promise<unknown | null> => {
     const res = await doFetch(path);
@@ -85,6 +94,10 @@ export function createController(
 
   let adjacency: Adjacency = {};
   let graph: ReturnType<typeof createGraph> | null = null;
+  let currentNetworkId = "";
+  let currentDevices: State["devices"] = [];
+  let currentConnections: State["connections"] = [];
+  let currentDeviceTypes: Record<string, DeviceType> = {};
   let stopTraffic: StopTraffic = () => {};
   const trafficByConn = new Map<string, TrafficUpdate>();
   let resizeObserver: ResizeObserver | null = null;
@@ -175,6 +188,82 @@ export function createController(
     graph = null;
   };
 
+  const loadPersistedNetworkEdits = (
+    networkId: string,
+  ):
+    | { devices: State["devices"]; connections: State["connections"] }
+    | null => {
+    if (!storage) return null;
+    try {
+      const raw = storage.getItem(`${networkEditStoragePrefix}${networkId}`);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object") return null;
+      const rec = parsed as Record<string, unknown>;
+      if (rec.v !== 1) return null;
+      const devices = Array.isArray(rec.devices) ? rec.devices : null;
+      const connections = Array.isArray(rec.connections)
+        ? rec.connections
+        : null;
+      if (!devices || !connections) return null;
+      return {
+        devices: devices as State["devices"],
+        connections: connections as State["connections"],
+      };
+    } catch {
+      return null;
+    }
+  };
+
+  const persistNetworkEdits = () => {
+    if (!storage || !currentNetworkId) return;
+    try {
+      storage.setItem(
+        `${networkEditStoragePrefix}${currentNetworkId}`,
+        JSON.stringify({
+          v: 1,
+          devices: currentDevices,
+          connections: currentConnections,
+        }),
+      );
+    } catch {
+      // Ignore storage errors.
+    }
+  };
+
+  const renderCurrentNetwork = () => {
+    destroyGraph();
+    dispatch({
+      type: "networkLoaded",
+      devices: currentDevices,
+      connections: currentConnections,
+      deviceTypes: currentDeviceTypes,
+    });
+
+    adjacency = buildAdjacency(currentConnections) as Adjacency;
+    graph = createGraph({
+      svg: graphSvg,
+      devices: currentDevices,
+      connections: currentConnections,
+      adjacency,
+      onNodeSelect: (id: string) => dispatch({ type: "toggleSelect", id }),
+    });
+
+    resizeObserver?.disconnect();
+    resizeObserver = new ResizeObserver(() => {
+      if (!graph) return;
+      graph.resize(getSvgSize(graphSvg));
+    });
+    resizeObserver.observe(graphSvg);
+
+    const state = store.getState();
+    graph.setTrafficVisualization(state.trafficVizKind);
+    graph.setLayout(state.layoutKind);
+    graph.resize(getSvgSize(graphSvg));
+    graph.updateTraffic(Array.from(trafficByConn.values()));
+    updateGraphFromState(state);
+  };
+
   const loadNetwork = async (networkId: string) => {
     try {
       stopTraffic?.();
@@ -199,35 +288,12 @@ export function createController(
         },
       );
 
-      dispatch({
-        type: "networkLoaded",
-        devices: devicesOut,
-        connections: connectionsOut,
-        deviceTypes,
-      });
-
-      adjacency = buildAdjacency(connectionsOut) as Adjacency;
-
-      graph = createGraph({
-        svg: graphSvg,
-        devices: devicesOut,
-        connections: connectionsOut,
-        adjacency,
-        onNodeSelect: (id: string) => dispatch({ type: "toggleSelect", id }),
-      });
-
-      resizeObserver?.disconnect();
-      resizeObserver = new ResizeObserver(() => {
-        if (!graph) return;
-        graph.resize(getSvgSize(graphSvg));
-      });
-      resizeObserver.observe(graphSvg);
-
-      const state = store.getState();
-      graph.setTrafficVisualization(state.trafficVizKind);
-      graph.setLayout(state.layoutKind);
-      graph.resize(getSvgSize(graphSvg));
-      updateGraphFromState(state);
+      currentNetworkId = networkId;
+      currentDeviceTypes = deviceTypes;
+      const persisted = loadPersistedNetworkEdits(networkId);
+      currentDevices = persisted?.devices ?? devicesOut;
+      currentConnections = persisted?.connections ?? connectionsOut;
+      renderCurrentNetwork();
 
       stopTraffic = await startTrafficConnector({
         basePath,
@@ -293,6 +359,42 @@ export function createController(
     updateGraphFromState(store.getState());
   };
 
+  const addDevice = (name: string, type = "other") => {
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      dispatch({ type: "setStatusText", text: "Device name is required." });
+      return;
+    }
+    currentDevices = [
+      ...currentDevices,
+      createAddedDevice({ name: trimmedName, type, devices: currentDevices }),
+    ];
+    persistNetworkEdits();
+    renderCurrentNetwork();
+    dispatch({ type: "setStatusText", text: "" });
+  };
+
+  const connectDevices = (fromId: string, toId: string) => {
+    const out = createConnectionUsingFirstPorts({
+      fromId,
+      toId,
+      devices: currentDevices,
+      connections: currentConnections,
+      deviceTypes: currentDeviceTypes,
+    });
+    if (!out.connection) {
+      dispatch({
+        type: "setStatusText",
+        text: out.error ?? "Unable to connect devices.",
+      });
+      return;
+    }
+    currentConnections = [...currentConnections, out.connection];
+    persistNetworkEdits();
+    renderCurrentNetwork();
+    dispatch({ type: "setStatusText", text: "" });
+  };
+
   const start = async () => {
     await loadNetwork(store.getState().networkId);
   };
@@ -300,6 +402,8 @@ export function createController(
   return {
     start,
     loadNetwork,
+    addDevice,
+    connectDevices,
     setTrafficSourceKind,
     setLayoutKind,
     setTrafficVizKind,
