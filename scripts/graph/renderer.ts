@@ -19,6 +19,46 @@ export type SimLink = {
 
 export type Guide = { y: number };
 
+const getLinkEndId = (end: string | ResolvedLinkEnd): string =>
+  typeof end === "string" ? end : end.id;
+
+const linkFanoutOffsetsByEndpoint = (links: SimLink[]) => {
+  const byNode = new Map<string, SimLink[]>();
+  const push = (nodeId: string, link: SimLink) => {
+    const arr = byNode.get(nodeId);
+    if (arr) arr.push(link);
+    else byNode.set(nodeId, [link]);
+  };
+
+  links.forEach((link) => {
+    const sourceId = getLinkEndId(link.source);
+    const targetId = getLinkEndId(link.target);
+    push(sourceId, link);
+    push(targetId, link);
+  });
+
+  const out = new Map<string, number>();
+
+  for (const [nodeId, nodeLinks] of byNode.entries()) {
+    const sorted = [...nodeLinks].sort((a, b) => {
+      const aOther = getLinkEndId(a.source) === nodeId
+        ? getLinkEndId(a.target)
+        : getLinkEndId(a.source);
+      const bOther = getLinkEndId(b.source) === nodeId
+        ? getLinkEndId(b.target)
+        : getLinkEndId(b.source);
+      return `${aOther}\n${a.id}`.localeCompare(`${bOther}\n${b.id}`);
+    });
+
+    const mid = (sorted.length - 1) / 2;
+    sorted.forEach((link, idx) => {
+      out.set(`${link.id}|${nodeId}`, idx - mid);
+    });
+  }
+
+  return out;
+};
+
 export type RendererUpdateArgs = {
   getLinkStroke: (d: SimLink) => string;
   getLinkWidth: (d: SimLink) => number;
@@ -91,6 +131,7 @@ export function createGraphRenderer(
     source: c.from.deviceId,
     target: c.to.deviceId,
   })) as SimLink[];
+  const fanoutOffsetByEndpoint = linkFanoutOffsetsByEndpoint(links);
 
   const linkSelection = linkLayer
     .attr("stroke", GRAPH_COLORS.linkStroke)
@@ -189,11 +230,48 @@ export function createGraphRenderer(
   let onTickHook: (() => void) | null = null;
 
   const renderPositions = () => {
+    const linkPosCache = new Map<string, {
+      x1: number;
+      y1: number;
+      x2: number;
+      y2: number;
+    }>();
+
+    const linkPos = (d: SimLink) => {
+      const cached = linkPosCache.get(d.id);
+      if (cached) return cached;
+
+      const source = d.source as ResolvedLinkEnd;
+      const target = d.target as ResolvedLinkEnd;
+
+      const dx = (target.x ?? 0) - (source.x ?? 0);
+      const dy = (target.y ?? 0) - (source.y ?? 0);
+      const length = Math.max(1e-6, Math.hypot(dx, dy));
+      const nx = -dy / length;
+      const ny = dx / length;
+
+      const sourceOffset =
+        (fanoutOffsetByEndpoint.get(`${d.id}|${source.id}`) ?? 0) *
+        GRAPH_DEFAULTS.link.fanoutPx;
+      const targetOffset =
+        (fanoutOffsetByEndpoint.get(`${d.id}|${target.id}`) ?? 0) *
+        GRAPH_DEFAULTS.link.fanoutPx;
+
+      const positioned = {
+        x1: source.x + nx * sourceOffset,
+        y1: source.y + ny * sourceOffset,
+        x2: target.x + nx * targetOffset,
+        y2: target.y + ny * targetOffset,
+      };
+      linkPosCache.set(d.id, positioned);
+      return positioned;
+    };
+
     linkSelection
-      .attr("x1", (d: SimLink) => (d.source as { x: number }).x)
-      .attr("y1", (d: SimLink) => (d.source as { y: number }).y)
-      .attr("x2", (d: SimLink) => (d.target as { x: number }).x)
-      .attr("y2", (d: SimLink) => (d.target as { y: number }).y);
+      .attr("x1", (d: SimLink) => linkPos(d).x1)
+      .attr("y1", (d: SimLink) => linkPos(d).y1)
+      .attr("x2", (d: SimLink) => linkPos(d).x2)
+      .attr("y2", (d: SimLink) => linkPos(d).y2);
 
     onTickHook?.();
     nodeSelection
@@ -218,8 +296,22 @@ export function createGraphRenderer(
     haloSelection
       .attr("cx", (d: SimNode) => d.x)
       .attr("cy", (d: SimNode) => d.y);
+
+    const edgeThreshold = GRAPH_DEFAULTS.label.edgeThreshold;
+    const edgeOffset = GRAPH_DEFAULTS.label.edgeOffset;
     labelSelection
-      .attr("x", (d: SimNode) => d.x)
+      .attr("text-anchor", (d: SimNode) => {
+        const x = d.x ?? 0;
+        if (x <= edgeThreshold) return "start";
+        if (x >= width - edgeThreshold) return "end";
+        return "middle";
+      })
+      .attr("x", (d: SimNode) => {
+        const x = d.x ?? 0;
+        if (x <= edgeThreshold) return x + edgeOffset;
+        if (x >= width - edgeThreshold) return x - edgeOffset;
+        return x;
+      })
       .attr("y", (d: SimNode) => (d.y ?? 0) + GRAPH_DEFAULTS.label.yOffset);
   };
 

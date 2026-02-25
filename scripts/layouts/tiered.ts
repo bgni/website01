@@ -1,3 +1,5 @@
+import { GRAPH_DEFAULTS } from "../config.ts";
+
 type NodeRef = string | { id: string };
 
 export type TieredLayoutNode = {
@@ -282,6 +284,14 @@ export function applyTieredLayout(
   const usableH = Math.max(220, height - paddingTop - paddingBottom);
   const bandH = usableH / TIER_ORDER.length;
 
+  const fullSpan = Math.max(220, width - paddingX * 2);
+  const span = Math.min(
+    fullSpan,
+    GRAPH_DEFAULTS.layout.tieredMaxHorizontalSpan,
+  );
+  const left = (width - span) / 2;
+  const right = left + span;
+
   const { parent, children, roots, deg } = buildTree({ nodes, links });
   const treeX = assignTreeX({ roots, children });
 
@@ -337,7 +347,7 @@ export function applyTieredLayout(
     const t = typeof raw === "number" && Number.isFinite(raw)
       ? (raw - minX) / spanX
       : 0.5;
-    return paddingX + t * (width - paddingX * 2);
+    return left + t * span;
   };
   const yTarget = (n: TieredLayoutNode) => {
     const idx =
@@ -354,8 +364,6 @@ export function applyTieredLayout(
   });
 
   // Resolve overlaps deterministically per tier.
-  const left = paddingX;
-  const right = width - paddingX;
   const minGap = 30; // circle-safe spacing; labels handled by per-node widths below
 
   const byTier = new Map<number, TieredLayoutNode[]>();

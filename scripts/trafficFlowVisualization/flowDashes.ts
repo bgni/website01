@@ -15,6 +15,42 @@ import type {
 const clamp = (v: number, min: number, max: number) =>
   Math.max(min, Math.min(max, v));
 
+const getEndId = (end: string | { id: string }): string =>
+  typeof end === "string" ? end : end.id;
+
+const buildFanoutOffsetsByEndpoint = (links: GraphLinkDatum[]) => {
+  const byNode = new Map<string, GraphLinkDatum[]>();
+  const add = (nodeId: string, link: GraphLinkDatum) => {
+    const arr = byNode.get(nodeId);
+    if (arr) arr.push(link);
+    else byNode.set(nodeId, [link]);
+  };
+
+  links.forEach((link) => {
+    add(getEndId(link.source), link);
+    add(getEndId(link.target), link);
+  });
+
+  const out = new Map<string, number>();
+  for (const [nodeId, nodeLinks] of byNode.entries()) {
+    const sorted = [...nodeLinks].sort((a, b) => {
+      const aOther = getEndId(a.source) === nodeId
+        ? getEndId(a.target)
+        : getEndId(a.source);
+      const bOther = getEndId(b.source) === nodeId
+        ? getEndId(b.target)
+        : getEndId(b.source);
+      return `${aOther}\n${a.id}`.localeCompare(`${bOther}\n${b.id}`);
+    });
+
+    const mid = (sorted.length - 1) / 2;
+    sorted.forEach((link, idx) => {
+      out.set(`${link.id}|${nodeId}`, idx - mid);
+    });
+  }
+  return out;
+};
+
 const speedFromRate = (rateMbps: unknown) => {
   const r = Math.max(0, Number(rateMbps) || 0);
   // Map 0..10G to a reasonable px/sec-ish range for dash offset.
@@ -36,6 +72,7 @@ export function createFlowDashesTrafficVisualization(
   let linkSelection: any;
   let lastNow = 0;
   const offsetById = new Map<string, number>();
+  let fanoutByEndpoint = new Map<string, number>();
 
   const animate = (now: number) => {
     if (!running) return;
@@ -92,6 +129,8 @@ export function createFlowDashesTrafficVisualization(
       // deno-lint-ignore no-explicit-any
       const c = container as any;
 
+      fanoutByEndpoint = buildFanoutOffsetsByEndpoint(links);
+
       overlay = c.append("g")
         .attr("pointer-events", "none")
         .selectAll("line")
@@ -110,6 +149,7 @@ export function createFlowDashesTrafficVisualization(
         rafId = 0;
         lastNow = 0;
         offsetById.clear();
+        fanoutByEndpoint.clear();
         overlay?.remove();
         overlay = null;
       };
@@ -121,12 +161,45 @@ export function createFlowDashesTrafficVisualization(
 
     onSimulationTick() {
       if (!overlay || !linkSelection) return;
+      const cache = new Map<
+        string,
+        { x1: number; y1: number; x2: number; y2: number }
+      >();
+      const linkPos = (d: GraphLinkDatum) => {
+        const hit = cache.get(d.id);
+        if (hit) return hit;
+
+        const source = d.source;
+        const target = d.target;
+        const dx = (target.x ?? 0) - (source.x ?? 0);
+        const dy = (target.y ?? 0) - (source.y ?? 0);
+        const length = Math.max(1e-6, Math.hypot(dx, dy));
+        const nx = -dy / length;
+        const ny = dx / length;
+
+        const sourceOffset =
+          (fanoutByEndpoint.get(`${d.id}|${source.id}`) ?? 0) *
+          GRAPH_DEFAULTS.link.fanoutPx;
+        const targetOffset =
+          (fanoutByEndpoint.get(`${d.id}|${target.id}`) ?? 0) *
+          GRAPH_DEFAULTS.link.fanoutPx;
+
+        const out = {
+          x1: source.x + nx * sourceOffset,
+          y1: source.y + ny * sourceOffset,
+          x2: target.x + nx * targetOffset,
+          y2: target.y + ny * targetOffset,
+        };
+        cache.set(d.id, out);
+        return out;
+      };
+
       // Keep overlay in sync with base link positions.
       overlay
-        .attr("x1", (d: GraphLinkDatum) => d.source.x)
-        .attr("y1", (d: GraphLinkDatum) => d.source.y)
-        .attr("x2", (d: GraphLinkDatum) => d.target.x)
-        .attr("y2", (d: GraphLinkDatum) => d.target.y);
+        .attr("x1", (d: GraphLinkDatum) => linkPos(d).x1)
+        .attr("y1", (d: GraphLinkDatum) => linkPos(d).y1)
+        .attr("x2", (d: GraphLinkDatum) => linkPos(d).x2)
+        .attr("y2", (d: GraphLinkDatum) => linkPos(d).y2);
     },
 
     afterLinkStyle(
@@ -190,6 +263,7 @@ export function createFlowDashesTrafficVisualization(
       rafId = 0;
       lastNow = 0;
       offsetById.clear();
+      fanoutByEndpoint.clear();
       overlay?.remove();
       overlay = null;
     },

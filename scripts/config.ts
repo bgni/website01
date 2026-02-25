@@ -12,10 +12,15 @@ export const GRAPH_DEFAULTS = {
   link: {
     defaultWidth: 1.4,
     defaultOpacity: 0.6,
+    fanoutPx: 2.4,
     force: {
       distance: 130,
       strength: 0.6,
     },
+  },
+
+  layout: {
+    tieredMaxHorizontalSpan: 1240,
   },
 
   simulation: {
@@ -49,6 +54,8 @@ export const GRAPH_DEFAULTS = {
     fontSize: 11,
     dy: 0,
     yOffset: 24,
+    edgeThreshold: 92,
+    edgeOffset: 16,
   },
 
   guides: {
