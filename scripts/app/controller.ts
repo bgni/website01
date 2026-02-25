@@ -190,7 +190,9 @@ export function createController(
 
   const loadPersistedNetworkEdits = (
     networkId: string,
-  ): { devices: State["devices"]; connections: State["connections"] } | null => {
+  ):
+    | { devices: State["devices"]; connections: State["connections"] }
+    | null => {
     if (!storage) return null;
     try {
       const raw = storage.getItem(`${networkEditStoragePrefix}${networkId}`);
@@ -200,7 +202,9 @@ export function createController(
       const rec = parsed as Record<string, unknown>;
       if (rec.v !== 1) return null;
       const devices = Array.isArray(rec.devices) ? rec.devices : null;
-      const connections = Array.isArray(rec.connections) ? rec.connections : null;
+      const connections = Array.isArray(rec.connections)
+        ? rec.connections
+        : null;
       if (!devices || !connections) return null;
       return {
         devices: devices as State["devices"],

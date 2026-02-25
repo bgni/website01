@@ -3,7 +3,11 @@ import {
   createAddedDevice,
   createConnectionUsingFirstPorts,
 } from "./networkEdit.ts";
-import type { Connection, DeviceType, NetworkDevice } from "../domain/types.ts";
+import type {
+  Connection,
+  DeviceType,
+  NetworkDevice,
+} from "../domain/types.ts";
 
 Deno.test("createAddedDevice creates slug id and increments duplicates", () => {
   const devices: NetworkDevice[] = [{

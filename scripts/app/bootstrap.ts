@@ -184,8 +184,14 @@ export function bootstrap(doc: Document) {
     doc,
     "connectFromSelect",
   );
-  const connectToSelect = mustGetById<HTMLSelectElement>(doc, "connectToSelect");
-  const connectDevicesBtn = mustGetById<HTMLButtonElement>(doc, "connectDevicesBtn");
+  const connectToSelect = mustGetById<HTMLSelectElement>(
+    doc,
+    "connectToSelect",
+  );
+  const connectDevicesBtn = mustGetById<HTMLButtonElement>(
+    doc,
+    "connectDevicesBtn",
+  );
 
   const searchInput = mustGetById<HTMLInputElement>(doc, "searchInput");
   const searchShell = mustGetById<HTMLElement>(doc, "searchShell");
