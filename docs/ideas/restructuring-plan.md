@@ -178,6 +178,29 @@ Rule:
 - A layout refactor is not complete unless its behavior is protected by
   input/output tests that run without browser APIs.
 
+## TDD Operating Rule (Pragmatic)
+
+Use test-driven development where it improves design clarity and confidence,
+especially for:
+
+- pure domain transforms,
+- layout and graph policy decisions,
+- service orchestration via ports/fakes.
+
+Guideline:
+
+- For a non-trivial logic change, start with a failing test that describes the
+  target behavior, then implement the smallest change to pass.
+- Not every change must be TDD-first (for example mechanical file moves), but
+  every behavior change should end with explicit test coverage at the right
+  level.
+
+Pause-and-evaluate trigger:
+
+- If tests become brittle, hard to set up, or over-constrain refactors, stop and
+  reassess the seam design (ports, responsibilities, determinism) before adding
+  more tests.
+
 ## Sequencing (Recommended)
 
 1. Contract layer (`ports.ts`) and adapters.
