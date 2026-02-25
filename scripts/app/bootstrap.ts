@@ -162,6 +162,7 @@ export function bootstrap(doc: Document) {
     deps: {
       loadData,
       loadJson,
+      storage,
     },
   });
 
@@ -176,6 +177,15 @@ export function bootstrap(doc: Document) {
     "trafficVizSelect",
   );
   const layoutSelect = mustGetById<HTMLSelectElement>(doc, "layoutSelect");
+  const addDeviceName = mustGetById<HTMLInputElement>(doc, "addDeviceName");
+  const addDeviceType = mustGetById<HTMLInputElement>(doc, "addDeviceType");
+  const addDeviceBtn = mustGetById<HTMLButtonElement>(doc, "addDeviceBtn");
+  const connectFromSelect = mustGetById<HTMLSelectElement>(
+    doc,
+    "connectFromSelect",
+  );
+  const connectToSelect = mustGetById<HTMLSelectElement>(doc, "connectToSelect");
+  const connectDevicesBtn = mustGetById<HTMLButtonElement>(doc, "connectDevicesBtn");
 
   const searchInput = mustGetById<HTMLInputElement>(doc, "searchInput");
   const searchShell = mustGetById<HTMLElement>(doc, "searchShell");
@@ -228,7 +238,43 @@ export function bootstrap(doc: Document) {
     controls.render(state);
     searchPanel.render(state);
     selectedPanel.render(state);
+
+    const setDeviceOptions = (
+      select: HTMLSelectElement,
+      selectedValue: string,
+    ) => {
+      while (select.firstChild) select.removeChild(select.firstChild);
+      state.devices.forEach((device) => {
+        const opt = doc.createElement("option");
+        opt.value = device.id;
+        opt.textContent = device.name;
+        if (device.id === selectedValue) opt.selected = true;
+        select.appendChild(opt);
+      });
+    };
+
+    setDeviceOptions(
+      connectFromSelect,
+      state.devices.some((d) => d.id === connectFromSelect.value)
+        ? connectFromSelect.value
+        : "",
+    );
+    setDeviceOptions(
+      connectToSelect,
+      state.devices.some((d) => d.id === connectToSelect.value)
+        ? connectToSelect.value
+        : "",
+    );
   };
+
+  addDeviceBtn.addEventListener("click", () => {
+    controller.addDevice(addDeviceName.value, addDeviceType.value);
+    addDeviceName.value = "";
+  });
+
+  connectDevicesBtn.addEventListener("click", () => {
+    controller.connectDevices(connectFromSelect.value, connectToSelect.value);
+  });
 
   // Initial paint and subsequent updates.
   renderAll();

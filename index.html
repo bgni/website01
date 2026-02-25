@@ -28,6 +28,28 @@
                 <option value="dot">DOT (Sugiyama)</option>
               </select>
             </div>
+            <div class="edit-shell">
+              <div class="edit-row">
+                <input
+                  id="addDeviceName"
+                  type="text"
+                  placeholder="New device name"
+                  aria-label="New device name"
+                />
+                <input
+                  id="addDeviceType"
+                  type="text"
+                  placeholder="Type (optional)"
+                  aria-label="New device type"
+                />
+                <button id="addDeviceBtn" type="button">Add device</button>
+              </div>
+              <div class="edit-row">
+                <select id="connectFromSelect" aria-label="Connect from"></select>
+                <select id="connectToSelect" aria-label="Connect to"></select>
+                <button id="connectDevicesBtn" type="button">Connect</button>
+              </div>
+            </div>
 
             <div class="search-shell" id="searchShell">
               <div class="search-input-row">
