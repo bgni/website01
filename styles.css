@@ -97,6 +97,14 @@ button:disabled {
   border: 1px solid var(--border);
 }
 
+/* Keep SVG node labels readable over traffic lines without extra DOM. */
+.label-layer text {
+  paint-order: stroke fill;
+  stroke: #0b1220;
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
 .graph-overlay {
   position: absolute;
   z-index: 10;
@@ -118,6 +126,10 @@ button:disabled {
 }
 
 .graph-overlay.is-hidden {
+  display: none;
+}
+
+.is-hidden {
   display: none;
 }
 
@@ -178,6 +190,11 @@ button:disabled {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}
+.legend-note {
+  color: var(--muted);
+  font-size: 12px;
+  opacity: 0.9;
 }
 .dot {
   width: 10px;

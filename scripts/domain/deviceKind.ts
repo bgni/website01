@@ -38,7 +38,12 @@ export const inferDeviceKindFromType = (type: string): DeviceKind => {
     return DEVICE_KIND_ROUTER;
   }
 
-  if (t.includes("server")) {
+  if (
+    t.includes("server") ||
+    t.includes("load balancer") ||
+    t.includes("load-balancer") ||
+    t === "lb"
+  ) {
     return DEVICE_KIND_SERVER;
   }
 

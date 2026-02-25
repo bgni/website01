@@ -21,7 +21,8 @@ traffic styling.
 - Dev server: `main.ts` (Deno.serve + static assets + TS transpile cache for
   local DX).
 - Browser entry: `index.html` → `scripts/main.ts` (UI + state + wiring).
-- App wiring/orchestration: `scripts/app/bootstrap.ts`, `scripts/app/controller.ts`
+- App wiring/orchestration: `scripts/app/bootstrap.ts`,
+  `scripts/app/controller.ts`
 - Domain (typed boundaries + fixture parsing): `scripts/domain/*`
   - Load network: `scripts/domain/loadNetwork.ts`
   - Errors + runtime guards: `scripts/domain/errors.ts`
@@ -47,8 +48,10 @@ traffic styling.
   - Move code in small steps, keep behavior stable.
   - Add shims to preserve import paths, then update call sites gradually.
 - Make dependencies explicit:
-  - No DOM querying in “logic” layers. Resolve DOM once in bootstrap, then inject.
-  - Inject IO boundaries into controllers (loaders/fetch), with sensible defaults.
+  - No DOM querying in “logic” layers. Resolve DOM once in bootstrap, then
+    inject.
+  - Inject IO boundaries into controllers (loaders/fetch), with sensible
+    defaults.
 - Centralize global/browser dependencies:
   - D3 is loaded as a browser global; use `getD3()` from `scripts/lib/d3.ts`.
   - Avoid “implicit global” usage (`d3.*` without an explicit import).
@@ -150,8 +153,8 @@ traffic styling.
 ### “Explicit boundary” pattern
 
 - Bootstrap resolves concrete environment details (DOM elements, URLs, storage).
-- Controller coordinates behavior and lifecycle (observers, teardown), but should
-  not reach out to the DOM by selector.
+- Controller coordinates behavior and lifecycle (observers, teardown), but
+  should not reach out to the DOM by selector.
 - Domain modules parse + validate fixtures into typed objects.
 - Graph modules render into an injected SVG and expose a small API.
 

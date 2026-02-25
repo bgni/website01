@@ -47,8 +47,8 @@ export const GRAPH_DEFAULTS = {
 
   label: {
     fontSize: 11,
-    dy: 22,
-    yOffset: 24,
+    dy: 0,
+    yOffset: 18,
   },
 
   guides: {
