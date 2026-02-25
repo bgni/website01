@@ -659,6 +659,26 @@ export function applyTieredLayout(
     }
   }
 
+  // Recenter occupied node span inside the available lane to avoid biasing
+  // layouts to one side after crossing-min and overlap passes.
+  const txVals = nodes
+    .map((n) => n.__tx)
+    .filter((v): v is number => typeof v === "number" && Number.isFinite(v));
+  if (txVals.length) {
+    const occupiedMin = Math.min(...txVals);
+    const occupiedMax = Math.max(...txVals);
+    const occupiedCenter = (occupiedMin + occupiedMax) / 2;
+    const laneCenter = (left + right) / 2;
+    const shift = laneCenter - occupiedCenter;
+
+    if (Math.abs(shift) > 0.5) {
+      nodes.forEach((n) => {
+        const { min, max } = getLabelSafeBounds(n, left, right);
+        n.__tx = clamp((n.__tx ?? laneCenter) + shift, min, max);
+      });
+    }
+  }
+
   // Apply final positions and lock nodes.
   nodes.forEach((n) => {
     const { min, max } = getLabelSafeBounds(n, left, right);
