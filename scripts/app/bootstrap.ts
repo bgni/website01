@@ -273,13 +273,51 @@ export function bootstrap(doc: Document) {
     );
   };
 
-  addDeviceBtn.addEventListener("click", () => {
+  const addDeviceFromInputs = () => {
+    const existingIds = new Set(store.getState().devices.map((d) => d.id));
     controller.addDevice(addDeviceName.value, addDeviceType.value);
+    const addedDevice = store.getState().devices.find((d) =>
+      !existingIds.has(d.id)
+    );
+    if (addedDevice) {
+      connectFromSelect.value = addedDevice.id;
+      if (connectToSelect.value === addedDevice.id) {
+        const fallback = store.getState().devices.find((d) =>
+          d.id !== addedDevice.id
+        );
+        if (fallback) connectToSelect.value = fallback.id;
+      }
+    }
     addDeviceName.value = "";
+    addDeviceName.focus();
+  };
+
+  addDeviceBtn.addEventListener("click", addDeviceFromInputs);
+  addDeviceName.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    addDeviceFromInputs();
+  });
+  addDeviceType.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    addDeviceFromInputs();
   });
 
-  connectDevicesBtn.addEventListener("click", () => {
+  const connectFromInputs = () => {
     controller.connectDevices(connectFromSelect.value, connectToSelect.value);
+  };
+
+  connectDevicesBtn.addEventListener("click", connectFromInputs);
+  connectFromSelect.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    connectFromInputs();
+  });
+  connectToSelect.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    connectFromInputs();
   });
 
   // Initial paint and subsequent updates.
