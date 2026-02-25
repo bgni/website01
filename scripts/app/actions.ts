@@ -25,5 +25,6 @@ export type Action =
   | { type: "setPageSize"; pageSize: number }
   | { type: "setTraffic"; traffic: TrafficUpdate[] }
   | { type: "resetTraffic" }
+  | { type: "setTrafficSourceKind"; kind: string }
   | { type: "setTrafficVizKind"; kind: string }
   | { type: "setLayoutKind"; kind: string };

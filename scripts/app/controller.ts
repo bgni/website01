@@ -7,6 +7,7 @@ import { createGraph } from "../graph.ts";
 import {
   createTrafficConnector,
   parseTrafficConnectorSpec,
+  type TrafficConnectorKind,
 } from "../traffic/registry.ts";
 import type { StopTraffic } from "../traffic/types.ts";
 import type { TrafficUpdate } from "../domain/types.ts";
@@ -47,11 +48,16 @@ const getNetworkBasePath = (networkId: string) => {
 export type Controller = {
   start: () => Promise<void>;
   loadNetwork: (networkId: string) => Promise<void>;
+  setTrafficSourceKind: (kind: string) => Promise<void>;
   setLayoutKind: (kind: string) => void;
   setTrafficVizKind: (kind: string) => void;
   clearSelection: () => void;
   dispatch: Dispatch;
 };
+
+const isTrafficConnectorKind = (v: string): v is TrafficConnectorKind =>
+  v === "flow" || v === "generated" || v === "static" || v === "real" ||
+  v === "timeline";
 
 export function createController(
   {
@@ -82,6 +88,8 @@ export function createController(
   let stopTraffic: StopTraffic = () => {};
   const trafficByConn = new Map<string, TrafficUpdate>();
   let resizeObserver: ResizeObserver | null = null;
+  let currentTrafficPaths: { basePath: string; trafficPath: string } | null =
+    null;
 
   const getSvgSize = (svg: SVGSVGElement) => {
     const rect = svg.getBoundingClientRect();
@@ -101,6 +109,7 @@ export function createController(
   const resetTrafficState = () => {
     trafficByConn.clear();
     dispatch({ type: "resetTraffic" });
+    graph?.resetTraffic?.();
   };
 
   const attachTraffic = (trafficUpdates: unknown) => {
@@ -132,13 +141,24 @@ export function createController(
   };
 
   const startTrafficConnector = async (
-    { basePath, trafficPath }: { basePath: string; trafficPath: string },
+    {
+      basePath,
+      trafficPath,
+      sourceKind,
+    }: {
+      basePath: string;
+      trafficPath: string;
+      sourceKind: string;
+    },
   ): Promise<StopTraffic> => {
     // Optional connector config per network.
     const connectorPath = `${basePath}/traffic.connector.json`;
     const connector = await loadJsonOptional(connectorPath);
 
-    const spec = parseTrafficConnectorSpec(connector);
+    const parsed = parseTrafficConnectorSpec(connector);
+    const spec = sourceKind === "default"
+      ? parsed
+      : (isTrafficConnectorKind(sourceKind) ? { kind: sourceKind } : parsed);
     const trafficConnector = await createTrafficConnector(spec, {
       basePath,
       trafficPath,
@@ -166,6 +186,7 @@ export function createController(
 
       const basePath = getNetworkBasePath(networkId);
       const trafficPath = `${basePath}/traffic.json`;
+      currentTrafficPaths = { basePath, trafficPath };
 
       const {
         devices: devicesOut,
@@ -208,12 +229,17 @@ export function createController(
       graph.resize(getSvgSize(graphSvg));
       updateGraphFromState(state);
 
-      stopTraffic = await startTrafficConnector({ basePath, trafficPath });
+      stopTraffic = await startTrafficConnector({
+        basePath,
+        trafficPath,
+        sourceKind: store.getState().trafficSourceKind,
+      });
       dispatch({ type: "setStatusText", text: "" });
     } catch (err) {
       stopTraffic?.();
       stopTraffic = () => {};
       destroyGraph();
+      currentTrafficPaths = null;
 
       resetTrafficState();
       dispatch({
@@ -228,6 +254,32 @@ export function createController(
     dispatch({ type: "setLayoutKind", kind });
     if (graph?.setLayout) graph.setLayout(kind);
     updateGraphFromState(store.getState());
+  };
+
+  const setTrafficSourceKind = async (kind: string) => {
+    dispatch({ type: "setTrafficSourceKind", kind });
+    const paths = currentTrafficPaths;
+    if (!paths) return;
+
+    stopTraffic?.();
+    stopTraffic = () => {};
+    resetTrafficState();
+
+    try {
+      stopTraffic = await startTrafficConnector({
+        basePath: paths.basePath,
+        trafficPath: paths.trafficPath,
+        sourceKind: kind,
+      });
+      dispatch({ type: "setStatusText", text: "" });
+    } catch (err) {
+      stopTraffic = () => {};
+      dispatch({
+        type: "setStatusText",
+        text: `Traffic source failed: ${formatStatusError(err)}`,
+      });
+      console.error("Failed to start traffic source.", err);
+    }
   };
 
   const setTrafficVizKind = (kind: string) => {
@@ -248,6 +300,7 @@ export function createController(
   return {
     start,
     loadNetwork,
+    setTrafficSourceKind,
     setLayoutKind,
     setTrafficVizKind,
     clearSelection,

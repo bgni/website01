@@ -77,6 +77,9 @@ export const reduce = (state: State, action: Action): State => {
     case "resetTraffic": {
       return { ...state, traffic: [] };
     }
+    case "setTrafficSourceKind": {
+      return { ...state, trafficSourceKind: action.kind };
+    }
     case "setTrafficVizKind": {
       return { ...state, trafficVizKind: action.kind };
     }

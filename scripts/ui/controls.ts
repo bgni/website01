@@ -2,6 +2,7 @@ import type { State } from "../app/state.ts";
 
 type TrafficVizOption = { id: string; name: string };
 type NetworkOption = { id: string; name?: string };
+type TrafficSourceOption = { id: string; name: string };
 
 const clearChildren = (el: Element) => {
   while (el.firstChild) el.removeChild(el.firstChild);
@@ -11,20 +12,24 @@ export function createControls(
   {
     statusEl,
     networkSelect,
+    trafficSourceSelect,
     trafficVizSelect,
     layoutSelect,
     clearSelectionBtn,
     onNetworkSelected,
+    onTrafficSourceChanged,
     onLayoutChanged,
     onTrafficVizChanged,
     onClearSelection,
   }: {
     statusEl: HTMLElement;
     networkSelect: HTMLSelectElement;
+    trafficSourceSelect: HTMLSelectElement;
     trafficVizSelect: HTMLSelectElement;
     layoutSelect: HTMLSelectElement;
     clearSelectionBtn: HTMLButtonElement;
     onNetworkSelected: (networkId: string) => void;
+    onTrafficSourceChanged: (kind: string) => void;
     onLayoutChanged: (kind: string) => void;
     onTrafficVizChanged: (kind: string) => void;
     onClearSelection: () => void;
@@ -55,12 +60,26 @@ export function createControls(
     });
   };
 
+  const setTrafficSourceOptions = (options: TrafficSourceOption[]) => {
+    clearChildren(trafficSourceSelect);
+    options.forEach((o) => {
+      const opt = document.createElement("option");
+      opt.value = o.id;
+      opt.textContent = o.name;
+      trafficSourceSelect.appendChild(opt);
+    });
+  };
+
   const wire = () => {
     if (hasWired) return;
     hasWired = true;
 
     networkSelect.addEventListener("change", () => {
       onNetworkSelected(networkSelect.value);
+    });
+
+    trafficSourceSelect.addEventListener("change", () => {
+      onTrafficSourceChanged(trafficSourceSelect.value);
     });
 
     layoutSelect.addEventListener("change", () => {
@@ -87,6 +106,10 @@ export function createControls(
       networkSelect.value = state.networkId;
     }
 
+    if (trafficSourceSelect.value !== state.trafficSourceKind) {
+      trafficSourceSelect.value = state.trafficSourceKind;
+    }
+
     if (trafficVizSelect.value !== state.trafficVizKind) {
       trafficVizSelect.value = state.trafficVizKind;
     }
@@ -98,6 +121,7 @@ export function createControls(
   return {
     render,
     setTrafficVizOptions,
+    setTrafficSourceOptions,
     setNetworkOptions,
   };
 }

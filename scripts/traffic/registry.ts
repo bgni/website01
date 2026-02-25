@@ -15,6 +15,15 @@ export type TrafficConnectorKind =
   | "real"
   | "timeline";
 
+export const TRAFFIC_CONNECTOR_OPTIONS: Array<{ id: string; name: string }> = [
+  { id: "default", name: "Source: Default" },
+  { id: "flow", name: "Source: Flow" },
+  { id: "generated", name: "Source: Generated" },
+  { id: "static", name: "Source: Static" },
+  { id: "real", name: "Source: Real (poll)" },
+  { id: "timeline", name: "Source: Timeline" },
+];
+
 export type TrafficConnectorSpec = {
   kind: TrafficConnectorKind;
   configPath?: string;

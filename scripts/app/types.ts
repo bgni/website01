@@ -20,6 +20,7 @@ export type State = {
   connections: Connection[];
   traffic: TrafficUpdate[];
   deviceTypes: Record<string, DeviceType>;
+  trafficSourceKind: string;
   trafficVizKind: string;
   layoutKind: string;
 };

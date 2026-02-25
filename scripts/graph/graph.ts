@@ -37,6 +37,7 @@ export function createGraph(
     },
   ) => void;
   updateTraffic: (traffic?: TrafficUpdate[]) => void;
+  resetTraffic: () => void;
   destroy: () => void;
   setTrafficVisualization: (kind: string) => void;
   setLayout: (kind: string) => void;
@@ -114,6 +115,11 @@ export function createGraph(
     });
   };
 
+  const resetTraffic = () => {
+    for (const key of Object.keys(trafficById)) delete trafficById[key];
+    update(lastUpdateArgs);
+  };
+
   const update = (
     {
       filteredIds = new Set<string>(),
@@ -159,6 +165,7 @@ export function createGraph(
   return {
     update,
     updateTraffic,
+    resetTraffic,
     destroy,
     setTrafficVisualization,
     setLayout,

@@ -1,4 +1,5 @@
 import { TRAFFIC_VIZ_OPTIONS } from "../trafficFlowVisualization/registry.ts";
+import { TRAFFIC_CONNECTOR_OPTIONS } from "../traffic/registry.ts";
 import { LAYOUTS } from "../layouts/registry.ts";
 import { createController } from "./controller.ts";
 import { createStore, type State } from "./state.ts";
@@ -16,6 +17,7 @@ type PersistedUiSettingsV1 = {
   sortDir?: SortDir;
   pageSize?: number;
   trafficVizKind?: string;
+  trafficSourceKind?: string;
   layoutKind?: string;
 };
 
@@ -86,6 +88,12 @@ const loadPersistedUiSettings = (
       settings.trafficVizKind = obj.trafficVizKind;
     }
   }
+  if (typeof obj.trafficSourceKind === "string") {
+    const allowed = new Set(TRAFFIC_CONNECTOR_OPTIONS.map((o) => o.id));
+    if (allowed.has(obj.trafficSourceKind)) {
+      settings.trafficSourceKind = obj.trafficSourceKind;
+    }
+  }
   if (typeof obj.layoutKind === "string") {
     const allowed = new Set(LAYOUTS.map((o) => o.id));
     if (allowed.has(obj.layoutKind)) settings.layoutKind = obj.layoutKind;
@@ -104,6 +112,7 @@ const persistUiSettings = (storage: Storage | undefined, state: State) => {
     sortDir: state.sortDir,
     pageSize: state.pageSize,
     trafficVizKind: state.trafficVizKind,
+    trafficSourceKind: state.trafficSourceKind,
     layoutKind: state.layoutKind,
   };
   try {
@@ -139,6 +148,7 @@ export function bootstrap(doc: Document) {
     connections: [],
     traffic: [],
     deviceTypes: {},
+    trafficSourceKind: "default",
     trafficVizKind: "classic",
     layoutKind: "force",
     ...persistedSettings,
@@ -157,6 +167,10 @@ export function bootstrap(doc: Document) {
 
   const statusEl = mustGetById<HTMLElement>(doc, "status");
   const networkSelect = mustGetById<HTMLSelectElement>(doc, "networkSelect");
+  const trafficSourceSelect = mustGetById<HTMLSelectElement>(
+    doc,
+    "trafficSourceSelect",
+  );
   const trafficVizSelect = mustGetById<HTMLSelectElement>(
     doc,
     "trafficVizSelect",
@@ -177,15 +191,18 @@ export function bootstrap(doc: Document) {
   const controls = createControls({
     statusEl,
     networkSelect,
+    trafficSourceSelect,
     trafficVizSelect,
     layoutSelect,
     clearSelectionBtn: mustGetById<HTMLButtonElement>(doc, "clearSelection"),
     onNetworkSelected: (id) => controller.loadNetwork(id),
+    onTrafficSourceChanged: (kind) => controller.setTrafficSourceKind(kind),
     onLayoutChanged: (kind) => controller.setLayoutKind(kind),
     onTrafficVizChanged: (kind) => controller.setTrafficVizKind(kind),
     onClearSelection: () => controller.clearSelection(),
   });
   controls.setTrafficVizOptions(TRAFFIC_VIZ_OPTIONS);
+  controls.setTrafficSourceOptions(TRAFFIC_CONNECTOR_OPTIONS);
 
   const searchPanel = createSearchPanel({
     searchInput,
