@@ -3,24 +3,14 @@ import type {
   TrafficConnectorKind,
   TrafficConnectorSpec,
 } from "../traffic/registry.ts";
+import type {
+  TrafficConnectorPort,
+  TrafficGraphPort,
+  TrafficLoadPort,
+} from "./ports.ts";
 import type { Dispatch } from "./types.ts";
 
-type LoadJson = (path: string) => Promise<unknown>;
 type StopTraffic = () => void;
-type CreateTrafficConnectorFn = (
-  spec: TrafficConnectorSpec | null,
-  args: {
-    basePath: string;
-    trafficPath: string;
-    loadJson: LoadJson;
-  },
-) => Promise<{
-  start: (onUpdate: (payload: unknown) => void) => StopTraffic;
-}>;
-type ParseTrafficConnectorSpecFn = (
-  raw: unknown,
-) => TrafficConnectorSpec | null;
-type ParseTrafficUpdatesPayloadFn = (payload: unknown) => TrafficUpdate[];
 
 const isTrafficConnectorKind = (v: string): v is TrafficConnectorKind =>
   v === "flow" || v === "generated" || v === "static" || v === "real" ||
@@ -28,18 +18,14 @@ const isTrafficConnectorKind = (v: string): v is TrafficConnectorKind =>
 
 export type TrafficPaths = { basePath: string; trafficPath: string };
 
-type TrafficServiceDeps = {
-  dispatch: Dispatch;
-  loadJson: LoadJson;
-  doFetch?: typeof fetch;
-  formatStatusError: (err: unknown) => string;
-  onGraphResetTraffic: () => void;
-  onGraphUpdateTraffic: (updates: TrafficUpdate[]) => void;
-  onGraphRefreshFromState: () => void;
-  createTrafficConnectorFn: CreateTrafficConnectorFn;
-  parseTrafficConnectorSpecFn: ParseTrafficConnectorSpecFn;
-  parseTrafficUpdatesPayloadFn: ParseTrafficUpdatesPayloadFn;
-};
+type TrafficServiceDeps =
+  & {
+    dispatch: Dispatch;
+    formatStatusError: (err: unknown) => string;
+  }
+  & TrafficLoadPort
+  & TrafficGraphPort
+  & TrafficConnectorPort;
 
 export type TrafficService = {
   teardown: () => void;

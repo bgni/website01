@@ -15,9 +15,11 @@ import {
   stripManagedDeviceFields,
 } from "./customBuilderUtils.ts";
 import type {
-  CustomHistoryService,
-  CustomHistorySnapshot,
-} from "./historyService.ts";
+  BuilderGraphPort,
+  BuilderHistoryPort,
+  BuilderIdentityPort,
+  BuilderModePort,
+} from "./ports.ts";
 import type { Dispatch, State } from "./types.ts";
 
 export type BuilderStatsState = {
@@ -25,26 +27,18 @@ export type BuilderStatsState = {
   frequentDeviceTypeCounts: Record<string, number>;
 };
 
-type RefreshOptions = { selectedIds?: string[] };
-
-type BuilderServiceDeps = {
-  getState: () => State;
-  dispatch: Dispatch;
-  customNetworkId: string;
-  builderStats: BuilderStatsState;
-  nextUniqueId: (prefix: string, existing: Set<string>) => string;
-  getNodePositions: () => Map<string, { x: number; y: number }>;
-  getViewportCenter: () => { x: number; y: number } | null;
-  refreshCustomGraph: (
-    devices: NetworkDevice[],
-    connections: Connection[],
-    options?: RefreshOptions,
-  ) => void;
-  history: Pick<CustomHistoryService, "pushUndo" | "clear">;
-  createHistorySnapshot: (label: string) => CustomHistorySnapshot;
-  ensureBuilderMode: () => Promise<void>;
-  formatStatusError: (err: unknown) => string;
-};
+type BuilderServiceDeps =
+  & {
+    getState: () => State;
+    dispatch: Dispatch;
+    customNetworkId: string;
+    builderStats: BuilderStatsState;
+    formatStatusError: (err: unknown) => string;
+  }
+  & BuilderGraphPort
+  & BuilderHistoryPort
+  & BuilderIdentityPort
+  & BuilderModePort;
 
 export type BuilderService = {
   addCustomDevice: (deviceTypeSlug: string) => void;
