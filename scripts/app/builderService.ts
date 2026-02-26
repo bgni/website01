@@ -14,6 +14,10 @@ import {
   pruneConnectionsForDeviceType,
   stripManagedDeviceFields,
 } from "./customBuilderUtils.ts";
+import type {
+  CustomHistoryService,
+  CustomHistorySnapshot,
+} from "./historyService.ts";
 import type { Dispatch, State } from "./types.ts";
 
 export type BuilderStatsState = {
@@ -36,8 +40,8 @@ type BuilderServiceDeps = {
     connections: Connection[],
     options?: RefreshOptions,
   ) => void;
-  pushCustomUndoSnapshot: (label: string) => void;
-  clearCustomUndo: () => void;
+  history: Pick<CustomHistoryService, "pushUndo" | "clear">;
+  createHistorySnapshot: (label: string) => CustomHistorySnapshot;
   ensureBuilderMode: () => Promise<void>;
   formatStatusError: (err: unknown) => string;
 };
@@ -76,6 +80,10 @@ export type BuilderService = {
 export const createBuilderService = (
   deps: BuilderServiceDeps,
 ): BuilderService => {
+  const pushHistorySnapshot = (label: string) => {
+    deps.history.pushUndo(deps.createHistorySnapshot(label));
+  };
+
   const requireCustomMode = (): State | null => {
     const state = deps.getState();
     if (state.networkId === deps.customNetworkId) return state;
@@ -153,7 +161,7 @@ export const createBuilderService = (
     deps.builderStats.frequentDeviceTypeCounts =
       tracked.frequentDeviceTypeCounts;
 
-    deps.pushCustomUndoSnapshot("add device");
+    pushHistorySnapshot("add device");
     const nextDevices = [...state.devices, device];
 
     let nextConnections = state.connections;
@@ -238,7 +246,7 @@ export const createBuilderService = (
       y: position.y,
     };
 
-    deps.pushCustomUndoSnapshot("add container");
+    pushHistorySnapshot("add container");
     deps.refreshCustomGraph([...state.devices, container], state.connections, {
       selectedIds: [containerId],
     });
@@ -279,7 +287,7 @@ export const createBuilderService = (
 
     if ((device.containerId as string | undefined) === nextContainerId) return;
 
-    deps.pushCustomUndoSnapshot("assign to container");
+    pushHistorySnapshot("assign to container");
     const nextDevices = state.devices.map((entry) =>
       entry.id === deviceId
         ? {
@@ -351,7 +359,7 @@ export const createBuilderService = (
     const connectionIds = new Set(state.connections.map((c) => c.id));
     const connectionId = deps.nextUniqueId("custom-connection", connectionIds);
 
-    deps.pushCustomUndoSnapshot("connect devices");
+    pushHistorySnapshot("connect devices");
     const nextConnections: Connection[] = [
       ...state.connections,
       {
@@ -404,7 +412,7 @@ export const createBuilderService = (
       return;
     }
 
-    deps.pushCustomUndoSnapshot("delete connection");
+    pushHistorySnapshot("delete connection");
     const removeIds = new Set(toRemove.map((connection) => connection.id));
     const nextConnections = state.connections.filter((connection) =>
       !removeIds.has(connection.id)
@@ -441,7 +449,7 @@ export const createBuilderService = (
 
     if (existing.name === trimmed) return;
 
-    deps.pushCustomUndoSnapshot("rename device");
+    pushHistorySnapshot("rename device");
     const nextDevices = state.devices.map((device) =>
       device.id === deviceId ? { ...device, name: trimmed } : device
     );
@@ -504,7 +512,7 @@ export const createBuilderService = (
       deviceTypes: state.deviceTypes,
     });
 
-    deps.pushCustomUndoSnapshot("change device type");
+    pushHistorySnapshot("change device type");
     deps.refreshCustomGraph(nextDevices, nextConnections, {
       selectedIds: [deviceId],
     });
@@ -576,7 +584,7 @@ export const createBuilderService = (
       };
     });
 
-    deps.pushCustomUndoSnapshot("update device properties");
+    pushHistorySnapshot("update device properties");
     deps.refreshCustomGraph(nextDevices, state.connections, {
       selectedIds: [deviceId],
     });
@@ -601,7 +609,7 @@ export const createBuilderService = (
       connection.from.deviceId === deviceId ||
       connection.to.deviceId === deviceId
     );
-    deps.pushCustomUndoSnapshot("delete device");
+    pushHistorySnapshot("delete device");
     const nextConnections = state.connections.filter((connection) =>
       connection.from.deviceId !== deviceId &&
       connection.to.deviceId !== deviceId
@@ -629,7 +637,7 @@ export const createBuilderService = (
     try {
       const state = deps.getState();
       const parsed = parseImportPayload(text, state.deviceTypes);
-      deps.clearCustomUndo();
+      deps.history.clear();
       deps.refreshCustomGraph(parsed.devices, parsed.connections);
       deps.dispatch({
         type: "setStatusText",

@@ -1,4 +1,5 @@
 import type { Connection, NetworkDevice } from "../domain/types.ts";
+import type { CustomHistorySnapshot } from "./historyService.ts";
 
 export type BuilderGraphPort = {
   getNodePositions: () => Map<string, { x: number; y: number }>;
@@ -11,8 +12,11 @@ export type BuilderGraphPort = {
 };
 
 export type BuilderHistoryPort = {
-  pushCustomUndoSnapshot: (label: string) => void;
-  clearCustomUndo: () => void;
+  history: {
+    pushUndo: (snapshot: CustomHistorySnapshot) => void;
+    clear: () => void;
+  };
+  createHistorySnapshot: (label: string) => CustomHistorySnapshot;
 };
 
 export type BuilderIdentityPort = {

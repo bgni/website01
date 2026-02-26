@@ -53,8 +53,12 @@ Deno.test("builderService: blocks edits outside custom mode", () => {
     refreshCustomGraph: () => {
       refreshCalls += 1;
     },
-    pushCustomUndoSnapshot: () => {},
-    clearCustomUndo: () => {},
+    history: { pushUndo: () => {}, clear: () => {} },
+    createHistorySnapshot: (label) => ({
+      devices: [],
+      connections: [],
+      label,
+    }),
     ensureBuilderMode: async () => {},
     formatStatusError: (err) => String(err),
   });
@@ -87,8 +91,12 @@ Deno.test("builderService: rejects unknown device type slug", () => {
     getNodePositions: () => new Map(),
     getViewportCenter: () => ({ x: 100, y: 100 }),
     refreshCustomGraph: () => {},
-    pushCustomUndoSnapshot: () => {},
-    clearCustomUndo: () => {},
+    history: { pushUndo: () => {}, clear: () => {} },
+    createHistorySnapshot: (label) => ({
+      devices: [],
+      connections: [],
+      label,
+    }),
     ensureBuilderMode: async () => {},
     formatStatusError: (err) => String(err),
   });
@@ -134,10 +142,17 @@ Deno.test("builderService: adds custom device and updates recents/frequents", ()
         selectedIds: options?.selectedIds,
       });
     },
-    pushCustomUndoSnapshot: (label) => {
-      undoLabel = label;
+    history: {
+      pushUndo: (snapshot) => {
+        undoLabel = snapshot.label;
+      },
+      clear: () => {},
     },
-    clearCustomUndo: () => {},
+    createHistorySnapshot: (label) => ({
+      devices: [],
+      connections: [],
+      label,
+    }),
     ensureBuilderMode: async () => {},
     formatStatusError: (err) => String(err),
   });
@@ -198,10 +213,17 @@ const mkStatefulHarness = (initial: State) => {
         selected: new Set(options?.selectedIds ?? Array.from(state.selected)),
       };
     },
-    pushCustomUndoSnapshot: (label) => undoLabels.push(label),
-    clearCustomUndo: () => {
-      undoLabels.length = 0;
+    history: {
+      pushUndo: (snapshot) => undoLabels.push(snapshot.label),
+      clear: () => {
+        undoLabels.length = 0;
+      },
     },
+    createHistorySnapshot: (label) => ({
+      devices: [],
+      connections: [],
+      label,
+    }),
     ensureBuilderMode: () => {
       state = {
         ...state,

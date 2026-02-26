@@ -220,15 +220,13 @@ export function createController(
       return withPosition(device, stored);
     });
 
-  const pushCustomUndoSnapshot = (label: string) => {
+  const createHistorySnapshot = (label: string) => {
     const state = store.getState();
-    if (state.networkId !== CUSTOM_NETWORK_ID) return;
-
-    customHistory.pushUndo({
+    return {
       devices: cloneDevices(state.devices),
       connections: cloneConnections(state.connections),
       label,
-    });
+    };
   };
 
   const clearCustomUndo = () => {
@@ -327,8 +325,8 @@ export function createController(
     getNodePositions: () => graph?.getNodePositions() ?? new Map(),
     getViewportCenter: () => graph?.getViewportCenter() ?? null,
     refreshCustomGraph,
-    pushCustomUndoSnapshot,
-    clearCustomUndo,
+    history: customHistory,
+    createHistorySnapshot,
     ensureBuilderMode: async () => {
       await loadNetwork(CUSTOM_NETWORK_ID);
     },
