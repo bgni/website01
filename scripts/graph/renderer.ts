@@ -21,6 +21,8 @@ const NODE_COLLIDE_RADIUS = Math.max(NODE_HALF_WIDTH, NODE_HALF_HEIGHT) + 16;
 const GROUP_MIN_WIDTH = 180;
 const GROUP_MIN_HEIGHT = 120;
 const MIDDLE_PAN_DEBUG_STORAGE_KEY = "networkMap.debugMiddlePan";
+const MIN_CANVAS_WIDTH = 760;
+const MIN_CANVAS_HEIGHT = 480;
 
 const normalizeContainerId = (value: unknown): string =>
   typeof value === "string" ? value.trim() : "";
@@ -829,6 +831,111 @@ export function createGraphRenderer(
       const fy = Number(node.fy);
       if (Number.isFinite(fy)) node.fy = fy + dy;
     }
+  };
+
+  const getMinimumCanvasSize = (): { width: number; height: number } => {
+    let minX = Number.POSITIVE_INFINITY;
+    let maxX = Number.NEGATIVE_INFINITY;
+    let minY = Number.POSITIVE_INFINITY;
+    let maxY = Number.NEGATIVE_INFINITY;
+
+    const includeBounds = (
+      left: number,
+      right: number,
+      top: number,
+      bottom: number,
+    ) => {
+      if (
+        !Number.isFinite(left) || !Number.isFinite(right) ||
+        !Number.isFinite(top) || !Number.isFinite(bottom)
+      ) {
+        return;
+      }
+      minX = Math.min(minX, left);
+      maxX = Math.max(maxX, right);
+      minY = Math.min(minY, top);
+      maxY = Math.max(maxY, bottom);
+    };
+
+    for (const node of deviceNodes) {
+      const x = Number(node.x);
+      const y = Number(node.y);
+      if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+      includeBounds(
+        x - NODE_HALF_WIDTH,
+        x + NODE_HALF_WIDTH,
+        y - NODE_HALF_HEIGHT,
+        y + Math.max(
+          NODE_HALF_HEIGHT,
+          displaySettings.labelMargin + displaySettings.labelTextSize + 12,
+        ),
+      );
+    }
+
+    for (const node of containerNodes) {
+      const x = Number(node.x);
+      const y = Number(node.y);
+      if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+      const halfWidth = getContainerWidth(node) / 2;
+      const halfHeight = getContainerHeight(node) / 2;
+      includeBounds(
+        x - halfWidth,
+        x + halfWidth,
+        y - halfHeight,
+        y + halfHeight,
+      );
+    }
+
+    if (
+      !Number.isFinite(minX) || !Number.isFinite(maxX) ||
+      !Number.isFinite(minY) || !Number.isFinite(maxY)
+    ) {
+      return {
+        width: GRAPH_DEFAULTS.width,
+        height: GRAPH_DEFAULTS.height,
+      };
+    }
+
+    const horizontalPadding = Math.max(
+      96,
+      GRAPH_DEFAULTS.node.boundsPadding + NODE_HALF_WIDTH + 28,
+    );
+    const topPadding = 72;
+    const bottomPadding = Math.max(
+      88,
+      displaySettings.labelMargin + displaySettings.labelTextSize + 28,
+    );
+    const estimatedNodeCount = Math.max(
+      1,
+      deviceNodes.length + containerNodes.length * 2,
+    );
+    const estimatedColumns = Math.max(
+      1,
+      Math.ceil(Math.sqrt(estimatedNodeCount * 1.8)),
+    );
+    const estimatedRows = Math.max(
+      1,
+      Math.ceil(estimatedNodeCount / estimatedColumns),
+    );
+    const estimatedWidth = Math.ceil(
+      estimatedColumns * (NODE_CARD_WIDTH + 88) + horizontalPadding * 2,
+    );
+    const estimatedHeight = Math.ceil(
+      estimatedRows * (NODE_CARD_HEIGHT + 120) + topPadding + bottomPadding,
+    );
+
+    return {
+      width: Math.max(
+        MIN_CANVAS_WIDTH,
+        estimatedWidth,
+        Math.ceil(maxX - minX + horizontalPadding * 2),
+      ),
+      height: Math.max(
+        MIN_CANVAS_HEIGHT,
+        estimatedHeight,
+        Math.ceil(maxY - minY + topPadding + bottomPadding),
+      ),
+    };
   };
 
   const layoutContainerMembers = (containerNode: SimNode) => {
@@ -1743,8 +1850,11 @@ export function createGraphRenderer(
   simulation.on("tick", renderPositions);
 
   const resize = (next: { width: number; height: number }) => {
-    const w = Math.max(1, Math.floor(Number(next?.width) || 0));
-    const h = Math.max(1, Math.floor(Number(next?.height) || 0));
+    const requestedWidth = Math.max(1, Math.floor(Number(next?.width) || 0));
+    const requestedHeight = Math.max(1, Math.floor(Number(next?.height) || 0));
+    const minimumCanvasSize = getMinimumCanvasSize();
+    const w = Math.max(requestedWidth, minimumCanvasSize.width);
+    const h = Math.max(requestedHeight, minimumCanvasSize.height);
     if (!w || !h) return;
 
     width = w;

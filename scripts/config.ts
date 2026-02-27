@@ -51,9 +51,9 @@ export const GRAPH_DEFAULTS = {
   },
 
   label: {
-    fontSize: 11,
+    fontSize: 12,
     dy: 0,
-    yOffset: 24,
+    yOffset: 36,
   },
 
   guides: {

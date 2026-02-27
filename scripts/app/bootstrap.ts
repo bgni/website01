@@ -41,6 +41,8 @@ const LABEL_TEXT_SIZE_MIN = 9;
 const LABEL_TEXT_SIZE_MAX = 24;
 const LABEL_MARGIN_MIN = 8;
 const LABEL_MARGIN_MAX = 52;
+const LEGACY_LABEL_TEXT_SIZE_DEFAULT = 11;
+const LEGACY_LABEL_MARGIN_DEFAULT = 24;
 
 type DisplaySettingsState = {
   edgeOpacity: number;
@@ -53,6 +55,12 @@ type PersistedPanelWidthsV1 = {
   left?: number;
   right?: number;
 };
+
+const getDefaultLabelMargin = (labelTextSize: number): number =>
+  Math.max(
+    LABEL_MARGIN_MIN,
+    Math.min(LABEL_MARGIN_MAX, Math.round(labelTextSize * 3)),
+  );
 
 const getLocalStorage = (doc: Document): Storage | undefined => {
   try {
@@ -162,6 +170,13 @@ const loadPersistedUiSettings = (
       LABEL_MARGIN_MIN,
       Math.min(LABEL_MARGIN_MAX, obj.labelMargin),
     );
+  }
+  if (
+    displaySettings.labelTextSize === LEGACY_LABEL_TEXT_SIZE_DEFAULT &&
+    displaySettings.labelMargin === LEGACY_LABEL_MARGIN_DEFAULT
+  ) {
+    delete displaySettings.labelTextSize;
+    delete displaySettings.labelMargin;
   }
 
   return {
@@ -398,7 +413,10 @@ export function bootstrap(doc: Document) {
     labelTextSize: persistedDisplaySettings?.labelTextSize ??
       GRAPH_DEFAULTS.label.fontSize,
     labelMargin: persistedDisplaySettings?.labelMargin ??
-      GRAPH_DEFAULTS.label.yOffset,
+      getDefaultLabelMargin(
+        persistedDisplaySettings?.labelTextSize ??
+          GRAPH_DEFAULTS.label.fontSize,
+      ),
   };
 
   const restoreSelection = (ids: string[]) => {
@@ -878,12 +896,25 @@ export function bootstrap(doc: Document) {
   labelTextSizeInput.addEventListener("input", () => {
     const raw = Number(labelTextSizeInput.value);
     if (!Number.isFinite(raw) || raw <= 0) return;
+    const previousLabelTextSize = displaySettings.labelTextSize;
+    const previousDefaultLabelMargin = getDefaultLabelMargin(
+      previousLabelTextSize,
+    );
+    const shouldFollowDefaultLabelMargin =
+      displaySettings.labelMargin === previousDefaultLabelMargin ||
+      displaySettings.labelMargin === GRAPH_DEFAULTS.label.yOffset ||
+      displaySettings.labelMargin === LEGACY_LABEL_MARGIN_DEFAULT;
     displaySettings.labelTextSize = Math.round(
       Math.max(
         LABEL_TEXT_SIZE_MIN,
         Math.min(LABEL_TEXT_SIZE_MAX, raw),
       ),
     );
+    if (shouldFollowDefaultLabelMargin) {
+      displaySettings.labelMargin = getDefaultLabelMargin(
+        displaySettings.labelTextSize,
+      );
+    }
     renderDisplaySettings();
     controller.setDisplaySettings(displaySettings);
     persistCurrentUiSettings();

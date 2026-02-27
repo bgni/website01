@@ -183,7 +183,7 @@ button:disabled {
   shape-rendering: geometricPrecision;
 }
 .device-node-card-image {
-  image-rendering: -webkit-optimize-contrast;
+  image-rendering: auto;
 }
 .device-node-hitbox {
   cursor: move;
@@ -257,7 +257,8 @@ button:disabled {
   order: 2;
 }
 
-.graph-overlay.is-hidden {
+.graph-overlay.is-hidden,
+.graph-overlay.left.builder-overlay.is-hidden {
   display: none;
 }
 

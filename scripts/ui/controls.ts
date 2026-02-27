@@ -39,6 +39,42 @@ const clearChildren = (el: Element) => {
   while (el.firstChild) el.removeChild(el.firstChild);
 };
 
+const buildBuilderOptionSignature = (options: BuilderDeviceOption[]): string =>
+  options.map((option) =>
+    [
+      option.slug,
+      option.label,
+      option.groupId,
+      option.groupLabel,
+      option.portSummary,
+      option.kindLabel,
+      option.modelLabel ?? "",
+      option.thumbPng ?? "",
+      option.thumbJpg ?? "",
+      option.portTypes.join("|"),
+    ].join("\u001f")
+  ).join("\u001e");
+
+const buildShortlistSignature = (
+  kinds: BuilderShortlistKindOption[],
+): string =>
+  kinds.map((kind) =>
+    [
+      String(kind.kindId),
+      kind.kindLabel,
+      kind.selectedSlug,
+      kind.choices.map((choice) =>
+        [
+          choice.slug,
+          choice.label,
+          choice.portSummary,
+          choice.thumbPng ?? "",
+          choice.thumbJpg ?? "",
+        ].join("\u001f")
+      ).join("\u001d"),
+    ].join("\u001f")
+  ).join("\u001e");
+
 export function createControls(
   {
     statusEl,
@@ -142,6 +178,8 @@ export function createControls(
   let lastViewedNetworkId = "";
   let builderDeviceTypeOptions: BuilderDeviceOption[] = [];
   let builderShortlistKinds: BuilderShortlistKindOption[] = [];
+  let builderDeviceTypeOptionsSignature = "";
+  let builderShortlistKindsSignature = "";
   let builderFiltersOpen = false;
   const selectedTypeFilters = new Set<string>();
   const selectedPortFilters = new Set<string>();
@@ -435,7 +473,10 @@ export function createControls(
   };
 
   const setBuilderDeviceTypeOptions = (options: BuilderDeviceOption[]) => {
+    const nextSignature = buildBuilderOptionSignature(options);
     builderDeviceTypeOptions = options;
+    if (nextSignature === builderDeviceTypeOptionsSignature) return;
+    builderDeviceTypeOptionsSignature = nextSignature;
 
     const typeFilterValues = Array.from(
       new Set(
@@ -490,7 +531,10 @@ export function createControls(
   };
 
   const setBuilderShortlistKinds = (kinds: BuilderShortlistKindOption[]) => {
+    const nextSignature = buildShortlistSignature(kinds);
     builderShortlistKinds = kinds;
+    if (nextSignature === builderShortlistKindsSignature) return;
+    builderShortlistKindsSignature = nextSignature;
     renderShortlistPanel();
   };
 
