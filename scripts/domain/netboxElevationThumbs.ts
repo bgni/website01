@@ -1,6 +1,7 @@
 import { FixtureValidationError } from "./errors.ts";
+import { NETBOX_ELEVATION_FORMAT_BY_SLUG } from "./netboxElevationAvailability.ts";
 
-type ThumbPaths = { thumbPng: string; thumbJpg: string };
+type ThumbPaths = { thumbPng?: string; thumbJpg?: string };
 
 const slugToFileBase = (mfg: string, modelFileBase: string): string => {
   return `${String(mfg).toLowerCase()}-${String(modelFileBase).toLowerCase()}`
@@ -39,7 +40,16 @@ export const computeNetboxElevationThumbs = (
   const fileBase = slugToFileBase(mfg, modelFileBase);
   if (!fileBase) return undefined;
 
+  const availableFormat = NETBOX_ELEVATION_FORMAT_BY_SLUG[slug];
+  if (!availableFormat) return undefined;
+
   const base =
     `vendor/netbox-devicetype-library/elevation-images/${mfg}/${fileBase}.front`;
+  if (availableFormat === "png") {
+    return { thumbPng: `${base}.png` };
+  }
+  if (availableFormat === "jpg") {
+    return { thumbJpg: `${base}.jpg` };
+  }
   return { thumbPng: `${base}.png`, thumbJpg: `${base}.jpg` };
 };

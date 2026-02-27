@@ -65,7 +65,7 @@ export function applyDotLayout(
   const paddingBottom = 24;
   const paddingX = 28;
   const maxSpan = 1240;
-  const nodeGap = 72;
+  const nodeGap = 136;
 
   const byId = new Map(nodes.map((n) => [n.id, n]));
   const nodeIds = nodes.map((n) => n.id);

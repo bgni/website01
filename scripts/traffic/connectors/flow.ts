@@ -24,13 +24,19 @@ export function createFlowTrafficConnector({
   config,
   connections,
   connectionTypes,
+  speedMultiplier = 1,
 }: {
   config: unknown;
   connections: unknown;
   connectionTypes?: unknown;
+  speedMultiplier?: number;
 }) {
   if (!isObject(config)) throw new Error("config is required");
   if (!Array.isArray(connections)) throw new Error("connections is required");
+  const normalizedSpeed =
+    Number.isFinite(speedMultiplier) && speedMultiplier > 0
+      ? speedMultiplier
+      : 1;
 
   const cfg = config as Record<string, unknown>;
   const connTypes = isObject(connectionTypes)
@@ -195,7 +201,8 @@ export function createFlowTrafficConnector({
       let eventIdx = 0;
 
       const tick = () => {
-        const elapsedSec = (performance.now() - start) / 1000;
+        const elapsedSec = ((performance.now() - start) / 1000) *
+          normalizedSpeed;
 
         // Apply scheduled flow events.
         while (
@@ -218,7 +225,10 @@ export function createFlowTrafficConnector({
         emitDiff({ totals, touched });
       };
 
-      const timer = setInterval(tick, Math.max(100, tickSeconds * 1000));
+      const timer = setInterval(
+        tick,
+        Math.max(100, (tickSeconds * 1000) / normalizedSpeed),
+      );
       return () => clearInterval(timer);
     },
   };

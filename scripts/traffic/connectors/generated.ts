@@ -13,8 +13,13 @@ import { clamp, isObject } from "../util.ts";
 // }
 export function createGeneratedTrafficConnector({
   config,
-}: { config: unknown }) {
+  speedMultiplier = 1,
+}: { config: unknown; speedMultiplier?: number }) {
   if (!isObject(config)) throw new Error("config is required");
+  const normalizedSpeed =
+    Number.isFinite(speedMultiplier) && speedMultiplier > 0
+      ? speedMultiplier
+      : 1;
 
   const cfg = config as Record<string, unknown>;
 
@@ -52,7 +57,8 @@ export function createGeneratedTrafficConnector({
       let eventIdx = 0;
 
       const tick = () => {
-        const elapsedSec = (performance.now() - start) / 1000;
+        const elapsedSec = ((performance.now() - start) / 1000) *
+          normalizedSpeed;
         const batch = [];
 
         // Apply scheduled events.
@@ -168,7 +174,10 @@ export function createGeneratedTrafficConnector({
         if (batch.length) onUpdate(batch);
       };
 
-      const timer = setInterval(tick, Math.max(100, tickSeconds * 1000));
+      const timer = setInterval(
+        tick,
+        Math.max(100, (tickSeconds * 1000) / normalizedSpeed),
+      );
       return () => clearInterval(timer);
     },
   };

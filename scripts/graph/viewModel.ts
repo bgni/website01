@@ -77,12 +77,13 @@ export const buildRendererUpdateArgs = (
         : 0.25;
     },
     afterLinkStyle: trafficAdapter.afterLinkStyle
-      ? () => {
+      ? (edgeOpacityMultiplier: number) => {
         trafficAdapter.afterLinkStyle?.({
           highlightedLinks,
           hasSelection,
           filteredSet,
           selected,
+          edgeOpacityMultiplier,
         });
       }
       : undefined,

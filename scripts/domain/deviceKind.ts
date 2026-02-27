@@ -13,13 +13,27 @@ export type DeviceKind =
 
 const norm = (s: string): string => s.trim().toLowerCase();
 
+const hasAccessPointToken = (text: string): boolean => {
+  if (
+    text.includes("access point") ||
+    text.includes("wireless access point") ||
+    text.includes("wireless ap") ||
+    text.includes("wifi")
+  ) {
+    return true;
+  }
+  // Match stand-alone `ap`/`wap` tokens in slugs or role labels such as:
+  // `ap/u6-lr`, `role=ap`, `wap-1`.
+  return /(^|[^a-z0-9])(ap|wap)([^a-z0-9]|$)/.test(text);
+};
+
 // Domain-boundary heuristic: infer a coarse device kind from the free-form
 // `type`/`role` string in fixtures.
 export const inferDeviceKindFromType = (type: string): DeviceKind => {
   const t = norm(type);
 
   // Keep access points distinct from access-layer switches.
-  if (t.includes("access point") || t === "ap" || t.includes("wifi")) {
+  if (hasAccessPointToken(t)) {
     return DEVICE_KIND_ACCESS_POINT;
   }
 

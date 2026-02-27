@@ -67,14 +67,21 @@ export function createTrafficAdapter(
   {
     kind,
     getTraffic,
+    speedMultiplier = 1,
   }: {
     kind: string;
     getTraffic: (connectionId: string) => TrafficUpdate | undefined;
+    speedMultiplier?: number;
   },
 ) {
+  let currentSpeedMultiplier = Number.isFinite(speedMultiplier) &&
+      speedMultiplier > 0
+    ? speedMultiplier
+    : 1;
   const helpers: TrafficVizHelpers = {
     trafficColor,
     trafficWidthRate: trafficWidth,
+    flowSpeedMultiplier: () => currentSpeedMultiplier,
   };
 
   let trafficViz: TrafficViz = createTrafficFlowVisualization(
@@ -113,10 +120,16 @@ export function createTrafficAdapter(
     attach(mount);
   };
 
+  const setSpeedMultiplier = (next: number) => {
+    if (!Number.isFinite(next) || next <= 0) return;
+    currentSpeedMultiplier = next;
+  };
+
   return {
     attach,
     destroy,
     setKind,
+    setSpeedMultiplier,
     // NOTE: these must delegate to the *current* trafficViz.
     // Binding once would pin them to the initial instance and make
     // runtime switching appear to "do nothing".

@@ -18,6 +18,7 @@ type CustomTopologyEnvelopeV1 = {
 type CustomTopologyPersistedV1 = CustomTopologyEnvelopeV1 & {
   recentDeviceTypeSlugs: string[];
   frequentDeviceTypeCounts: Record<string, number>;
+  shortlistByKind: Record<string, string>;
 };
 
 type Rec = Record<string, unknown>;
@@ -27,6 +28,7 @@ export type LoadedCustomTopology = {
   connections: Connection[];
   recentDeviceTypeSlugs: string[];
   frequentDeviceTypeCounts: Record<string, number>;
+  shortlistByKind: Record<string, string>;
 };
 
 export const CUSTOM_NETWORK_ID = "custom-local";
@@ -40,6 +42,7 @@ const emptyTopology = (): LoadedCustomTopology => ({
   connections: [],
   recentDeviceTypeSlugs: [],
   frequentDeviceTypeCounts: {},
+  shortlistByKind: {},
 });
 
 const normalizeRecent = (v: unknown): string[] => {
@@ -69,10 +72,47 @@ const normalizeFrequent = (v: unknown): Record<string, number> => {
   return out;
 };
 
+const normalizeShortlistByKind = (v: unknown): Record<string, string> => {
+  if (!isRecord(v)) return {};
+  const out: Record<string, string> = {};
+  Object.entries(v).forEach(([kindId, slugValue]) => {
+    const kindKey = kindId.trim();
+    if (!kindKey) return;
+    const slug = typeof slugValue === "string" ? slugValue.trim() : "";
+    if (!slug) return;
+    out[kindKey] = slug;
+  });
+  return out;
+};
+
+const connectionsNeedLegacyPortCleanup = (raw: unknown): boolean => {
+  if (!Array.isArray(raw)) return false;
+  return raw.some((item) => {
+    if (!isRecord(item)) return false;
+    const rec = item as Rec;
+    return [rec.from, rec.to].some((end) => {
+      if (!isRecord(end)) return false;
+      const endRec = end as Rec;
+      const interfaceId = typeof endRec.interfaceId === "string"
+        ? endRec.interfaceId.trim()
+        : "";
+      const portId = typeof endRec.portId === "string" ? endRec.portId.trim() : "";
+      if (!portId) return false;
+      if (!interfaceId) return true;
+      return interfaceId !== portId;
+    });
+  });
+};
+
 const parseAndValidateTopology = (
   raw: unknown,
   deviceTypes: Record<string, DeviceType>,
   ctx: string,
+  {
+    allowLegacyPortIdMismatch = false,
+  }: {
+    allowLegacyPortIdMismatch?: boolean;
+  } = {},
 ): { devices: NetworkDevice[]; connections: Connection[] } => {
   if (!isRecord(raw)) {
     throw new Error(`${ctx} must be an object with devices/connections`);
@@ -82,6 +122,7 @@ const parseAndValidateTopology = (
   const connections = parseConnectionsFixture(
     raw.connections ?? [],
     `${ctx}.connections`,
+    { allowLegacyPortIdMismatch },
   );
   const normalizedConnections = normalizeLegacyInterfaceIds({
     devices,
@@ -120,7 +161,20 @@ export const loadCustomTopology = (
       parsed,
       deviceTypes,
       "customTopology",
+      { allowLegacyPortIdMismatch: true },
     );
+
+    if (connectionsNeedLegacyPortCleanup(parsed.connections)) {
+      saveCustomTopology(storage, {
+        devices,
+        connections,
+        recentDeviceTypeSlugs: normalizeRecent(parsed.recentDeviceTypeSlugs),
+        frequentDeviceTypeCounts: normalizeFrequent(
+          parsed.frequentDeviceTypeCounts,
+        ),
+        shortlistByKind: normalizeShortlistByKind(parsed.shortlistByKind),
+      });
+    }
 
     return {
       devices,
@@ -129,6 +183,7 @@ export const loadCustomTopology = (
       frequentDeviceTypeCounts: normalizeFrequent(
         parsed.frequentDeviceTypeCounts,
       ),
+      shortlistByKind: normalizeShortlistByKind(parsed.shortlistByKind),
     };
   } catch (err) {
     console.warn("Failed to load custom topology from storage.", err);
@@ -143,6 +198,7 @@ export const saveCustomTopology = (
     connections: Connection[];
     recentDeviceTypeSlugs: string[];
     frequentDeviceTypeCounts: Record<string, number>;
+    shortlistByKind: Record<string, string>;
   },
 ): void => {
   if (!storage) return;
@@ -153,6 +209,7 @@ export const saveCustomTopology = (
     connections: topology.connections,
     recentDeviceTypeSlugs: topology.recentDeviceTypeSlugs,
     frequentDeviceTypeCounts: topology.frequentDeviceTypeCounts,
+    shortlistByKind: topology.shortlistByKind,
     updatedAt: new Date().toISOString(),
   };
 

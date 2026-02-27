@@ -10,8 +10,8 @@ export const GRAPH_DEFAULTS = {
   transitionMs: 220,
 
   link: {
-    defaultWidth: 1.4,
-    defaultOpacity: 0.6,
+    defaultWidth: 1.8,
+    defaultOpacity: 0.75,
     fanoutPx: 2.4,
     force: {
       distance: 130,

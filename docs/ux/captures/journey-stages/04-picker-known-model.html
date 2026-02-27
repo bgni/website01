@@ -1,0 +1,136 @@
+<!DOCTYPE html><html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Device Inventory</title>
+    <link rel="stylesheet" href="file:///home/bn/src/website01/styles.css">
+    
+  <style>
+.stage-caption {
+  position: fixed;
+  right: 20px;
+  top: 20px;
+  max-width: 420px;
+  z-index: 10000;
+  background: rgba(4, 15, 40, 0.92);
+  border: 1px solid rgba(96, 165, 250, 0.35);
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: #dbeafe;
+  font: 500 13px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.stage-caption h2 {
+  margin: 0 0 6px 0;
+  font-size: 14px;
+  color: #eff6ff;
+}
+
+.stage-caption p {
+  margin: 0;
+}
+
+.next-action {
+  outline: 2px solid #34d399;
+  box-shadow: 0 0 0 4px rgba(52, 211, 153, 0.24);
+}
+
+#addDeviceType.picker-open-preview {
+  min-height: 230px;
+}
+</style></head>
+  <body>
+    <main class="layout">
+      <section class="panel graph-panel">
+        <div class="graph-stage">
+          <svg id="graph" viewBox="0 0 1200 720" aria-label="Network topology">
+          </svg>
+
+          <div class="graph-overlay top-left">
+            <div class="overlay-row">
+              <select id="networkSelect" aria-label="Select network"><option value="small-office">Small Office (flat star) (small-office)</option><option value="custom-local">Custom (local) (custom-local)</option></select>
+              <select id="trafficSourceSelect" aria-label="Traffic source"><option value="default">Default</option></select>
+              <select id="trafficVizSelect" aria-label="Traffic visualization"><option value="classic">Classic (width=rate, color=util)</option></select>
+              <select id="layoutSelect" aria-label="Layout">
+                <option value="force">Force</option>
+                <option value="tiered">Layered</option>
+                <option value="tiered-xmin">Layered (cross-min)</option>
+                <option value="dot">DOT (Sugiyama)</option>
+              </select>
+            </div>
+
+            <div class="overlay-row builder-row">
+              <button id="createEdit" type="button" class="is-active">Create/Edit</button>
+              <input id="addDeviceTypeSearch" type="search" placeholder="Search device types…" aria-label="Search device types" aria-hidden="false">
+              <select id="addDeviceType" aria-label="Device type for quick add" aria-hidden="false" size="6" class="picker-open-preview"><optgroup label="Popular Switches (Top 10)"><option value="switch/cisco-c9300-48t">Cisco C9300-48T</option><option value="switch/ubnt-usw-48">Ubiquiti USW-48</option><option value="switch/arista-7050sx3-48yc8">Arista 7050SX3-48YC8</option><option value="switch/dell-n1548">Dell N1548</option></optgroup><optgroup label="Popular Routers (Top 10)"><option value="router/juniper-mx204">Juniper MX204</option></optgroup><optgroup label="Popular Servers (Top 10)"><option value="server/dell-r740">Dell PowerEdge R740</option></optgroup></select>
+              <button id="addDevice" type="button" aria-hidden="false">Add device</button>
+              <button id="undoCustom" type="button" aria-hidden="false" disabled="">Undo</button>
+              <button id="redoCustom" type="button" aria-hidden="false" disabled="">Redo</button>
+              <button id="connectSelected" type="button" aria-hidden="false" disabled="">Connect</button>
+              <button id="deleteConnection" type="button" aria-hidden="false" disabled="">
+                Delete connection
+              </button>
+              <button id="exportTopology" type="button" aria-hidden="false">Export JSON</button>
+              <button id="importTopology" type="button" aria-hidden="false">Import JSON</button>
+              <input id="importTopologyInput" type="file" accept="application/json,.json" class="is-hidden">
+            </div>
+
+            <div class="search-shell" id="searchShell">
+              <div class="search-input-row">
+                <div class="search-input-wrap">
+                  <input type="search" id="searchInput" placeholder="Quick search…" aria-label="Search devices">
+                  <button id="clearSearch" class="icon-button" title="Clear search" aria-label="Clear search" type="button">
+                    ×
+                  </button>
+                </div>
+              </div>
+              <div class="search-results" id="searchResults" aria-live="polite">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Brand</th>
+                      <th>Model</th>
+                      <th>Type</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+                <div class="search-pagination">
+                  <button id="prevPage" type="button">Prev</button>
+                  <span id="pageInfo"></span>
+                  <button id="nextPage" type="button">Next</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="graph-overlay bottom-left">
+            <div class="legend">
+              <span><span class="dot" style="background: #22d3ee"></span>Switch</span>
+              <span><span class="dot" style="background: #34d399"></span>Router</span>
+              <span><span class="dot" style="background: #fbbf24"></span>Server</span>
+              <span><span class="dot" style="background: #c084fc"></span>Other</span>
+              <span><span class="dot" style="background: #f87171"></span>Link down</span>
+            </div>
+          </div>
+
+          <div class="graph-overlay right" id="selectedOverlay">
+            <div class="selected-panel">
+              <div class="selected-header">
+                <div>
+                  <strong>Selected</strong>
+                  <span class="status" id="status">Filter device types by model or brand. | 0 selected | 0 total.</span>
+                </div>
+                <button id="clearSelection" type="button">Clear</button>
+              </div>
+              <div id="selectedDevices" class="selected-devices"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    
+  
+
+<aside class="stage-caption"><h2>Search known model</h2><p>User with exact model in mind can retrieve it quickly.</p></aside></body></html>

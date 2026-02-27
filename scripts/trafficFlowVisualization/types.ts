@@ -8,6 +8,7 @@ export type TrafficVizHelpers = {
     utilization: number | undefined,
   ) => string;
   trafficWidthRate?: (rateMbps: number | undefined) => number;
+  flowSpeedMultiplier?: () => number;
 };
 
 export type GraphLinkDatum = {
@@ -44,6 +45,7 @@ export type TrafficVizAfterStyleArgs = {
   hasSelection: boolean;
   filteredSet: Set<string>;
   selected?: Set<string>;
+  edgeOpacityMultiplier?: number;
 };
 
 export type TrafficViz = {

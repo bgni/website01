@@ -1,0 +1,116 @@
+<!DOCTYPE html><html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Device Inventory</title>
+    <link rel="stylesheet" href="file:///home/bn/src/website01/styles.css">
+    
+  <style>
+.stage-caption {
+  position: fixed;
+  right: 20px;
+  top: 20px;
+  max-width: 420px;
+  z-index: 10000;
+  background: rgba(4, 15, 40, 0.92);
+  border: 1px solid rgba(96, 165, 250, 0.35);
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: #dbeafe;
+  font: 500 13px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.stage-caption h2 {
+  margin: 0 0 6px 0;
+  font-size: 14px;
+  color: #eff6ff;
+}
+
+.stage-caption p {
+  margin: 0;
+}
+
+.next-action {
+  outline: 2px solid #34d399;
+  box-shadow: 0 0 0 4px rgba(52, 211, 153, 0.24);
+}
+
+.stage-open {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.stage-open .stage-intro {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: #e2e8f0;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.stage-open .stage-intro strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+.stage-open .stage-intro p {
+  margin: 0;
+  font-weight: 400;
+  color: #cbd5f5;
+}
+
+#addDeviceType.picker-open-preview {
+  min-height: 230px;
+}
+</style></head>
+  <body>
+    <main class="layout">
+      <section class="panel graph-panel">
+        <div class="graph-stage">
+          <svg id="graph" viewBox="0 0 1200 720" aria-label="Network topology">
+          </svg>
+
+          <div class="graph-overlay top-left stage-open">
+            <div class="overlay-row stage-intro">
+              <strong>Preview-only mode</strong>
+              <p>Viewing the saved topology. Click Create/Edit to unlock editing controls.</p>
+            </div>
+            <div class="overlay-row">
+              <button id="createEdit" type="button" class="next-action">Create/Edit</button>
+            </div>
+          </div>
+
+          <div class="graph-overlay bottom-left">
+            <div class="legend">
+              <span><span class="dot" style="background: #22d3ee"></span>Switch</span>
+              <span><span class="dot" style="background: #34d399"></span>Router</span>
+              <span><span class="dot" style="background: #fbbf24"></span>Server</span>
+              <span><span class="dot" style="background: #c084fc"></span>Other</span>
+              <span><span class="dot" style="background: #f87171"></span>Link down</span>
+            </div>
+          </div>
+
+          <div class="graph-overlay right" id="selectedOverlay">
+            <div class="selected-panel">
+              <div class="selected-header">
+                <div>
+                  <strong>Selected</strong>
+                  <span class="status" id="status">Viewing topology. Click Create/Edit to add and connect devices. | 0 selected | 0 total.</span>
+                </div>
+                <button id="clearSelection" type="button">Clear</button>
+              </div>
+              <div id="selectedDevices" class="selected-devices"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    
+  
+
+<aside class="stage-caption"><h2>Open app (before Create/Edit)</h2><p>User evaluates if editing looks possible.</p></aside></body></html>

@@ -9,6 +9,7 @@ It optimizes for:
 - Architectural convergence (less duplication, clearer boundaries)
 - CI-green incrementalism
 - Strict TypeScript direction
+- Continuous UX quality progression (not one-time "UX done" milestones)
 
 Documentation index: `docs/README.md`. Agent docs hub: `docs/agent/README.md`.
 Architecture heuristics: `docs/ideas/advanced-agent-lessons.md`.
@@ -122,7 +123,42 @@ Every change must follow this loop:
    - `deno task build:pages`
    - Serve `dist/` statically and verify `dist/index.html` works.
 
+6. If UX behavior changed:
+
+   - Check intent and risk against
+     `docs/ux/user_intent_and_experience_contract.md`
+   - Run `docs/ux/sanity_checklist.md`
+   - Run structured UX review using `docs/ux-review-benchmark.md`
+   - Run `docs/ux/tests/first_switch_discoverability_test.md`
+   - Update journey coverage via `docs/ux/journey_review_matrix.md`
+   - Include notes using `docs/ux/ux_review_template.md` with benchmark
+     scorecard and required scenario outcomes in PR notes
+
 Do not proceed while any step fails.
+
+---
+
+# UX Quality Gate (Same Status as Testing)
+
+For UX-impacting changes, structured UX review is mandatory.
+
+Start with:
+
+- `docs/ux/user_intent_and_experience_contract.md`
+- `docs/ux/sanity_checklist.md`
+
+Use `docs/ux-review-benchmark.md` to evaluate:
+
+- predictability,
+- interaction consistency,
+- spatial stability,
+- recoverability,
+- feedback clarity,
+- flow efficiency,
+- responsiveness.
+
+Do not frame UX work as "done once a ticket list is closed." Treat UX as a
+continuous benchmark trend and scenario reliability problem.
 
 ---
 

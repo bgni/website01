@@ -68,7 +68,7 @@ const estimateLabelWidth = (node: TieredLayoutNode) => {
   const text = String(node?.name || node?.id || "");
   // Font size is 11px; 6.1px/char is a decent heuristic.
   const px = text.length * 6.1;
-  return clamp(px, 48, 190);
+  return clamp(px, 132, 220);
 };
 
 const getLabelSafeBounds = (
@@ -82,6 +82,27 @@ const getLabelSafeBounds = (
   if (max >= min) return { min, max };
   const center = (left + right) / 2;
   return { min: center, max: center };
+};
+
+const getSafeRecenteringShift = (
+  nodes: TieredLayoutNode[],
+  left: number,
+  right: number,
+  fallbackX: number,
+) => {
+  let minShift = Number.NEGATIVE_INFINITY;
+  let maxShift = Number.POSITIVE_INFINITY;
+
+  nodes.forEach((node) => {
+    const current = typeof node.__tx === "number" && Number.isFinite(node.__tx)
+      ? node.__tx
+      : fallbackX;
+    const { min, max } = getLabelSafeBounds(node, left, right);
+    minShift = Math.max(minShift, min - current);
+    maxShift = Math.min(maxShift, max - current);
+  });
+
+  return { minShift, maxShift };
 };
 
 const buildNeighbors = (links: TieredLayoutLink[]) => {
@@ -583,7 +604,7 @@ export function applyTieredLayout(
   });
 
   // Resolve overlaps deterministically per tier.
-  const minGap = 30; // circle-safe spacing; labels handled by per-node widths below
+  const minGap = 48; // rack-card spacing; labels handled by per-node widths below
 
   for (const tierNodes of byTier.values()) {
     tierNodes.sort((a, b) =>
@@ -669,12 +690,18 @@ export function applyTieredLayout(
     const occupiedMax = Math.max(...txVals);
     const occupiedCenter = (occupiedMin + occupiedMax) / 2;
     const laneCenter = (left + right) / 2;
-    const shift = laneCenter - occupiedCenter;
+    const desiredShift = laneCenter - occupiedCenter;
+    const { minShift, maxShift } = getSafeRecenteringShift(
+      nodes,
+      left,
+      right,
+      laneCenter,
+    );
+    const shift = clamp(desiredShift, minShift, maxShift);
 
     if (Math.abs(shift) > 0.5) {
       nodes.forEach((n) => {
-        const { min, max } = getLabelSafeBounds(n, left, right);
-        n.__tx = clamp((n.__tx ?? laneCenter) + shift, min, max);
+        n.__tx = (n.__tx ?? laneCenter) + shift;
       });
     }
   }

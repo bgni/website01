@@ -169,6 +169,41 @@ Deno.test("trafficService: explicit source kind overrides parsed connector spec"
   assertEquals(specs, [{ kind: "real" }]);
 });
 
+Deno.test("trafficService: passes configured flow speed multiplier to connector factory", async () => {
+  const speedMultipliers: number[] = [];
+
+  const service = createTrafficService({
+    dispatch: () => {},
+    loadJson: () => Promise.resolve(null),
+    doFetch: () =>
+      Promise.resolve(
+        new Response(JSON.stringify({ kind: "flow" }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      ),
+    formatStatusError: (err) => String(err),
+    onGraphResetTraffic: () => {},
+    onGraphUpdateTraffic: () => {},
+    onGraphRefreshFromState: () => {},
+    parseTrafficConnectorSpecFn: () => ({ kind: "flow" }),
+    parseTrafficUpdatesPayloadFn: () => [],
+    createTrafficConnectorFn: (_spec, args) => {
+      speedMultipliers.push(args.speedMultiplier);
+      return Promise.resolve({ kind: "default", start: () => () => {} });
+    },
+  });
+
+  service.setCurrentPaths({
+    basePath: "data/networks/small-office",
+    trafficPath: "data/networks/small-office/traffic.json",
+  });
+  service.setSpeedMultiplier(2.5);
+  await service.startForCurrentSource("default");
+
+  assertEquals(speedMultipliers, [2.5]);
+});
+
 Deno.test("trafficService: invalid payload is reported and does not update graph", async () => {
   const actions: Action[] = [];
   let graphUpdateCalls = 0;

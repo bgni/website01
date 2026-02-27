@@ -47,6 +47,7 @@ export type TrafficConnectorPort = {
       basePath: string;
       trafficPath: string;
       loadJson: (path: string) => Promise<unknown>;
+      speedMultiplier: number;
     },
   ) => Promise<{
     start: (onUpdate: (payload: unknown) => void) => () => void;

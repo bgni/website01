@@ -6,14 +6,20 @@ export type RealTrafficConnectorOptions = {
   url: string;
   fetchJson?: FetchJson;
   intervalMs?: number;
+  speedMultiplier?: number;
 };
 
 export function createRealTrafficConnector({
   url,
   fetchJson = defaultFetchJson,
   intervalMs = 5000,
+  speedMultiplier = 1,
 }: RealTrafficConnectorOptions) {
   if (!url) throw new Error("url is required");
+  const normalizedSpeed =
+    Number.isFinite(speedMultiplier) && speedMultiplier > 0
+      ? speedMultiplier
+      : 1;
 
   return {
     kind: "real",
@@ -32,7 +38,7 @@ export function createRealTrafficConnector({
       tick().catch((err) => console.error(err));
       const timer = setInterval(
         () => tick().catch((err) => console.error(err)),
-        intervalMs,
+        Math.max(100, intervalMs / normalizedSpeed),
       );
 
       return () => clearInterval(timer);

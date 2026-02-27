@@ -66,18 +66,27 @@ export const parseTrafficConnectorSpec = (
 const resolveInNetwork = (basePath: string, configPath: string) =>
   `${basePath}/${configPath}`;
 
+const normalizeSpeedMultiplier = (value: number): number => {
+  if (!Number.isFinite(value) || value <= 0) return 1;
+  return Math.max(0.1, Math.min(64, value));
+};
+
 export async function createTrafficConnector(
   spec: TrafficConnectorSpec | null,
   {
     basePath,
     trafficPath,
     loadJson,
+    speedMultiplier = 1,
   }: {
     basePath: string;
     trafficPath: string;
     loadJson: LoadJson;
+    speedMultiplier?: number;
   },
 ): Promise<TrafficConnector> {
+  const normalizedSpeedMultiplier = normalizeSpeedMultiplier(speedMultiplier);
+
   if (spec?.kind === "flow") {
     const configPath = spec.configPath || "traffic.flow.json";
     const config = await loadJson(resolveInNetwork(basePath, configPath));
@@ -91,13 +100,17 @@ export async function createTrafficConnector(
       config,
       connections,
       connectionTypes,
+      speedMultiplier: normalizedSpeedMultiplier,
     });
   }
 
   if (spec?.kind === "generated") {
     const configPath = spec.configPath || "traffic.generator.json";
     const config = await loadJson(resolveInNetwork(basePath, configPath));
-    return createGeneratedTrafficConnector({ config });
+    return createGeneratedTrafficConnector({
+      config,
+      speedMultiplier: normalizedSpeedMultiplier,
+    });
   }
 
   if (spec?.kind === "static") {
@@ -111,25 +124,36 @@ export async function createTrafficConnector(
     const intervalMs = typeof spec.intervalMs === "number"
       ? spec.intervalMs
       : 5000;
-    return createRealTrafficConnector({ url, intervalMs });
+    return createRealTrafficConnector({
+      url,
+      intervalMs,
+      speedMultiplier: normalizedSpeedMultiplier,
+    });
   }
 
   if (spec?.kind === "timeline") {
     const configPath = spec.configPath || "traffic.json";
     const timeline = await loadJson(resolveInNetwork(basePath, configPath));
-    return createTimelineTrafficConnector({ timeline });
+    return createTimelineTrafficConnector({
+      timeline,
+      speedMultiplier: normalizedSpeedMultiplier,
+    });
   }
 
   // Default behavior: if traffic.json is a timeline, play it; otherwise poll it.
   const source = await loadJson(trafficPath);
   if (isObject(source) && Array.isArray(source.initial)) {
-    const tl = createTimelineTrafficConnector({ timeline: source });
+    const tl = createTimelineTrafficConnector({
+      timeline: source,
+      speedMultiplier: normalizedSpeedMultiplier,
+    });
     return { kind: "default", start: tl.start };
   }
 
   const real = createRealTrafficConnector({
     url: trafficPath,
     intervalMs: 5000,
+    speedMultiplier: normalizedSpeedMultiplier,
   });
   return { kind: "default", start: real.start };
 }

@@ -30,9 +30,15 @@ type TrafficServiceDeps =
 export type TrafficService = {
   teardown: () => void;
   setCurrentPaths: (paths: TrafficPaths | null) => void;
+  setSpeedMultiplier: (multiplier: number) => void;
   resetTrafficState: () => void;
   startForCurrentSource: (sourceKind: string) => Promise<void>;
   restartCurrentSource: (sourceKind: string) => Promise<void>;
+};
+
+const normalizeSpeedMultiplier = (value: number): number => {
+  if (!Number.isFinite(value) || value <= 0) return 1;
+  return Math.max(0.1, Math.min(64, value));
 };
 
 export const createTrafficService = (
@@ -46,6 +52,7 @@ export const createTrafficService = (
   let stopTraffic: StopTraffic = () => {};
   let currentPaths: TrafficPaths | null = null;
   const trafficByConn = new Map<string, TrafficUpdate>();
+  let speedMultiplier = 1;
 
   const loadJsonOptional = async (path: string): Promise<unknown | null> => {
     const res = await doFetch(path);
@@ -111,6 +118,7 @@ export const createTrafficService = (
       basePath,
       trafficPath,
       loadJson: deps.loadJson,
+      speedMultiplier,
     });
 
     return trafficConnector.start(attachTraffic);
@@ -118,6 +126,10 @@ export const createTrafficService = (
 
   const setCurrentPaths = (paths: TrafficPaths | null) => {
     currentPaths = paths;
+  };
+
+  const setSpeedMultiplier = (multiplier: number) => {
+    speedMultiplier = normalizeSpeedMultiplier(multiplier);
   };
 
   const teardown = () => {
@@ -157,6 +169,7 @@ export const createTrafficService = (
   return {
     teardown,
     setCurrentPaths,
+    setSpeedMultiplier,
     resetTrafficState,
     startForCurrentSource,
     restartCurrentSource,

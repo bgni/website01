@@ -5,7 +5,11 @@ import type {
   TrafficUpdate,
 } from "../domain/types.ts";
 import { applyLayoutToGraph } from "./layoutAdapter.ts";
-import { createGraphRenderer, type Guide } from "./renderer.ts";
+import {
+  createGraphRenderer,
+  type GraphDisplaySettings,
+  type Guide,
+} from "./renderer.ts";
 import type { ZoomTransformSnapshot } from "./renderer.ts";
 import { createTrafficAdapter } from "./trafficAdapter.ts";
 import { buildRendererUpdateArgs } from "./viewModel.ts";
@@ -25,6 +29,10 @@ export function createGraph(
     onNodeSelect,
     onCanvasDeselect,
     onSelectionReplaced,
+    onConnectionDragCreate,
+    onConnectionSelect,
+    onDeviceDropOnContainer,
+    onContainerGeometryCommit,
   }: {
     svg: string | SVGSVGElement;
     devices: NetworkDevice[];
@@ -33,6 +41,20 @@ export function createGraph(
     onNodeSelect: (id: string) => void;
     onCanvasDeselect?: () => void;
     onSelectionReplaced?: (ids: string[]) => void;
+    onConnectionDragCreate?: (fromId: string, toId: string) => void;
+    onConnectionSelect?: (
+      connectionId: string,
+      fromId: string,
+      toId: string,
+    ) => void;
+    onDeviceDropOnContainer?: (
+      deviceId: string,
+      containerId: string | null,
+    ) => void;
+    onContainerGeometryCommit?: (
+      containerId: string,
+      geometry: { x: number; y: number; width: number; height: number },
+    ) => void;
   },
 ): {
   update: (
@@ -45,12 +67,18 @@ export function createGraph(
   resetTraffic: () => void;
   destroy: () => void;
   setTrafficVisualization: (kind: string) => void;
+  setTrafficSpeedMultiplier: (multiplier: number) => void;
+  setDisplaySettings: (settings: Partial<GraphDisplaySettings>) => void;
   setLayout: (kind: string) => void;
   resize: (size: { width: number; height: number }) => void;
   getNodePositions: () => Map<string, { x: number; y: number }>;
   getViewportCenter: () => { x: number; y: number };
   getViewportTransform: () => ZoomTransformSnapshot;
   setViewportTransform: (snapshot: ZoomTransformSnapshot | null) => void;
+  clientPointToGraph: (
+    clientX: number,
+    clientY: number,
+  ) => { x: number; y: number } | null;
 } {
   const d3 = getD3();
   const trafficById: Record<string, TrafficUpdate> = {};
@@ -64,11 +92,16 @@ export function createGraph(
     onNodeSelect,
     onCanvasDeselect,
     onSelectionReplaced,
+    onConnectionDragCreate,
+    onConnectionSelect,
+    onDeviceDropOnContainer,
+    onContainerGeometryCommit,
   });
 
   const trafficAdapter = createTrafficAdapter({
     kind: "classic",
     getTraffic,
+    speedMultiplier: 1,
   });
 
   const mount = () => ({
@@ -167,6 +200,16 @@ export function createGraph(
     update(lastUpdateArgs);
   };
 
+  const setTrafficSpeedMultiplier = (multiplier: number) => {
+    trafficAdapter.setSpeedMultiplier(multiplier);
+  };
+
+  const setDisplaySettings = (settings: Partial<GraphDisplaySettings>) => {
+    renderer.setDisplaySettings(settings);
+    renderer.renderPositions();
+    update(lastUpdateArgs);
+  };
+
   const resize = ({ width, height }: { width: number; height: number }) => {
     renderer.resize({ width, height });
     // Re-apply active layout so tiered/force recompute based on new bounds.
@@ -179,6 +222,8 @@ export function createGraph(
     resetTraffic,
     destroy,
     setTrafficVisualization,
+    setTrafficSpeedMultiplier,
+    setDisplaySettings,
     setLayout,
     resize,
     getNodePositions: () => renderer.getNodePositions(),
@@ -186,5 +231,7 @@ export function createGraph(
     getViewportTransform: () => renderer.getViewportTransform(),
     setViewportTransform: (snapshot: ZoomTransformSnapshot | null) =>
       renderer.setViewportTransform(snapshot),
+    clientPointToGraph: (clientX: number, clientY: number) =>
+      renderer.clientPointToGraph(clientX, clientY),
   };
 }

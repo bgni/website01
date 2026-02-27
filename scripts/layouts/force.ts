@@ -21,6 +21,10 @@ type D3Like = {
   forceCollide: (radius: number) => unknown;
 };
 
+const RACK_LINK_DISTANCE = 140;
+const RACK_COLLIDE_RADIUS = 78;
+const RACK_CHARGE_STRENGTH = -320;
+
 export function applyForceLayout(
   {
     simulation,
@@ -63,12 +67,12 @@ export function applyForceLayout(
     .force("center", d3.forceCenter(width / 2, height / 2));
 
   const link = simulation.force("link");
-  if (link?.distance) link.distance(60);
+  if (link?.distance) link.distance(RACK_LINK_DISTANCE);
   if (link?.strength) link.strength(0.6);
 
   simulation
-    .force("charge", d3.forceManyBody().strength(-260))
-    .force("collide", d3.forceCollide(26))
+    .force("charge", d3.forceManyBody().strength(RACK_CHARGE_STRENGTH))
+    .force("collide", d3.forceCollide(RACK_COLLIDE_RADIUS))
     .alpha(initialAlpha)
     .restart();
 

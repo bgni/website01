@@ -1,297 +1,152 @@
-# Agent Instructions — website01 (v2)
+# Agent Instructions — website01
 
-This repo is a Deno + TypeScript static site (GitHub Pages) that visualizes
-network topologies with D3: search, multi-select, shortest-path highlights, and
-traffic styling.
+This repo is a Deno + TypeScript static site (GitHub Pages) for network topology
+visualization and editing with D3.
 
-Documentation index: `docs/README.md` Agent docs hub: `docs/agent/README.md`
-Architecture heuristics: `docs/ideas/advanced-agent-lessons.md`
+## Mission
 
----
+Generate behavior-preserving, test-backed changes that improve:
 
-# Non-negotiables (hard constraints)
+- architectural convergence (thin controller, service-owned behavior),
+- runtime correctness and resilience,
+- and especially map editing quality (fast, predictable, enjoyable), measured
+  through continuous UX benchmark progression.
+
+## Non-Negotiables
 
 - Target OS: Linux (CI runs ubuntu-latest).
-- Tooling/runtime: Deno (CI pins v2.6.10).
-- GitHub Pages must serve a working app as **static output** (no runtime
-  TypeScript transpile on Pages).
-- Do not merge changes that break: `deno task ci`.
-- Direction: tighten TypeScript (reduce `any`, remove untyped `Record`, add
-  explicit boundary types).
-- Direction: keep boundaries explicit (DI for DOM + IO).
-- Refactors must preserve behavior unless explicitly stated otherwise.
+- Runtime/tooling: Deno (CI-pinned).
+- GitHub Pages must work from static output (`dist/`).
+- Do not merge changes that break `deno task ci`.
+- Refactors must preserve behavior unless explicitly requested.
 
-Behavior stability is mandatory. Architectural convergence is expected.
+## Product Quality Bar (Editing UX)
 
----
+When changing builder/editing behavior, optimize for:
 
-# Architectural Intent (Important)
+- Predictability: selection, connect/delete, and undo/redo should behave
+  consistently.
+- Continuity: preserve viewport and node positions across edit operations.
+- Responsiveness: edits should feel immediate; avoid avoidable full remounts.
+- Recoverability: failed actions produce clear status feedback and never corrupt
+  topology state.
+- Learnability: shortcuts and controls should be discoverable and coherent.
 
-The target structure is:
+Use `docs/ux-review-benchmark.md` as the required evaluation frame for
+UX-impacting changes. Anchor UX reasoning first in
+`docs/ux/user_intent_and_experience_contract.md`.
 
-- **Composition root**
+## Architectural Intent
 
-  - `scripts/main.ts`
-  - `scripts/app/bootstrap.ts`
-- **Orchestration**
+- Composition root: `scripts/main.ts`, `scripts/app/bootstrap.ts`
+- Orchestration: `scripts/app/controller.ts` (thin lifecycle coordination)
+- Application services: `scripts/app/*Service.ts`
+- Domain: `scripts/domain/*` (parse/validate/normalize boundary data)
+- Infrastructure: `scripts/graph/**`, `scripts/layouts/**`, `scripts/traffic/**`
 
-  - `scripts/app/controller.ts` (thin, lifecycle only)
-- **Application services**
+Controller orchestrates. Services own behavior. Domain validates boundaries.
+Infrastructure renders and performs external side effects.
 
-  - `scripts/app/*Service.ts`
-- **Domain**
+## Active Architectural Priorities
 
-  - `scripts/domain/*`
-- **Infrastructure**
+1. Unify undo/redo ownership in one module.
+2. Reduce controller/bootstrap orchestration weight.
+3. Extract and test inline bootstrap logic (device-type grouping, shortcuts).
+4. Strengthen type seams (`layoutKind`, `trafficSourceKind`, `trafficVizKind`
+   unions).
+5. Expand tests around orchestration/lifecycle paths.
 
-  - `scripts/graph/**`
-  - `scripts/layouts/**`
-  - `scripts/traffic/**`
+## Ports and Dependency Rules
 
-Controller should orchestrate. Services should implement behavior. Domain should
-validate boundaries. Infrastructure should render or perform side effects.
+- Service dependencies must be expressed as named ports in
+  `scripts/app/ports.ts`.
+- Prefer many small ports (single concern) over broad interfaces.
+- Services consume ports; they do not import concrete infra implementations.
+- Avoid mutable shared object references across modules; use explicit port
+  methods for read/write ownership.
 
-If logic exists in two places, consolidation is preferred over caution.
+## Refactor Policy
 
----
+Safe when behavior is unchanged and CI passes:
 
-# Refactor Policy (Critical Clarification)
+- moving logic across modules,
+- introducing ports/adapters,
+- routing controller code through services,
+- deleting duplicate legacy paths after adoption.
 
-This repo allows **large mechanical diffs** when behavior is unchanged.
+Risky (explicit request required):
 
-## SAFE changes (even if large diff)
+- layout algorithm behavior changes,
+- shortest-path semantics changes,
+- selection/search/keyboard UX semantics changes,
+- fixture schema breaking changes.
 
-The following are safe if CI passes and behavior is preserved:
+## Workflow (Mandatory)
 
-- Moving logic between modules.
-- Introducing thin ports/adapters over existing implementations.
-- Routing controller logic through an existing service.
-- Deleting duplicate legacy implementations after adoption.
-- Consolidating undo/history/builder logic into services.
-- Splitting large files to reduce responsibility overlap.
-- Renaming or reorganizing files for clarity.
-
-Extraction without adoption is incomplete work.
-
-If a service exists but controller duplicates its behavior, the next PR should
-wire through the service and delete the duplicate path.
-
-## RISKY changes (require explicit intent)
-
-These must not be done unless explicitly requested:
-
-- Layout algorithm changes (tiering, determinism, force tuning).
-- Shortest-path semantics changes.
-- UX behavior changes (selection, search logic, keyboard behavior).
-- Breaking fixture schema changes.
-- Combining refactor + feature change in one PR.
-
-Refactors must not change behavior.
-
----
-
-# Repo Map (What Is Where)
-
-## Dev server
-
-- `main.ts` (Deno.serve + static assets + TS transpile cache for local DX)
-
-## Browser entry
-
-- `index.html` → `scripts/main.ts`
-
-## App wiring / orchestration
-
-- `scripts/app/bootstrap.ts`
-- `scripts/app/controller.ts`
-
-## Application services
-
-- `scripts/app/*Service.ts`
-
-## Domain (typed boundaries + fixture parsing)
-
-- `scripts/domain/loadNetwork.ts`
-- `scripts/domain/errors.ts`
-- `scripts/domain/types.ts`
-
-## Data loading shim (legacy import path)
-
-- `scripts/dataLoader.ts`
-
-## Graph
-
-- API: `scripts/graph/graph.ts`
-- Renderer: `scripts/graph/renderer.ts`
-- Legacy shim: `scripts/graph.ts`
-- Algorithms: `scripts/graphLogic.ts`
-
-## Layouts
-
-- `scripts/layouts/*` (force + tiered/layered)
-
-## Traffic
-
-- `scripts/traffic/*`
-- Legacy shim: `scripts/trafficConnector.ts`
-- Visualization strategies: `scripts/trafficFlowVisualization/*`
-
-## D3 access
-
-- `scripts/lib/d3.ts` (use `getD3()`, avoid implicit globals)
-
-## Static build
-
-- `tools/build_pages.ts` → outputs `dist/`
-
-## Data fixtures
-
-- `data/networks/**`
-
----
-
-# Default Workflow Loop (Mandatory)
-
-1. Identify the boundary touched:
-
-   - fixtures (`data/**`)
-   - wiring (`scripts/main.ts`, `bootstrap.ts`)
-   - orchestration (`controller.ts`)
-   - services
-   - domain parsing/types
-   - graph/layout
-   - traffic
-   - build
-
-2. Make the smallest change that:
-
-   - reduces duplication, or
-   - clarifies boundaries, or
-   - improves typing.
-
-3. Run locally:
-
+1. Identify the boundary touched.
+2. Make the smallest change that reduces duplication, clarifies boundaries,
+   improves typing, or closes a test gap.
+3. Run:
    - `deno task fmt`
    - `deno task lint`
    - `deno task check`
    - `deno task test`
-
 4. If fixtures/layout changed:
-
    - `deno task validate`
    - `deno task render:svgs`
-
 5. If wiring/build changed:
-
    - `deno task build:pages`
-   - Open `dist/index.html` via static server.
+6. If UX behavior is affected:
+   - Check user intent + risk against
+     `docs/ux/user_intent_and_experience_contract.md`.
+   - Run `docs/ux/sanity_checklist.md`.
+   - Run structured UX review per `docs/ux-review-benchmark.md`.
+   - Run `docs/ux/tests/first_switch_discoverability_test.md`.
+   - Update journey coverage using `docs/ux/journey_review_matrix.md`.
+   - Record benchmark scorecard + scenario results in PR notes using
+     `docs/ux/ux_review_template.md`.
 
-Do not proceed if any step fails.
-
----
-
-# Coding Rules (Guardrails)
-
-## TypeScript Rules
+## TypeScript and Data Rules
 
 - No new implicit `any`.
-- Exported functions must declare return types.
-- Avoid `as SomeType` unless preceded by runtime validation.
-- Prefer narrow boundary types + runtime guards.
-- Prefer `Set<string>` / `Map<string, T>` over untyped collections.
-- Define `Device`, `Connection`, `TrafficUpdate` in one place and import them.
+- Exported functions declare explicit return types.
+- Parse JSON as `unknown`, then validate.
+- Prefer narrow runtime-validated types at boundaries.
+- Use literal unions for finite mode/kind fields.
 
-JSON must be parsed as `unknown` and validated before use.
+## DOM and Security Rules
 
----
+- Do not use `innerHTML` for fixture/user/url-derived content.
+- Prefer DOM construction + `textContent`.
+- Keep third-party CDN scripts pinned.
 
-## DOM / Security Rules
+## Testing Rules
 
-- Do not use `innerHTML` for anything derived from:
+- New/extracted service logic requires tests.
+- Prioritize tests for:
+  - `controller.ts` lifecycle/error flows,
+  - `historyService.ts`,
+  - `reducers.ts`,
+  - `customTopology.ts`.
+- Prefer fake ports/mocks for service tests (no DOM dependency).
 
-  - fixtures (`data/**`)
-  - user input
-  - URL params
-- Prefer `textContent`, `setAttribute`, DOM assembly.
-- CDN scripts must be pinned and ideally use SRI.
-- Renderer must not assume hard-coded selectors.
+## UX Review Gate
 
----
+- UX-impacting changes require structured UX review, just like code changes
+  require tests.
+- Do not treat UX as "fixed by closing tickets." Evaluate against benchmark
+  trend and scenario outcomes.
+- Use `docs/ux/sanity_checklist.md` as a pre-benchmark gate.
+- First-switch discoverability is required; do not rely on catalog recall.
+- Track journey coverage with `docs/ux/journey_review_matrix.md`.
+- Required scenarios and dimensions are defined in
+  `docs/ux-review-benchmark.md`.
 
-## Determinism (Reviewability Requirement)
+## Definition of Done
 
-- Layout algorithms must be deterministic given same inputs.
-- Tiered layout especially must not depend on object iteration order.
-- SVG outputs must be stable across runs (or diffs must be explainable).
-
-Determinism changes count as risky.
-
----
-
-## Data Fixture Rules
-
-- Device IDs must be stable strings.
-- Connections must reference existing device IDs.
-- Traffic updates must reference existing connection IDs.
-- Backwards compatibility required for optional fields.
-
-Always run:
-
-- `deno task validate`
-
----
-
-# Consolidation Rule (Anti-Stagnation)
-
-Avoid “extract-only” PRs.
-
-If:
-
-- a service exists, and
-- controller still contains equivalent logic,
-
-Then:
-
-- Route through the service.
-- Delete duplicate logic in same PR.
-- Keep behavior identical.
-- Ensure CI passes.
-
-Architectural convergence is a goal.
-
----
-
-# Commit Strategy
-
-- Split commits by subsystem (domain / traffic / graph / docs).
-- Prefer “shim first” commits.
-- Adoption commits may be large but must be behavior-preserving.
-- Do not mix refactor and feature change.
-
----
-
-# Definition of Done (PR)
-
-- `deno task ci` passes.
-- `deno task build:pages` produces working `dist/`.
-- If fixtures changed: `deno task validate` passes.
-- If layout/render changed: `deno task render:svgs` diffs are explainable.
-- No new unsafe DOM usage.
-- Duplication reduced or unchanged.
-- Architecture direction improved or preserved.
-
----
-
-# Common Anti-Patterns (Avoid)
-
-- Type assertions without runtime validation.
-- Duplicate graph traversal logic across modules.
-- Controller implementing business logic.
-- Leaving both “old path” and “new path” active after extraction.
-- Behavioral changes hidden inside refactors.
-
----
-
-This file defines guardrails. It does not encourage timidity.
-
-Behavior must remain stable. Architecture must steadily improve.
+- Required tasks pass.
+- Behavior is preserved unless explicitly changed.
+- Duplicate ownership/logic for touched paths is reduced.
+- New behavior/logic is covered by tests.
+- UX-impacting behavior changes include benchmark scorecard + scenario review.
+- Architecture direction is improved or preserved.

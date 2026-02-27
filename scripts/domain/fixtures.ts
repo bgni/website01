@@ -88,6 +88,9 @@ export function parseDevicesFixture(
 const parseConnectionEnd = (
   raw: unknown,
   ctx: string,
+  { allowLegacyPortIdMismatch = false }: {
+    allowLegacyPortIdMismatch?: boolean;
+  } = {},
 ): ConnectionEnd => {
   if (!isRecord(raw)) fail(ctx, "expected an object");
   const rec = raw as Rec;
@@ -105,10 +108,14 @@ const parseConnectionEnd = (
     rec.interfaceId.trim() && rec.portId.trim() &&
     rec.interfaceId.trim() !== rec.portId.trim()
   ) {
-    fail(ctx, "fields 'interfaceId' and legacy 'portId' disagree");
+    if (!allowLegacyPortIdMismatch) {
+      fail(ctx, "fields 'interfaceId' and legacy 'portId' disagree");
+    }
   }
+  const out = { ...rec };
+  delete out.portId;
   return {
-    ...rec,
+    ...out,
     deviceId,
     ...(interfaceId ? { interfaceId } : {}),
   } satisfies ConnectionEnd;
@@ -117,6 +124,7 @@ const parseConnectionEnd = (
 export function parseConnectionsFixture(
   raw: unknown,
   ctx = "connections",
+  options?: { allowLegacyPortIdMismatch?: boolean },
 ): Connection[] {
   if (!Array.isArray(raw)) fail(ctx, "expected an array");
   const list = raw as unknown[];
@@ -129,8 +137,8 @@ export function parseConnectionsFixture(
     const id = nonEmptyStr(rec.id);
     if (!id) fail(itemCtx, "missing required field 'id'");
 
-    const from = parseConnectionEnd(rec.from, `${itemCtx}.from`);
-    const to = parseConnectionEnd(rec.to, `${itemCtx}.to`);
+    const from = parseConnectionEnd(rec.from, `${itemCtx}.from`, options);
+    const to = parseConnectionEnd(rec.to, `${itemCtx}.to`, options);
 
     // Prefer camelCase, but tolerate the legacy snake_case.
     const connectionType = nonEmptyStr(rec.connectionType) ||

@@ -32,6 +32,8 @@ const tierIndexForRole = (role: unknown): number => {
   const r = norm(role);
 
   if (r === "internet" || r === "isp") return 0;
+  if (r.includes("access point") || r === "ap" || r.includes("wifi")) return 6;
+  if (r.includes("customer edge") || r === "ce") return 6;
   if (r.includes("firewall")) return 1;
   if (r.includes("router") || r.includes("wan") || r.includes("edge")) return 1;
 
@@ -52,7 +54,6 @@ const tierIndexForRole = (role: unknown): number => {
     return 5;
   }
 
-  if (r.includes("access point") || r === "ap" || r.includes("wifi")) return 6;
   if (
     r.includes("endpoint") || r.includes("client") ||
     r.includes("workstation") || r.includes("printer")

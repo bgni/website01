@@ -59,7 +59,8 @@ const speedFromRate = (rateMbps: unknown) => {
 };
 
 export function createFlowDashesTrafficVisualization(
-  { trafficColor, trafficWidthRate }: TrafficVizHelpers = {},
+  { trafficColor, trafficWidthRate, flowSpeedMultiplier }: TrafficVizHelpers =
+    {},
 ): TrafficViz {
   const d3 = getD3();
   // deno-lint-ignore no-explicit-any
@@ -84,7 +85,11 @@ export function createFlowDashesTrafficVisualization(
     overlay
       .attr("stroke-dashoffset", (d: GraphLinkDatum) => {
         const t = getTraffic?.(d.id);
-        const speed = speedFromRate(t?.rateMbps);
+        const speedMultiplier = Math.max(
+          0.05,
+          Number(flowSpeedMultiplier?.() ?? 1) || 1,
+        );
+        const speed = speedFromRate(t?.rateMbps) * speedMultiplier;
         const prev = offsetById.get(d.id) ?? 0;
         // negative makes it look like it moves forward; direction is arbitrary without A->B metrics
         const next = prev - dt * speed;
@@ -203,7 +208,12 @@ export function createFlowDashesTrafficVisualization(
     },
 
     afterLinkStyle(
-      { highlightedLinks, hasSelection, filteredSet }: TrafficVizAfterStyleArgs,
+      {
+        highlightedLinks,
+        hasSelection,
+        filteredSet,
+        edgeOpacityMultiplier = 1,
+      }: TrafficVizAfterStyleArgs,
     ) {
       if (!overlay) return;
 
@@ -232,17 +242,20 @@ export function createFlowDashesTrafficVisualization(
         })
         .attr("opacity", (d: GraphLinkDatum) => {
           const t = getTraffic?.(d.id);
-          if (t?.status === TRAFFIC_STYLE.downStatus) return 1;
+          if (t?.status === TRAFFIC_STYLE.downStatus) {
+            return edgeOpacityMultiplier;
+          }
           // Mirror base-link opacity rules.
           if (hasSelection) {
             if (highlightedLinks.size) {
-              return highlightedLinks.has(d.id) ? 1 : 0.14;
+              return (highlightedLinks.has(d.id) ? 1 : 0.14) *
+                edgeOpacityMultiplier;
             }
-            return 0.28;
+            return 0.28 * edgeOpacityMultiplier;
           }
           return (filteredSet.has(d.source.id) || filteredSet.has(d.target.id))
-            ? 0.9
-            : 0.18;
+            ? 0.9 * edgeOpacityMultiplier
+            : 0.18 * edgeOpacityMultiplier;
         });
 
       // Keep dasharray changes immediate (avoids odd tweening artifacts).

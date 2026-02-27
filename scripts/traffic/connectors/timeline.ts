@@ -5,13 +5,19 @@ export type TimelineTrafficConnectorOptions = {
   timeline: unknown;
   tickMs?: number;
   loop?: boolean;
+  speedMultiplier?: number;
 };
 
 export function createTimelineTrafficConnector({
   timeline,
   tickMs = 250,
   loop = false,
+  speedMultiplier = 1,
 }: TimelineTrafficConnectorOptions) {
+  const normalizedSpeed =
+    Number.isFinite(speedMultiplier) && speedMultiplier > 0
+      ? speedMultiplier
+      : 1;
   const timelineRec = isObject(timeline) ? timeline : null;
   const initial = Array.isArray(timelineRec?.initial)
     ? (timelineRec.initial as TrafficUpdate[])
@@ -56,7 +62,8 @@ export function createTimelineTrafficConnector({
       let queue = queueBase;
 
       const timer = setInterval(() => {
-        const elapsedSec = (performance.now() - start) / 1000;
+        const elapsedSec = ((performance.now() - start) / 1000) *
+          normalizedSpeed;
         const batch = [];
 
         while (idx < queue.length && queue[idx].t <= elapsedSec) {
@@ -72,7 +79,7 @@ export function createTimelineTrafficConnector({
           idx = 0;
           queue = queueBase;
         }
-      }, tickMs);
+      }, Math.max(50, tickMs / normalizedSpeed));
 
       return () => clearInterval(timer);
     },

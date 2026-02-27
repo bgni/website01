@@ -17,43 +17,138 @@
           <div class="graph-overlay top-left">
             <div class="overlay-row">
               <select id="networkSelect" aria-label="Select network"></select>
-              <select id="trafficSourceSelect" aria-label="Traffic source">
-              </select>
-              <select id="trafficVizSelect" aria-label="Traffic visualization">
-              </select>
               <select id="layoutSelect" aria-label="Layout">
                 <option value="force">Force</option>
                 <option value="tiered">Layered</option>
                 <option value="tiered-xmin">Layered (cross-min)</option>
                 <option value="dot">DOT (Sugiyama)</option>
               </select>
-            </div>
-
-            <div class="overlay-row builder-row">
-              <button id="createEdit" type="button">Create/Edit</button>
-              <input
-                id="addDeviceTypeSearch"
-                type="search"
-                placeholder="Search device types…"
-                aria-label="Search device types"
-              />
-              <select id="addDeviceType" aria-label="Device type for quick add">
+              <span id="modeBadge" class="mode-badge" aria-live="polite"
+              >View mode</span>
+              <select id="builderWorkflow" aria-label="Editor workflow" hidden>
+                <option value="from-network">
+                  Edit selected network (copy)
+                </option>
+                <option value="new">Create new topology</option>
+                <option value="resume">Resume saved draft</option>
               </select>
-              <button id="addDevice" type="button">Add device</button>
-              <button id="undoCustom" type="button">Undo</button>
-              <button id="redoCustom" type="button">Redo</button>
-              <button id="connectSelected" type="button">Connect</button>
-              <button id="deleteConnection" type="button">
-                Delete connection
+              <button id="createEdit" type="button" hidden>Open editor</button>
+              <div class="panel-toggle-group" aria-label="Panel toggles">
+                <button id="builderPanelToggle" type="button">Tools</button>
+                <button id="selectedPanelToggle" type="button">Selected</button>
+              </div>
+              <button id="displaySettingsToggle" type="button">
+                Display settings
               </button>
-              <button id="exportTopology" type="button">Export JSON</button>
-              <button id="importTopology" type="button">Import JSON</button>
-              <input
-                id="importTopologyInput"
-                type="file"
-                accept="application/json,.json"
-                class="is-hidden"
-              />
+              <div class="history-group" aria-label="History controls">
+                <button
+                  id="undoCustom"
+                  class="icon-tool-button"
+                  type="button"
+                  title="Undo (Ctrl/Cmd+Z)"
+                  aria-label="Undo"
+                >
+                  ↶
+                </button>
+                <button
+                  id="redoCustom"
+                  class="icon-tool-button"
+                  type="button"
+                  title="Redo (Ctrl/Cmd+Shift+Z)"
+                  aria-label="Redo"
+                >
+                  ↷
+                </button>
+              </div>
+            </div>
+            <div class="flow-config-inline is-hidden" id="displaySettingsPanel">
+              <div class="flow-config-header">
+                <strong>Display settings</strong>
+                <button
+                  id="displaySettingsClose"
+                  type="button"
+                  aria-label="Close display settings"
+                >
+                  ×
+                </button>
+              </div>
+              <label class="flow-field flow-field-compact">
+                <span>Traffic source</span>
+                <select id="trafficSourceSelect" aria-label="Traffic source">
+                </select>
+              </label>
+              <label class="flow-field flow-field-compact">
+                <span>Visualization</span>
+                <select
+                  id="trafficVizSelect"
+                  aria-label="Traffic visualization"
+                >
+                </select>
+              </label>
+              <label class="flow-field flow-field-wide">
+                <span>Flow speed</span>
+                <div class="flow-speed-row">
+                  <input
+                    id="flowSpeedMultiplier"
+                    type="range"
+                    min="0.1"
+                    max="64"
+                    step="0.1"
+                    value="1"
+                    aria-label="Flow speed multiplier"
+                  />
+                  <output
+                    id="flowSpeedMultiplierValue"
+                    for="flowSpeedMultiplier"
+                  >1.00x</output>
+                </div>
+              </label>
+              <label class="flow-field flow-field-compact">
+                <span>Edge opacity</span>
+                <div class="flow-speed-row">
+                  <input
+                    id="edgeOpacity"
+                    type="range"
+                    min="0.1"
+                    max="1"
+                    step="0.05"
+                    value="1"
+                    aria-label="Edge opacity"
+                  />
+                  <output id="edgeOpacityValue" for="edgeOpacity">100%</output>
+                </div>
+              </label>
+              <label class="flow-field flow-field-compact">
+                <span>Label size</span>
+                <div class="flow-speed-row">
+                  <input
+                    id="labelTextSize"
+                    type="range"
+                    min="9"
+                    max="24"
+                    step="1"
+                    value="11"
+                    aria-label="Label text size"
+                  />
+                  <output id="labelTextSizeValue" for="labelTextSize"
+                  >11 px</output>
+                </div>
+              </label>
+              <label class="flow-field flow-field-compact">
+                <span>Label margin</span>
+                <div class="flow-speed-row">
+                  <input
+                    id="labelMargin"
+                    type="range"
+                    min="8"
+                    max="52"
+                    step="1"
+                    value="24"
+                    aria-label="Label margin"
+                  />
+                  <output id="labelMarginValue" for="labelMargin">24 px</output>
+                </div>
+              </label>
             </div>
 
             <div class="search-shell" id="searchShell">
@@ -97,6 +192,128 @@
             </div>
           </div>
 
+          <div
+            class="graph-overlay left builder-overlay is-hidden"
+            id="builderOverlay"
+            aria-hidden="true"
+          >
+            <div
+              class="overlay-resize-handle right-edge"
+              id="builderResizeHandle"
+              role="separator"
+              aria-label="Resize left panel"
+              aria-orientation="vertical"
+              tabindex="0"
+            >
+            </div>
+            <div class="builder-panel">
+              <div class="builder-header">
+                <div class="panel-header-row">
+                  <strong>Topology builder</strong>
+                  <button
+                    id="builderPanelCollapse"
+                    type="button"
+                    aria-label="Collapse tools panel"
+                  >
+                    ×
+                  </button>
+                </div>
+                <span class="status">
+                  Drag to place, click to quick-add, drag handle to connect.
+                </span>
+              </div>
+              <input
+                id="addDeviceTypeSearch"
+                type="search"
+                placeholder="Search device types…"
+                aria-label="Search device types"
+              />
+              <button id="builderFilterToggle" type="button">
+                Filters
+              </button>
+              <div
+                class="builder-filter-panel is-hidden"
+                id="builderFilterPanel"
+              >
+                <div class="builder-filter-header">
+                  <strong>Filters</strong>
+                  <button
+                    id="builderFilterClose"
+                    type="button"
+                    aria-label="Close filters"
+                  >
+                    ×
+                  </button>
+                </div>
+                <div class="builder-shortlist is-hidden" id="builderShortlist">
+                </div>
+                <div class="builder-filter-row">
+                  <label class="builder-filter-field">
+                    <span>Type filter</span>
+                    <select
+                      id="addDeviceType"
+                      aria-label="Filter list by device type"
+                      multiple
+                      size="4"
+                    >
+                    </select>
+                  </label>
+                  <label class="builder-filter-field">
+                    <span>Port filter</span>
+                    <select
+                      id="addPortTypeFilter"
+                      aria-label="Filter list by port type"
+                      multiple
+                      size="4"
+                    >
+                    </select>
+                  </label>
+                </div>
+              </div>
+              <button
+                id="addDevice"
+                type="button"
+                class="is-hidden"
+                aria-hidden="true"
+              >
+                Add
+              </button>
+              <div id="builderPalette" class="builder-palette"></div>
+              <div class="builder-actions-row">
+                <button id="connectSelected" type="button">
+                  Connect selected
+                </button>
+                <button id="deleteConnection" type="button">
+                  Delete connection
+                </button>
+              </div>
+              <div class="builder-actions-row">
+                <button id="groupSelected" type="button">
+                  Group selected
+                </button>
+              </div>
+              <details
+                class="builder-secondary-tools is-hidden"
+                aria-hidden="true"
+              >
+                <summary>Data tools</summary>
+                <div class="builder-actions-row secondary">
+                  <button id="exportTopology" type="button">Export JSON</button>
+                  <button id="importTopology" type="button">Import JSON</button>
+                </div>
+              </details>
+              <input
+                id="importTopologyInput"
+                type="file"
+                accept="application/json,.json"
+                class="is-hidden"
+              />
+              <p class="builder-tip is-hidden" aria-hidden="true">
+                Canvas pan: middle-click + drag.
+              </p>
+            </div>
+          </div>
+
           <div class="graph-overlay bottom-left">
             <div class="legend">
               <span><span
@@ -122,14 +339,32 @@
             </div>
           </div>
 
-          <div class="graph-overlay right" id="selectedOverlay">
+          <div class="graph-overlay right is-hidden" id="selectedOverlay">
+            <div
+              class="overlay-resize-handle left-edge"
+              id="selectedResizeHandle"
+              role="separator"
+              aria-label="Resize right panel"
+              aria-orientation="vertical"
+              tabindex="0"
+            >
+            </div>
             <div class="selected-panel">
               <div class="selected-header">
-                <div>
+                <div class="selected-header-main">
                   <strong>Selected</strong>
                   <span class="status" id="status"></span>
                 </div>
-                <button id="clearSelection" type="button">Clear</button>
+                <div class="selected-header-actions">
+                  <button id="clearSelection" type="button">Clear</button>
+                  <button
+                    id="selectedPanelCollapse"
+                    type="button"
+                    aria-label="Collapse selected panel"
+                  >
+                    ×
+                  </button>
+                </div>
               </div>
               <div id="selectedDevices" class="selected-devices"></div>
             </div>

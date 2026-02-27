@@ -1,5 +1,9 @@
-import type { Connection, NetworkDevice } from "../domain/types.ts";
+import type { Connection, DeviceType, NetworkDevice } from "../domain/types.ts";
 import { inferDeviceKindFromType } from "../domain/deviceKind.ts";
+import {
+  DEFAULT_GROUP_BACKGROUND_COLOR,
+  DEFAULT_GROUP_LAYOUT,
+} from "../domain/groupStyles.ts";
 import {
   buildExportPayload,
   getFrequentDeviceTypeSlugs,
@@ -25,6 +29,7 @@ import type { Dispatch, State } from "./types.ts";
 export type BuilderStatsState = {
   recentDeviceTypeSlugs: string[];
   frequentDeviceTypeCounts: Record<string, number>;
+  shortlistByKind: Record<string, string>;
 };
 
 type BuilderServiceDeps =
@@ -47,9 +52,15 @@ export type BuilderService = {
     position: { x: number; y: number },
   ) => void;
   addCustomContainerAt: (position: { x: number; y: number }) => void;
+  groupSelectedDevices: () => void;
+  deleteSelectedDevices: () => void;
   assignDeviceToContainer: (
     deviceId: string,
     containerId: string | null,
+  ) => void;
+  updateContainerGeometry: (
+    containerId: string,
+    geometry: { x: number; y: number; width: number; height: number },
   ) => void;
   connectSelectedDevices: () => void;
   deleteSelectedConnection: () => void;
@@ -74,6 +85,23 @@ export type BuilderService = {
 export const createBuilderService = (
   deps: BuilderServiceDeps,
 ): BuilderService => {
+  const buildDeviceTypeDecorations = (
+    deviceType: DeviceType,
+  ): Record<string, unknown> => ({
+    brand: deviceType.brand,
+    model: deviceType.model,
+    ports: deviceType.ports,
+    ...(typeof deviceType.partNumber === "string" && deviceType.partNumber
+      ? { partNumber: deviceType.partNumber }
+      : {}),
+    ...(typeof deviceType.thumbPng === "string" && deviceType.thumbPng
+      ? { thumbPng: deviceType.thumbPng }
+      : {}),
+    ...(typeof deviceType.thumbJpg === "string" && deviceType.thumbJpg
+      ? { thumbJpg: deviceType.thumbJpg }
+      : {}),
+  });
+
   const pushHistorySnapshot = (label: string) => {
     deps.history.pushUndo(deps.createHistorySnapshot(label));
   };
@@ -83,7 +111,7 @@ export const createBuilderService = (
     if (state.networkId === deps.customNetworkId) return state;
     deps.dispatch({
       type: "setStatusText",
-      text: "Open Create/Edit mode first.",
+      text: "Open editor mode first.",
     });
     return null;
   };
@@ -143,6 +171,7 @@ export const createBuilderService = (
       type: typeText,
       deviceKind: inferDeviceKindFromType(typeText),
       deviceTypeSlug: slug,
+      ...buildDeviceTypeDecorations(deviceType),
       ...(newPosition ? { x: newPosition.x, y: newPosition.y } : {}),
     };
 
@@ -238,6 +267,8 @@ export const createBuilderService = (
       height: 170,
       x: position.x,
       y: position.y,
+      groupLayout: DEFAULT_GROUP_LAYOUT,
+      groupBackgroundColor: DEFAULT_GROUP_BACKGROUND_COLOR,
     };
 
     pushHistorySnapshot("add container");
@@ -245,6 +276,95 @@ export const createBuilderService = (
       selectedIds: [containerId],
     });
     deps.dispatch({ type: "setStatusText", text: `Added ${container.name}.` });
+  };
+
+  const groupSelectedDevices = () => {
+    const state = requireCustomMode();
+    if (!state) return;
+
+    const selectedDevices = Array.from(state.selected)
+      .map((id) => state.devices.find((device) => device.id === id))
+      .filter((device): device is NetworkDevice =>
+        device !== undefined && !isContainerDevice(device)
+      );
+
+    if (!selectedDevices.length) {
+      deps.dispatch({
+        type: "setStatusText",
+        text: "Select one or more devices to group.",
+      });
+      return;
+    }
+
+    const positions = deps.getNodePositions();
+    const positioned = selectedDevices.map((device) => {
+      const pos = positions.get(device.id);
+      const x = Number(pos?.x ?? device.x);
+      const y = Number(pos?.y ?? device.y);
+      if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+      return { id: device.id, x, y };
+    }).filter((entry): entry is { id: string; x: number; y: number } =>
+      entry !== null
+    );
+
+    if (!positioned.length) {
+      deps.dispatch({
+        type: "setStatusText",
+        text: "Unable to group selected devices (missing positions).",
+      });
+      return;
+    }
+
+    const minX = Math.min(...positioned.map((p) => p.x));
+    const maxX = Math.max(...positioned.map((p) => p.x));
+    const minY = Math.min(...positioned.map((p) => p.y));
+    const maxY = Math.max(...positioned.map((p) => p.y));
+
+    const paddingX = 70;
+    const paddingY = 56;
+    const width = Math.max(220, maxX - minX + paddingX * 2);
+    const height = Math.max(170, maxY - minY + paddingY * 2);
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+
+    const ids = new Set(state.devices.map((d) => d.id));
+    const containerId = deps.nextUniqueId("custom-container", ids);
+    const containerCount = state.devices.filter((d) => isContainerDevice(d))
+      .length;
+
+    const container: NetworkDevice = {
+      id: containerId,
+      name: `Group ${containerCount + 1}`,
+      type: "container group",
+      deviceKind: inferDeviceKindFromType("other"),
+      isContainer: true,
+      width,
+      height,
+      x: centerX,
+      y: centerY,
+      groupLayout: DEFAULT_GROUP_LAYOUT,
+      groupBackgroundColor: DEFAULT_GROUP_BACKGROUND_COLOR,
+    };
+
+    const selectedSet = new Set(positioned.map((p) => p.id));
+    const nextDevices = state.devices.map((device) => {
+      if (!selectedSet.has(device.id)) return device;
+      return {
+        ...device,
+        containerId,
+      };
+    });
+
+    pushHistorySnapshot("group selected");
+    deps.refreshCustomGraph(
+      [...nextDevices, container],
+      state.connections,
+      { selectedIds: [containerId] },
+    );
+    deps.dispatch({
+      type: "setStatusText",
+      text: `Grouped ${positioned.length} device(s) into ${container.name}.`,
+    });
   };
 
   const assignDeviceToContainer = (
@@ -304,6 +424,123 @@ export const createBuilderService = (
       text: nextContainerId
         ? `Assigned ${device.name} to container.`
         : `Removed ${device.name} from container.`,
+    });
+  };
+
+  const updateContainerGeometry = (
+    containerId: string,
+    geometry: { x: number; y: number; width: number; height: number },
+  ) => {
+    const state = requireCustomMode();
+    if (!state) return;
+
+    const existing = state.devices.find((device) =>
+      device.id === containerId && isContainerDevice(device)
+    );
+    if (!existing) return;
+
+    const nextX = Number(geometry.x);
+    const nextY = Number(geometry.y);
+    const nextWidth = Number(geometry.width);
+    const nextHeight = Number(geometry.height);
+    if (
+      !Number.isFinite(nextX) ||
+      !Number.isFinite(nextY) ||
+      !Number.isFinite(nextWidth) ||
+      !Number.isFinite(nextHeight)
+    ) {
+      return;
+    }
+
+    const clampedWidth = Math.max(180, Math.min(2400, Math.round(nextWidth)));
+    const clampedHeight = Math.max(120, Math.min(1800, Math.round(nextHeight)));
+    const roundedX = Math.round(nextX);
+    const roundedY = Math.round(nextY);
+
+    const prevX = Number(existing.x);
+    const prevY = Number(existing.y);
+    const prevWidth = Number(existing.width);
+    const prevHeight = Number(existing.height);
+    const unchanged =
+      Math.round(Number.isFinite(prevX) ? prevX : roundedX) === roundedX &&
+      Math.round(Number.isFinite(prevY) ? prevY : roundedY) === roundedY &&
+      Math.round(Number.isFinite(prevWidth) ? prevWidth : clampedWidth) ===
+        clampedWidth &&
+      Math.round(Number.isFinite(prevHeight) ? prevHeight : clampedHeight) ===
+        clampedHeight;
+    if (unchanged) return;
+
+    const nextDevices = state.devices.map((device) =>
+      device.id === containerId
+        ? {
+          ...device,
+          x: roundedX,
+          y: roundedY,
+          width: clampedWidth,
+          height: clampedHeight,
+        }
+        : device
+    );
+
+    pushHistorySnapshot("update group frame");
+    deps.refreshCustomGraph(nextDevices, state.connections, {
+      selectedIds: [containerId],
+    });
+  };
+
+  const deleteSelectedDevices = () => {
+    const state = requireCustomMode();
+    if (!state) return;
+
+    const selectedIds = Array.from(state.selected);
+    if (!selectedIds.length) {
+      deps.dispatch({
+        type: "setStatusText",
+        text: "Select one or more devices to delete.",
+      });
+      return;
+    }
+
+    const selectedSet = new Set(selectedIds);
+    const selectedDevices = state.devices.filter((device) =>
+      selectedSet.has(device.id)
+    );
+    if (!selectedDevices.length) {
+      deps.dispatch({
+        type: "setStatusText",
+        text: "Selected devices are no longer available.",
+      });
+      return;
+    }
+
+    const removeIds = new Set(selectedDevices.map((device) => device.id));
+
+    const nextDevices = state.devices
+      .filter((device) => !removeIds.has(device.id))
+      .map((device) => {
+        const containerId = typeof device.containerId === "string"
+          ? device.containerId
+          : "";
+        if (!containerId || !removeIds.has(containerId)) return device;
+        const copy = { ...device };
+        delete copy.containerId;
+        return copy;
+      });
+
+    const nextConnections = state.connections.filter((connection) =>
+      !removeIds.has(connection.from.deviceId) &&
+      !removeIds.has(connection.to.deviceId)
+    );
+
+    pushHistorySnapshot(
+      selectedDevices.length === 1
+        ? "delete device"
+        : "delete selected devices",
+    );
+    deps.refreshCustomGraph(nextDevices, nextConnections);
+    deps.dispatch({
+      type: "setStatusText",
+      text: `Deleted ${selectedDevices.length} device(s).`,
     });
   };
 
@@ -488,16 +725,23 @@ export const createBuilderService = (
     if (existing.deviceTypeSlug === slug) return;
 
     const nextTypeText = `${nextDeviceType.slug} ${nextDeviceType.model}`;
-    const nextDevices = state.devices.map((device) =>
-      device.id === deviceId
-        ? {
-          ...device,
-          deviceTypeSlug: slug,
-          type: nextTypeText,
-          deviceKind: inferDeviceKindFromType(nextTypeText),
-        }
-        : device
-    );
+    const nextDevices = state.devices.map((device) => {
+      if (device.id !== deviceId) return device;
+      const base = { ...device } as Record<string, unknown>;
+      delete base.brand;
+      delete base.model;
+      delete base.partNumber;
+      delete base.ports;
+      delete base.thumbPng;
+      delete base.thumbJpg;
+      return {
+        ...base,
+        deviceTypeSlug: slug,
+        type: nextTypeText,
+        deviceKind: inferDeviceKindFromType(nextTypeText),
+        ...buildDeviceTypeDecorations(nextDeviceType),
+      } as NetworkDevice;
+    });
 
     const { nextConnections, removedCount } = pruneConnectionsForDeviceType({
       device: existing,
@@ -567,6 +811,18 @@ export const createBuilderService = (
         deviceKind: device.deviceKind,
         ...(device.deviceTypeSlug
           ? { deviceTypeSlug: device.deviceTypeSlug }
+          : {}),
+        ...(typeof device.brand === "string" ? { brand: device.brand } : {}),
+        ...(typeof device.model === "string" ? { model: device.model } : {}),
+        ...(typeof device.partNumber === "string" && device.partNumber
+          ? { partNumber: device.partNumber }
+          : {}),
+        ...(Array.isArray(device.ports) ? { ports: device.ports } : {}),
+        ...(typeof device.thumbPng === "string" && device.thumbPng
+          ? { thumbPng: device.thumbPng }
+          : {}),
+        ...(typeof device.thumbJpg === "string" && device.thumbJpg
+          ? { thumbJpg: device.thumbJpg }
           : {}),
         ...(Number.isFinite(Number(device.x)) ? { x: Number(device.x) } : {}),
         ...(Number.isFinite(Number(device.y)) ? { y: Number(device.y) } : {}),
@@ -656,7 +912,10 @@ export const createBuilderService = (
     addCustomDevice,
     addCustomDeviceAt,
     addCustomContainerAt,
+    groupSelectedDevices,
+    deleteSelectedDevices,
     assignDeviceToContainer,
+    updateContainerGeometry,
     connectSelectedDevices,
     deleteSelectedConnection,
     renameCustomDevice,

@@ -46,6 +46,7 @@ Deno.test("builderService: blocks edits outside custom mode", () => {
     builderStats: {
       recentDeviceTypeSlugs: [],
       frequentDeviceTypeCounts: {},
+      shortlistByKind: {},
     },
     nextUniqueId: () => "unused",
     getNodePositions: () => new Map(),
@@ -68,7 +69,7 @@ Deno.test("builderService: blocks edits outside custom mode", () => {
   assertEquals(refreshCalls, 0);
   assertEquals(actions[0], {
     type: "setStatusText",
-    text: "Open Create/Edit mode first.",
+    text: "Open editor mode first.",
   });
 });
 
@@ -86,6 +87,7 @@ Deno.test("builderService: rejects unknown device type slug", () => {
     builderStats: {
       recentDeviceTypeSlugs: [],
       frequentDeviceTypeCounts: {},
+      shortlistByKind: {},
     },
     nextUniqueId: () => "unused",
     getNodePositions: () => new Map(),
@@ -120,6 +122,7 @@ Deno.test("builderService: adds custom device and updates recents/frequents", ()
   const builderStats = {
     recentDeviceTypeSlugs: [] as string[],
     frequentDeviceTypeCounts: {} as Record<string, number>,
+    shortlistByKind: {} as Record<string, string>,
   };
 
   const service = createBuilderService({
@@ -196,6 +199,7 @@ const mkStatefulHarness = (initial: State) => {
     builderStats: {
       recentDeviceTypeSlugs: [],
       frequentDeviceTypeCounts: {},
+      shortlistByKind: {},
     },
     nextUniqueId: (prefix, existing) => `${prefix}-${existing.size + 1}`,
     getNodePositions: () => new Map(),
@@ -256,6 +260,8 @@ Deno.test("builderService: addCustomContainerAt creates container node", () => {
   assertEquals(harness.undoLabels, ["add container"]);
   assertEquals(harness.getState().devices.length, 1);
   assertEquals(harness.getState().devices[0].isContainer, true);
+  assertEquals(harness.getState().devices[0].groupLayout, "free");
+  assertEquals(harness.getState().devices[0].groupBackgroundColor, "slate");
   assertEquals(harness.refreshes[0].selectedIds, ["custom-container-1"]);
 });
 
@@ -285,6 +291,38 @@ Deno.test("builderService: assign and unassign device container", () => {
 
   harness.service.assignDeviceToContainer("d1", null);
   assertEquals(harness.getState().devices[0].containerId, undefined);
+});
+
+Deno.test("builderService: deleteSelectedDevices removes selected nodes and links", () => {
+  const state = createBaseState({
+    networkId: "custom-local",
+    selected: new Set(["d1"]),
+    devices: [
+      {
+        id: "d1",
+        name: "Device 1",
+        type: "switch",
+        deviceKind: DEVICE_KIND_SWITCH,
+      },
+      {
+        id: "d2",
+        name: "Device 2",
+        type: "switch",
+        deviceKind: DEVICE_KIND_SWITCH,
+      },
+    ],
+    connections: [{
+      id: "c1",
+      from: { deviceId: "d1", interfaceId: "p1" },
+      to: { deviceId: "d2", interfaceId: "p1" },
+    }],
+  });
+  const harness = mkStatefulHarness(state);
+
+  harness.service.deleteSelectedDevices();
+
+  assertEquals(harness.getState().devices.map((device) => device.id), ["d2"]);
+  assertEquals(harness.getState().connections.length, 0);
 });
 
 Deno.test("builderService: connectSelectedDevices adds connection", () => {
